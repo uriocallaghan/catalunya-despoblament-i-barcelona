@@ -2,7 +2,7 @@
 // Ús: npm install && npm run build:data
 import fs from 'fs'; import * as tc from 'topojson-client'; import * as ts from 'topojson-server';
 import * as geo from 'd3-geo'; import * as force from 'd3-force';
-import { cartogram } from './cartograma.mjs';
+import { Worker } from 'worker_threads'; import { historic } from './historic.mjs';
 const t=JSON.parse(fs.readFileSync(new URL('../node_modules/es-atlas/es/municipalities.json', import.meta.url)));
 const C={}; fs.readFileSync(new URL('../data/raw/municipis-cens-2025.csv', import.meta.url),'utf8').trim().split('\n').slice(1).forEach(l=>{const [c,com,alt,a,p]=l.split(';'); C[c.slice(0,5)]={com,alt:+alt,a:+a,p:+p};});
 const geoms=t.objects.municipalities.geometries.filter(g=>['08','17','25','43'].includes(g.id.slice(0,2)));
@@ -37,22 +37,29 @@ const T=tc.transform(topo.transform);
 const eq=geo.geoAzimuthalEqualArea().rotate([-1.5,-41.7]).fitExtent([[8,8],[W-8,W-8]],outline);
 const A0=topo.arcs.map(a=>{ const q=a.map((p,i)=>eq(T(p.slice(),i))); const o=[q[0]]; // densificació: segments de 2 unitats com a màxim
   for(let i=1;i<q.length;i++){ const [x0,y0]=q[i-1],[x1,y1]=q[i]; const n=Math.ceil(Math.hypot(x1-x0,y1-y0)/2); for(let k=1;k<=n;k++) o.push([x0+(x1-x0)*k/n,y0+(y1-y0)*k/n]); } return o; });
-const A1=A0.map(a=>a.map(p=>p.slice())); const cen=M.map(m=>{ const c=geo.geoPath(eq).centroid(m.f); return c; });
-const {best}=cartogram(A1,topo.objects.m.geometries,M.map(m=>m.p),cen,{N:512,rounds:5});
-// Ajust del cartograma a la mateixa caixa i simplificació conjunta (Douglas-Peucker en 4D: original + cartograma).
-{ let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity; A1.flat().forEach(([x,y])=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);});
+// Població de cada any sobre els municipis actuals (scripts/historic.mjs) i un cartograma per any, en paral·lel.
+const YRS=[1857,1900,1930,1950,1970,1991,2025];
+const HIST=historic(M,tc.neighbors(topo.objects.m.geometries),YRS); HIST.log.forEach(l=>console.log('fusió',l));
+const cen0=M.map(m=>geo.geoPath(eq).centroid(m.f));
+const runs=await Promise.all(YRS.map(y=>new Promise((res,rej)=>{ const w=new Worker(new URL('./cartograma-worker.mjs', import.meta.url),{workerData:{arcs:A0,geoms:topo.objects.m.geometries,values:HIST.values[y],extra:cen0,year:y}}); w.on('message',res); w.on('error',rej); })));
+// Cada cartograma s'ajusta a la mateixa caixa.
+runs.forEach(r=>{ let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity; r.arcs.flat().forEach(([x,y])=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);});
   const k=Math.min((W-16)/(x1-x0),(W-16)/(y1-y0)), ox=(W-(x1-x0)*k)/2-x0*k, oy=(W-(y1-y0)*k)/2-y0*k;
-  [...A1.flat(),...cen].forEach(p=>{p[0]=p[0]*k+ox;p[1]=p[1]*k+oy;}); }
-function dp(a,b,tol){ const n=a.length, keep=new Uint8Array(n); keep[0]=keep[n-1]=1; const st=[[0,n-1]];
-  while(st.length){ const [i,j]=st.pop(); let md=0,mi=-1; for(let k=i+1;k<j;k++){ const t=(k-i)/(j-i); const d=Math.max(Math.hypot(a[k][0]-(a[i][0]+(a[j][0]-a[i][0])*t),a[k][1]-(a[i][1]+(a[j][1]-a[i][1])*t)),Math.hypot(b[k][0]-(b[i][0]+(b[j][0]-b[i][0])*t),b[k][1]-(b[i][1]+(b[j][1]-b[i][1])*t))); if(d>md){md=d;mi=k;} }
+  [...r.arcs.flat(),...r.extra].forEach(p=>{p[0]=p[0]*k+ox;p[1]=p[1]*k+oy;}); });
+// Simplificació conjunta (Douglas-Peucker sobre la desviació màxima entre totes les versions): mateixos vèrtexs a totes.
+function dp(vs,tol){ const n=vs[0].length, keep=new Uint8Array(n); keep[0]=keep[n-1]=1; const st=[[0,n-1]];
+  while(st.length){ const [i,j]=st.pop(); let md=0,mi=-1; for(let k=i+1;k<j;k++){ const t=(k-i)/(j-i); let d=0; for(const a of vs){ d=Math.max(d,Math.hypot(a[k][0]-(a[i][0]+(a[j][0]-a[i][0])*t),a[k][1]-(a[i][1]+(a[j][1]-a[i][1])*t))); } if(d>md){md=d;mi=k;} }
     if(md>tol){ keep[mi]=1; st.push([i,mi],[mi,j]); } } return keep; }
 const enc=a=>{ let px=0,py=0; return a.flatMap(([x,y])=>{ const X=Math.round(x*10),Y=Math.round(y*10); const r=[X-px,Y-py]; px=X; py=Y; return r; }); };
-const C0=[],C1=[]; A0.forEach((a,i)=>{ const kp=dp(a,A1[i],.35); C0.push(enc(a.filter((_,k)=>kp[k]))); C1.push(enc(A1[i].filter((_,k)=>kp[k]))); });
-const carto={a0:C0,a1:C1,cen:cen.map(p=>[+p[0].toFixed(1),+p[1].toFixed(1)]),err:{w:+best.popWeightedErr.toFixed(4),rounds:best.round}};
-console.log('cartograma: punts',C0.reduce((s,a)=>s+a.length/2,0),'error ponderat',(best.popWeightedErr*100).toFixed(2)+'%');
+const VERS=[A0,...runs.map(r=>r.arcs)], ENC=VERS.map(()=>[]);
+A0.forEach((_,i)=>{ const kp=dp(VERS.map(v=>v[i]),.35); VERS.forEach((v,j)=>ENC[j].push(enc(v[i].filter((_,k)=>kp[k])))); });
+const carto={years:YRS,a0:ENC[0],a:ENC.slice(1),cen:runs.map(r=>r.extra.map(p=>[+p[0].toFixed(1),+p[1].toFixed(1)])),
+  pop:YRS.map(y=>HIST.values[y].map(v=>Math.round(v))),merged:YRS.map(y=>HIST.merged[y]),err:runs.map(r=>+r.best.popWeightedErr.toFixed(4)),rounds:runs.map(r=>r.best.round)};
+fs.writeFileSync(new URL('../data/cartograma.json', import.meta.url),JSON.stringify(carto));
+console.log('cartograma: punts',ENC[0].reduce((s,a)=>s+a.length/2,0),'errors',carto.err.join(' '),'KB',(fs.statSync(new URL('../data/cartograma.json', import.meta.url)).size/1024).toFixed(0));
 // Hipsometria (scripts/hipsometria.mjs, Copernicus DEM GLO-90).
 const hipso=fs.readFileSync(new URL('../data/raw/hipsometria.csv', import.meta.url),'utf8').trim().split('\n').slice(1).map(l=>+l.split(';')[2]);
-const data={W,H,scale:proj.scale(),translate:proj.translate(),coms:COMS,topo,mun:MUN,dots:b64,carto,hipso};
+const data={W,H,scale:proj.scale(),translate:proj.translate(),coms:COMS,topo,mun:MUN,dots:b64,hipso};
 const OUT=new URL('../data/catalunya.json', import.meta.url); fs.writeFileSync(OUT,JSON.stringify(data));
 console.log('H',H,'dots',dots.length/2,'KB',(fs.statSync(OUT).size/1024).toFixed(0));
 const TA=M.reduce((s,m)=>s+m.a,0);

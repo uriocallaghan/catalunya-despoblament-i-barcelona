@@ -38,9 +38,10 @@ button{ font:inherit; color:inherit; }
 .readout .m{ color:var(--muted); }
 .note{ font-size:12.5px; line-height:1.5; color:var(--muted); max-width:40rem; margin:.9rem auto 0; letter-spacing:-.005em; }
 .map{ display:block; width:100%; max-width:646px; height:auto; margin:1.3rem auto 0; touch-action:manipulation; }
-.mp{ stroke:var(--bg); stroke-width:.35px; vector-effect:non-scaling-stroke; transition:fill .7s ease; cursor:pointer; }
+.mp{ stroke:var(--edge,var(--bg)); stroke-width:.35px; vector-effect:non-scaling-stroke; transition:fill .7s ease; cursor:pointer; }
 .mp.hl{ stroke:var(--ink); stroke-width:1.5px; }
 .mesh{ fill:none; stroke:#fff; stroke-width:.9px; vector-effect:non-scaling-stroke; pointer-events:none; }
+.mesh-u{ fill:none; stroke:rgba(28,28,27,.16); stroke-width:1.9px; vector-effect:non-scaling-stroke; pointer-events:none; }
 .outline{ fill:none; stroke:#B9B9B3; stroke-width:.7px; vector-effect:non-scaling-stroke; pointer-events:none; }
 .legend{ display:flex; margin:1rem auto 0; max-width:357px; }
 .legend div{ flex:1; }
@@ -63,6 +64,8 @@ input[type=range]{ width:100%; max-width:357px; accent-color:var(--red); }
 .slider{ display:flex; justify-content:center; align-items:center; gap:1rem; margin:1rem auto 0; max-width:442px; }
 .slider .yr{ font-size:2.2rem; font-weight:620; letter-spacing:-.06em; color:var(--red); min-width:3.3ch; line-height:1; }
 .slider[hidden]{ display:none; }
+.play{ flex:none; width:2.3rem; height:2.3rem; border-radius:50%; border:0; background:var(--ink); color:var(--bg); font-size:13px; cursor:pointer; padding:0 0 0 2px; }
+.play[aria-pressed="true"]{ background:var(--red); }
 .km{ display:grid; grid-template-columns:1fr 1fr; gap:clamp(.8rem,3vw,2rem); margin:1.2rem auto 0; max-width:612px; }
 .km canvas{ width:100%; aspect-ratio:1/1; display:block; margin-top:.8rem; background:var(--land); border-radius:2px; }
 .km .d{ font-size:clamp(1.8rem,6.5vw,3rem); font-weight:620; letter-spacing:-.06em; line-height:1; margin-top:.8rem; font-variant-numeric:tabular-nums; }

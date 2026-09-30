@@ -14,9 +14,11 @@ assets/style.css           estils
 assets/app.js              tota la lògica dels gràfics (D3)
 assets/vendor/             d3 7.8.5, topojson-client 3.1.0 i lenis 1.3.26 (sense CDN)
 data/catalunya.json        dades i geometria ja processades (les carrega app.js)
+data/cartograma.json       cartogrames 1857–2025 (generat)
 data/raw/                  dades municipals oficials en CSV
 scripts/build-data.mjs     regenera data/catalunya.json
 scripts/cartograma.mjs     cartograma continu per difusió (Gastner i Newman, 2004)
+scripts/historic.mjs       població municipal 1857–1991 sobre els municipis actuals
 scripts/hipsometria.mjs    superfície per franges d’altitud des del Copernicus DEM
 netlify.toml               configuració de desplegament a Netlify
 ```
@@ -36,7 +38,7 @@ npm install
 npm run build:data
 ```
 
-L’script creua `data/raw/municipis-cens-2025.csv` amb els límits municipals d’es-atlas (IGN), calcula el mapa de punts (1 punt = 500 persones) i el cartograma continu, i escriu `data/catalunya.json`. El cartograma triga uns 5 minuts.
+L’script creua `data/raw/municipis-cens-2025.csv` amb els límits municipals d’es-atlas (IGN), calcula el mapa de punts (1 punt = 500 persones) i el cartograma continu, i escriu `data/catalunya.json`. Els cartogrames (un per any) triguen uns 10 minuts.
 
 La distribució del territori per altitud (`data/raw/hipsometria.csv`) es genera a part, perquè descarrega el model d’elevacions (unes 10 rajoles GeoTIFF) a una carpeta temporal que s’esborra en acabar:
 
@@ -48,7 +50,7 @@ npm run build:hipso
 
 - Idescat, *Altitud, superfície i població. Municipis*, 2025 (Cens de població anual).
 - Idescat, *Densitat de població* i *Nombre de municipis i població*, comarques, 2025.
-- Idescat, *Sèries històriques demogràfiques. Evolució de la població de fet*, 1857–1991.
+- Idescat, *Sèries històriques demogràfiques. Evolució de la població de fet*, comarques i municipis, 1857–1991.
 - Idescat, *Estadística del grau d’urbanització 2025* (quadrícula d’1 km²).
 - Límits municipals: Instituto Geográfico Nacional, via [es-atlas](https://github.com/martgnz/es-atlas).
 - Altituds: Copernicus DEM GLO-90 (ESA).

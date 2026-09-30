@@ -57,11 +57,12 @@
 
   <section>
     <h2>El mapa, si cada municipi ocupés tant com la seva gent</h2>
-    <p>Un cartograma continu: deformem Catalunya perquè la superfície de cada municipi sigui proporcional als seus habitants, sense trencar els límits entre veïns.</p>
+    <p>Un cartograma continu: deformem Catalunya perquè la superfície de cada municipi sigui proporcional als seus habitants, sense trencar els límits entre veïns. Mou l’any per veure com s’ha anat inflant Barcelona des del 1857.</p>
     <div class="seg" role="group" aria-label="Forma del mapa">
       <button data-dor="map" aria-pressed="true">Mapa</button>
       <button data-dor="cart" aria-pressed="false">Cartograma</button>
     </div>
+    <div class="slider" id="dorYearBox" hidden><button class="play" id="dorPlay" aria-label="Reprodueix de 1857 a 2025">▶</button><span class="yr" id="dorYearOut">2025</span><input type="range" id="dorYear" min="0" max="6" step="1" value="6" aria-label="Any del cartograma"></div>
     <svg class="map" id="mDor" role="img" aria-label="Mapa de Catalunya i cartograma continu de la població per municipi"></svg>
     <p class="readout" id="rDor" aria-live="polite"></p>
     <p class="note" id="cartNote"></p>
@@ -163,7 +164,7 @@
       <ul>
         <li>Idescat. <a href="https://www.idescat.cat/indicadors/?id=aec&n=15903">Altitud, superfície i població. Municipis</a>, 2025 (Cens de població anual).</li>
         <li>Idescat. <a href="https://www.idescat.cat/indicadors/?id=aec&n=15227">Densitat de població. Comarques i Aran</a> i <a href="https://www.idescat.cat/indicadors/?id=aec&n=15902">Nombre de municipis i població</a>, 2025.</li>
-        <li>Idescat. <a href="https://www.idescat.cat/pub/?id=shd&n=1341&t=199100&by=com">Sèries històriques demogràfiques. Evolució de la població de fet</a>, 1857–1991.</li>
+        <li>Idescat. <a href="https://www.idescat.cat/pub/?id=shd&n=1341&t=199100&by=com">Sèries històriques demogràfiques. Evolució de la població de fet</a>, comarques i <a href="https://www.idescat.cat/pub/?id=shd&n=1341&geo=mun&t=199100">municipis</a>, 1857–1991.</li>
         <li>Idescat. <a href="https://govern.cat/salapremsa/notes-premsa/833960/l-any-2025-el-614-percent-de-la-poblacio-viu-en-centres-urbans-que-ocupen-l-138-percent-de-la-superficie-de-catalunya">Estadística del grau d’urbanització 2025</a> (quadrícula d’1 km²).</li>
         <li>Límits municipals: Instituto Geográfico Nacional, via es-atlas (TopoJSON).</li>
         <li>Altituds del territori: <a href="https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM">Copernicus DEM GLO-90</a>, Agència Espacial Europea.</li>

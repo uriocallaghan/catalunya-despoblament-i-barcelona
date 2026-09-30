@@ -65,6 +65,11 @@ input[type=range]{ width:100%; max-width:357px; accent-color:var(--red); }
 .slider{ display:flex; justify-content:center; align-items:center; gap:1rem; margin:1rem auto 0; max-width:442px; }
 .slider .yr{ font-size:2.2rem; font-weight:620; letter-spacing:-.06em; color:var(--red); min-width:3.3ch; line-height:1; }
 .slider[hidden]{ display:none; }
+.yrange{ position:relative; flex:1; max-width:420px; }
+.yrange input{ display:block; max-width:none; margin:0; }
+.ticks{ position:relative; height:9px; margin:1px 8px 0; }
+.ticks i{ position:absolute; top:0; width:1.5px; height:6px; margin-left:-.75px; background:var(--muted); border-radius:1px; }
+.ticks i.on{ background:var(--red); height:9px; }
 .play{ flex:none; width:2.3rem; height:2.3rem; border-radius:50%; border:0; background:var(--ink); color:var(--bg); font-size:13px; cursor:pointer; padding:0 0 0 2px; }
 .play[aria-pressed="true"]{ background:var(--red); }
 .km{ display:grid; grid-template-columns:1fr 1fr; gap:clamp(.8rem,3vw,2rem); margin:1.2rem auto 0; max-width:612px; }

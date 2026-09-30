@@ -123,10 +123,12 @@ onView($('#cDots'),()=>{ const t0=performance.now(), dur=RM?0:1800; const st=now
 // data/cartograma.json: arcs en projecció d'àrea igual (a0) i un cartograma per any (a), de scripts/build-data.mjs.
 function labName(m){ return ({"L'Hospitalet de Llobregat":"L’Hospitalet","Santa Coloma de Gramenet":"Sta. Coloma","Sant Cugat del Vallès":"Sant Cugat","Cornellà de Llobregat":"Cornellà","Sant Boi de Llobregat":"Sant Boi"}[m.n]||m.n); }
 const bSvg=baseMap('#mDor').attr('viewBox',`0 0 ${W} ${W}`);
-fetch('data/cartograma.json').then(r=>r.json()).then(CA=>{
+// El fitxer és gran (27 anys): es baixa quan la secció s'acosta a la pantalla.
+new Promise(res=>{ if(!('IntersectionObserver' in window)) return res(); const io=new IntersectionObserver(es=>{ if(es.some(e=>e.isIntersecting)){ io.disconnect(); res(); } },{rootMargin:'1500px 0px'}); io.observe($('#mDor')); })
+.then(()=>fetch('data/cartograma.json')).then(r=>r.json()).then(CA=>{
 const Q=CA.q||10, dec=a=>{ const o=new Float32Array(a.length); let x=0,y=0; for(let i=0;i<a.length;i+=2){ x+=a[i]; y+=a[i+1]; o[i]=x/Q; o[i+1]=y/Q; } return o; };
 const YR=CA.years, NY=YR.length, V=[CA.a0.map(dec),...CA.a.map(v=>v.map(dec))]; // V[0] mapa, V[k+1] cartograma de YR[k]
-const KT=V[0].map(a=>new Float32Array(a)), KS=V[0].map(a=>new Float32Array(a));
+const KT=V[0].map(a=>new Float32Array(a)), KS=V[0].map(a=>new Float32Array(a)), KY=V[0].map(a=>new Float32Array(a));
 const MERGED=CA.merged.map(l=>new Set(l));
 const GEO=OBJ.geometries.map(g=> g.type==='Polygon' ? [g.arcs] : g.type==='MultiPolygon' ? g.arcs : []);
 const own=KT.map(()=>[]); GEO.forEach((polys,i)=>polys.forEach(p=>p.forEach(r=>r.forEach(a=>own[a<0?~a:a].push(i)))));
@@ -135,61 +137,75 @@ const ringD=r=>'M'+r.map((a,j)=>{ const s=a<0?arcPts(~a,true):arcPts(a,false); r
 const geoD=i=>GEO[i].map(p=>p.map(ringD).join('')).join('');
 const arcsD=list=>list.map(a=>'M'+arcPts(a,false)).join('');
 const COMARC=own.map((o,a)=>o.length===2&&MUN[o[0]].c!==MUN[o[1]].c?a:-1).filter(a=>a>=0), OUTARC=own.map((o,a)=>o.length===1?a:-1).filter(a=>a>=0);
-const st={mode:'map', yi:NY-1, timer:null, shown:false, play:null};
-$('#dorYear').max=NY-1; $('#dorYear').value=NY-1;
+// Any continu: entre dos anys amb dades, formes, població i centres s'interpolen linealment.
+const Y0=YR[0], Y1=YR[NY-1];
+const seg=t=>{ let k=0; while(k<NY-2&&YR[k+1]<=t) k++; const f=Math.max(0,Math.min(1,(t-YR[k])/(YR[k+1]-YR[k]))); return {k,f}; };
+const isData=t=>YR.includes(t);
+const st={mode:'map', t:Y1, blend:0, timer:null, shown:false, play:null};
+$('#dorYear').min=Y0; $('#dorYear').max=Y1; $('#dorYear').value=Y1;
+$('#dorTicks').innerHTML=YR.map(y=>`<i data-y="${y}" style="left:${((y-Y0)/(Y1-Y0)*100).toFixed(2)}%" title="${y}"></i>`).join('');
 const bPs=bSvg.append('g').selectAll('path').data(MUN).join('path').attr('class','mp').attr('fill-rule','evenodd').attr('fill',LAND);
 const bMu=bSvg.append('path').attr('class','mesh-u'), bMesh=bSvg.append('path').attr('class','mesh'), bOut=bSvg.append('path').attr('class','outline');
 const BIGL=[...MUN].sort((a,b)=>b.p-a.p).slice(0,14);
 const blab=bSvg.append('g').selectAll('text').data(BIGL).join('text').attr('class','blab').attr('dy','.35em').attr('opacity',0).text(m=>labName(m));
-const popY=(m,yi)=>CA.pop[yi][m.i], totY=yi=>d3.sum(CA.pop[yi]);
-const densNow=m=> st.mode==='map' ? m.d : popY(m,st.yi)/m.a;
-function draw(){ const m=bMesh.attr('d',arcsD(COMARC)).attr('d'); bPs.attr('d',d=>geoD(d.i)); bMu.attr('d',m); bOut.attr('d',arcsD(OUTARC)); }
+const popT=(m,t)=>{ const {k,f}=seg(t); return CA.pop[k][m.i]*(1-f)+CA.pop[k+1][m.i]*f; };
+const totT=t=>{ const {k,f}=seg(t); return d3.sum(CA.pop[k])*(1-f)+d3.sum(CA.pop[k+1])*f; };
+const cenT=(m,t)=>{ const {k,f}=seg(t), a=CA.cen[k][m.i], b=CA.cen[k+1][m.i]; return [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f]; };
+const densNow=m=> st.mode==='map' ? m.d : popT(m,st.t)/m.a;
+// Forma del cartograma a l'any t (a KY) i barreja amb el mapa real segons st.blend (a KT).
+function shapeAt(t){ const {k,f}=seg(t), A=V[k+1], B=V[k+2]; for(let a=0;a<KY.length;a++){ const x=A[a],y=B[a],o=KY[a]; for(let j=0;j<o.length;j++) o[j]=x[j]+(y[j]-x[j])*f; } }
+function compose(){ const b=st.blend; for(let a=0;a<KT.length;a++){ const x=V[0][a],y=KY[a],o=KT[a]; for(let j=0;j<o.length;j++) o[j]=x[j]+(y[j]-x[j])*b; } }
+function draw(){ const m=arcsD(COMARC); bPs.attr('d',d=>geoD(d.i)); bMesh.attr('d',m); bMu.attr('d',m); bOut.attr('d',arcsD(OUTARC)); }
 draw();
-function recolor(){ if(st.shown) paint(bPs,m=>dcol(densNow(m))); }
+let lastCol=null;
+function recolor(force){ if(!st.shown) return; const key=st.mode+Math.round(st.t); if(!force&&key===lastCol) return; lastCol=key; paint(bPs,m=>dcol(densNow(m))); }
 // Etiquetes: només les que caben dins el municipi i no en trepitgen una de més gran.
 function labels(delay){
-  const cartOn=st.mode==='cart', yi=st.yi, sc=($('#mDor').clientWidth||400)/W, tot=totY(yi);
-  const side=m=>Math.sqrt(popY(m,yi)/tot*W*W), lfs=m=>Math.min(24/Math.max(sc,.5),Math.max(10/sc,side(m)*.8/(labName(m).length*.56)));
-  const boxes=[], vis=new Set(); if(cartOn) [...BIGL].sort((a,b)=>popY(b,yi)-popY(a,yi)).forEach(m=>{ const f=lfs(m), w=labName(m).length*f*.56, [x,y]=CA.cen[yi][m.i], b=[x-w/2,y-f*.6,x+w/2,y+f*.6];
+  const cartOn=st.mode==='cart'&&!st.play, t=st.t, sc=($('#mDor').clientWidth||400)/W, tot=totT(t);
+  const side=m=>Math.sqrt(popT(m,t)/tot*W*W), lfs=m=>Math.min(24/Math.max(sc,.5),Math.max(10/sc,side(m)*.8/(labName(m).length*.56)));
+  const boxes=[], vis=new Set(); if(cartOn) [...BIGL].sort((a,b)=>popT(b,t)-popT(a,t)).forEach(m=>{ const f=lfs(m), w=labName(m).length*f*.56, [x,y]=cenT(m,t), b=[x-w/2,y-f*.6,x+w/2,y+f*.6];
     if(side(m)*.95<=w || boxes.some(o=>b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1])) return; boxes.push(b); vis.add(m); });
-  blab.interrupt().attr('opacity',0).filter(m=>vis.has(m)).attr('x',m=>CA.cen[yi][m.i][0]).attr('y',m=>CA.cen[yi][m.i][1]).attr('font-size',lfs).attr('fill',m=>dcls(densNow(m))>=5?BG:INK)
+  blab.interrupt().attr('opacity',0).filter(m=>vis.has(m)).attr('x',m=>cenT(m,t)[0]).attr('y',m=>cenT(m,t)[1]).attr('font-size',lfs).attr('fill',m=>dcls(densNow(m))>=5?BG:INK)
     .transition().delay(RM?0:delay).duration(RM?0:450).attr('opacity',1);
 }
-// Transició de la forma actual a la versió k (0 = mapa real).
-function morph(k,dur){
-  if(st.timer) st.timer.stop();
-  KT.forEach((a,i)=>KS[i].set(a)); const T=V[k];
-  const step=e=>{ for(let a=0;a<KT.length;a++){ const s=KS[a],t=T[a],o=KT[a]; for(let j=0;j<o.length;j++) o[j]=s[j]+(t[j]-s[j])*e; } draw(); };
-  if(RM||!dur){ step(1); return; }
-  st.timer=d3.timer(el=>{ const q=Math.min(1,el/dur); step(d3.easeCubicInOut(q)); if(q>=1) st.timer.stop(); });
-}
 const READ0=()=>{ if(st.mode==='map') return '<span class="m">Toca un municipi o passa al cartograma.</span>';
-  const yi=st.yi, y=YR[yi], tot=totY(yi), bcn=popY(BCN,yi);
-  return `L’any <b>${y}</b> Catalunya tenia ${fmt(tot)} habitants. Barcelona n’era el ${pct(bcn/tot,0)} i ocupa el mateix tros del mapa. <span class="m">Toca un municipi.</span>`; };
+  const t=Math.round(st.t), tot=totT(t), bcn=popT(BCN,t);
+  if(isData(t)) return `L’any <b>${t}</b> Catalunya tenia ${fmt(tot)} habitants. Barcelona n’era el ${pct(bcn/tot,0)} i ocupa el mateix tros del mapa. <span class="m">Toca un municipi.</span>`;
+  const {k}=seg(t); return `<b>${t}</b>: Catalunya tenia uns ${fmt(Math.round(tot/1e4)*1e4)} habitants. Barcelona, prop del ${pct(bcn/tot,0)}. <span class="m">No hi ha dades municipals d’aquest any: el mapa s’interpola entre el ${YR[k]} i el ${YR[k+1]}.</span>`; };
 const bH=hoverable(bSvg,bPs,m=>{
   if(st.mode==='map'){ $('#rDor').innerHTML=muniHTML(m)+`<br><span class="m">Al mapa real ocupa el ${pct(m.a/TA)} de Catalunya; al cartograma del 2025, el ${pct(m.p/TP)}.</span>`; return; }
-  const yi=st.yi, y=YR[yi], v=popY(m,yi);
-  $('#rDor').innerHTML=`<b>${m.n}</b> <span class="m">${m.com}</span><br>`+(MERGED[yi].has(m.i)
-    ? `<span class="m">El ${y} encara formava part d’un altre municipi. Es compta amb aquell, amb la mateixa densitat.</span>`
-    : `<span class="num">${fmt(v)} habitants el ${y}: ocupa el ${pct(v/totY(yi))} del cartograma i el ${pct(m.a/TA)} del territori.</span>`);
+  const t=Math.round(st.t), v=popT(m,t), {k}=seg(t), exact=isData(t);
+  $('#rDor').innerHTML=`<b>${m.n}</b> <span class="m">${m.com}</span><br>`+(MERGED[k].has(m.i)
+    ? `<span class="m">El ${YR[k]} encara formava part d’un altre municipi. Es compta amb aquell, amb la mateixa densitat.</span>`
+    : `<span class="num">${exact?'':'Uns '}${fmt(exact?v:Math.round(v/(v>1000?100:10))*(v>1000?100:10))} habitants el ${t}${exact?'':' (interpolat)'}: ocupa el ${pct(v/totT(t))} del cartograma i el ${pct(m.a/TA)} del territori.</span>`);
 },()=>{ $('#rDor').innerHTML=READ0(); });
-function setYear(yi,dur){ st.yi=yi; $('#dorYear').value=yi; $('#dorYearOut').textContent=YR[yi]; morph(yi+1,dur); recolor(); labels(dur*.8); bH.clear(); $('#rDor').innerHTML=READ0(); }
-function setMode(mode){
-  st.mode=mode; $$('[data-dor]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.dor===mode)); $('#dorYearBox').hidden=mode!=='cart'; stopPlay();
-  const dur=2200; if(mode==='cart') setYear(st.yi,dur); else { morph(0,dur); recolor(); labels(0); bH.clear(); $('#rDor').innerHTML=READ0(); }
+function yearUI(){ const t=Math.round(st.t); $('#dorYearOut').textContent=t; $('#dorYear').value=t; $$('#dorTicks i').forEach(i=>i.classList.toggle('on',+i.dataset.y===t)); }
+// Anima l'any mostrat (i, si cal, la barreja mapa-cartograma) fins a l'objectiu.
+function go(tTo,bTo,dur,ease){
+  if(st.timer) st.timer.stop(); const t0=st.t, b0=st.blend; ease=ease||d3.easeCubicInOut;
+  const frame=q=>{ st.t=t0+(tTo-t0)*q; st.blend=b0+(bTo-b0)*q; shapeAt(st.t); compose(); draw(); yearUI(); recolor(); };
+  if(RM||!dur){ frame(1); after(); return; }
+  st.timer=d3.timer(el=>{ const q=Math.min(1,el/dur); frame(ease(q)); if(q>=1){ st.timer.stop(); st.timer=null; after(); } });
 }
-function stopPlay(){ if(st.play){ clearTimeout(st.play); st.play=null; } $('#dorPlay').setAttribute('aria-pressed','false'); $('#dorPlay').textContent='▶'; }
+function after(){ recolor(true); labels(0); if(!bH) return; $('#rDor').innerHTML=READ0(); }
+function setMode(mode){
+  stopPlay(); st.mode=mode; $$('[data-dor]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.dor===mode)); $('#dorYearBox').hidden=mode!=='cart';
+  bH.clear(); blab.attr('opacity',0); go(st.t, mode==='cart'?1:0, 2200); $('#rDor').innerHTML=READ0();
+}
+function stopPlay(){ if(st.play){ st.play=null; if(st.timer){ st.timer.stop(); st.timer=null; } after(); } $('#dorPlay').setAttribute('aria-pressed','false'); $('#dorPlay').textContent='▶'; }
+// Reproducció a velocitat constant: 7 anys per segon.
 $('#dorPlay').addEventListener('click',()=>{
   if(st.play){ stopPlay(); return; }
-  $('#dorPlay').setAttribute('aria-pressed','true'); $('#dorPlay').textContent='❚❚';
-  let yi=st.yi===NY-1?0:st.yi; const next=()=>{ setYear(yi,1000); if(yi>=NY-1){ st.play=setTimeout(stopPlay,1000); return; } yi++; st.play=setTimeout(next,1350); }; next();
+  if(Math.round(st.t)>=Y1) { st.t=Y0; }
+  st.play=true; $('#dorPlay').setAttribute('aria-pressed','true'); $('#dorPlay').textContent='❚❚'; bH.clear(); blab.attr('opacity',0);
+  go(Y1,1,(Y1-st.t)/7*1000,d3.easeLinear); const chk=d3.timer(()=>{ if(!st.timer){ chk.stop(); st.play=null; $('#dorPlay').setAttribute('aria-pressed','false'); $('#dorPlay').textContent='▶'; } });
 });
 $$('[data-dor]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.dor)));
-$('#dorYear').addEventListener('input',e=>{ stopPlay(); setYear(+e.target.value,900); });
-$('#rDor').innerHTML=READ0();
+$('#dorYear').addEventListener('input',e=>{ if(st.play){ st.play=null; $('#dorPlay').setAttribute('aria-pressed','false'); $('#dorPlay').textContent='▶'; } bH.clear(); blab.attr('opacity',0); const t=+e.target.value; go(t,1,Math.min(700,120+Math.abs(t-st.t)*25)); });
+shapeAt(st.t); yearUI(); $('#rDor').innerHTML=READ0();
 onView($('#mDor'),()=>{ st.shown=true; revealFill(bPs,m=>dcol(densNow(m))); });
 const errs=CA.err.map(e=>e*100);
-$('#cartNote').textContent=`Mètode: cartograma de difusió de Gastner i Newman (PNAS, 2004) sobre una projecció azimutal d’àrea igual de Lambert, en una malla de 512 × 512 cel·les i refinat en fins a 5 iteracions. Error d’àrea mitjà, ponderat per població: entre el ${fmt(d3.min(errs),1)}% i el ${fmt(d3.max(errs),1)}% segons l’any. Fins al 1991, població de fet dels censos; des del 2001, padró municipal (Idescat). Els municipis que encara no existien es compten amb el d’on es van segregar. Tots els anys ocupen la mateixa superfície total: el que canvia és com es reparteix. El color és la densitat de cada any.`;
+$('#cartNote').textContent=`Mètode: cartograma de difusió de Gastner i Newman (PNAS, 2004) sobre una projecció azimutal d’àrea igual de Lambert, en una malla de 512 × 512 cel·les i refinat en fins a 5 iteracions. Error d’àrea mitjà, ponderat per població: entre el ${fmt(d3.min(errs),1)}% i el ${fmt(d3.max(errs),1)}% segons l’any. Fins al 1991, població de fet dels censos; des del 2001, padró municipal (Idescat). Els municipis que encara no existien es compten amb el d’on es van segregar. Hi ha dades de ${NY} anys (les marques del control); entre dos d’ells, el mapa s’interpola. Tots els anys ocupen la mateixa superfície total: el que canvia és com es reparteix. El color és la densitat de cada any.`;
 }).catch(e=>console.error(e));
 
 /* =========== 5. PICS =========== */

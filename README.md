@@ -44,7 +44,7 @@ npm install
 npm run build:data
 ```
 
-L’script creua `data/raw/municipis-cens-2025.csv` amb els límits municipals d’es-atlas (IGN), calcula el mapa de punts (1 punt = 500 persones) i el cartograma continu, i escriu `data/catalunya.json`. Els cartogrames (17 anys, de 1857 a 2025) triguen uns 25 minuts.
+L’script creua `data/raw/municipis-cens-2025.csv` amb els límits municipals d’es-atlas (IGN), calcula el mapa de punts (1 punt = 500 persones) i el cartograma continu, i escriu `data/catalunya.json`. Els cartogrames (27 anys amb dades, de 1857 a 2025) triguen uns 45 minuts.
 
 La distribució del territori per altitud (`data/raw/hipsometria.csv`) es genera a part, perquè descarrega el model d’elevacions (unes 10 rajoles GeoTIFF) a una carpeta temporal que s’esborra en acabar:
 
@@ -74,7 +74,7 @@ Fonts: INE (IPC des del 1961 i Enquesta trimestral de cost laboral), BCE (M3, ef
 - Idescat, *Altitud, superfície i població. Municipis*, 2025 (Cens de població anual).
 - Idescat, *Densitat de població* i *Nombre de municipis i població*, comarques, 2025.
 - Idescat, *Sèries històriques demogràfiques. Evolució de la població de fet*, comarques i municipis, 1857–1991.
-- Idescat, *Padró municipal d’habitants. Població a 1 de gener*, municipis, 2001, 2011 i 2021.
+- Idescat, *Padró municipal d’habitants. Població a 1 de gener*, municipis, 1998, 2001, 2006, 2011, 2016 i 2021.
 - Idescat, *Estadística del grau d’urbanització 2025* (quadrícula d’1 km²).
 - Límits municipals: Instituto Geográfico Nacional, via [es-atlas](https://github.com/martgnz/es-atlas).
 - Altituds: Copernicus DEM GLO-90 (ESA).

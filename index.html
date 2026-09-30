@@ -62,7 +62,7 @@
       <button data-dor="map" aria-pressed="true">Mapa</button>
       <button data-dor="cart" aria-pressed="false">Cartograma</button>
     </div>
-    <div class="slider" id="dorYearBox" hidden><button class="play" id="dorPlay" aria-label="Reprodueix de 1857 a 2025">▶</button><span class="yr" id="dorYearOut">2025</span><input type="range" id="dorYear" min="0" max="16" step="1" value="16" aria-label="Any del cartograma"></div>
+    <div class="slider" id="dorYearBox" hidden><button class="play" id="dorPlay" aria-label="Reprodueix de 1857 a 2025">▶</button><span class="yr" id="dorYearOut">2025</span><div class="yrange"><input type="range" id="dorYear" min="1857" max="2025" step="1" value="2025" aria-label="Any del cartograma"><div class="ticks" id="dorTicks" aria-hidden="true"></div></div></div>
     <svg class="map" id="mDor" role="img" aria-label="Mapa de Catalunya i cartograma continu de la població per municipi"></svg>
     <p class="readout" id="rDor" aria-live="polite"></p>
     <p class="note" id="cartNote"></p>

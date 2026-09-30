@@ -19,6 +19,8 @@ data/raw/                  dades municipals oficials en CSV
 scripts/build-data.mjs     regenera data/catalunya.json
 scripts/cartograma.mjs     cartograma continu per difusió (Gastner i Newman, 2004)
 scripts/historic.mjs       població municipal 1857–1991 sobre els municipis actuals
+scripts/serveis/           descàrrega i anàlisi de serveis (escoles, farmàcies, hospitals, tren…)
+data/serveis.json          serveis per municipi, temps a urgències i alumnat (generat)
 scripts/hipsometria.mjs    superfície per franges d’altitud des del Copernicus DEM
 netlify.toml               configuració de desplegament a Netlify
 ```
@@ -46,6 +48,14 @@ La distribució del territori per altitud (`data/raw/hipsometria.csv`) es genera
 npm run build:hipso
 ```
 
+## Serveis
+
+```bash
+node scripts/serveis/dades.mjs      # regenera data/serveis.json des de data/raw/serveis-*.csv
+```
+
+Per actualitzar les fonts, vegeu `scripts/serveis/descarrega.sh`.
+
 ## Fonts
 
 - Idescat, *Altitud, superfície i població. Municipis*, 2025 (Cens de població anual).
@@ -54,4 +64,5 @@ npm run build:hipso
 - Idescat, *Estadística del grau d’urbanització 2025* (quadrícula d’1 km²).
 - Límits municipals: Instituto Geográfico Nacional, via [es-atlas](https://github.com/martgnz/es-atlas).
 - Altituds: Copernicus DEM GLO-90 (ESA).
+- Serveis: Dades obertes de Catalunya (centres docents, equipaments, establiments sanitaris, equipaments culturals, instal·lacions esportives, alumnat universitari), GTFS de Renfe i FGC, límits de l'ICGC. Temps en cotxe amb OSRM (OpenStreetMap).
 - Cartograma: Gastner i Newman, *Diffusion-based method for producing density-equalizing maps*, PNAS 101 (2004).

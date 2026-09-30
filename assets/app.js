@@ -531,8 +531,166 @@ $('#sortBtn').addEventListener('click',()=>{ gTo=gTo?0:1; $('#sortBtn').textCont
   if(gTo&&gMode==='all'){ gMode='half'; $$('[data-g]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.g==='half')); $('#rGrid').textContent=GTXT.half+' Mira la primera fila.'; } animGrid(); });
 $('#rGrid').textContent=GTXT.all;
 
+/* =========== 14. SERVEIS =========== */
+// data/serveis.json (scripts/serveis/dades.mjs): recomptes i distàncies per municipi, temps a urgències, alumnat.
+const svReady=fetch('data/serveis.json').then(r=>r.json()).then(SV=>{
+const METRO=new Set(['Barcelonès','Baix Llobregat','Vallès Occidental','Vallès Oriental','Maresme']);
+/* --- 14a. El llindar: quins serveis té un municipi segons la mida --- */
+const SVS=[['primaria','Escola primària','escola'],['farmacia','Farmàcia','farmàcia'],['biblioteca_publica','Biblioteca pública','biblioteca'],['eso','Institut (ESO)','institut'],
+  ['batxillerat','Batxillerat','batxillerat'],['piscina_coberta','Piscina coberta','piscina coberta'],['estacio_tren','Estació de tren','estació de tren'],['cinema','Cinema','cinema'],['hospital','Hospital públic','hospital']];
+const has=(k,m)=>SV.n[k][m.i]>0;
+const byLogP=[...MUN].sort((a,b)=>a.p-b.p);
+// Regressió logística: probabilitat que un municipi tingui el servei segons log10(habitants). Ajust per Newton-Raphson.
+const XS=d3.range(1,6.26,.05);
+function logit(k){ let a=0,b=0; for(let it=0;it<40;it++){ let g0=0,g1=0,h00=1e-6,h01=0,h11=1e-6;
+    for(const m of MUN){ const x=Math.log10(Math.max(m.p,1)), p=1/(1+Math.exp(-(a+b*x))), y=has(k,m)?1:0, w=p*(1-p); g0+=y-p; g1+=(y-p)*x; h00+=w; h01+=w*x; h11+=w*x*x; }
+    const det=h00*h11-h01*h01; a+=( h11*g0-h01*g1)/det; b+=(-h01*g0+h00*g1)/det; } return {a,b}; }
+const FIT={}; const curve=k=>{ const f=FIT[k]=logit(k); return XS.map(x=>1/(1+Math.exp(-(f.a+f.b*x)))); };
+const CUR=Object.fromEntries(SVS.map(([k])=>[k,curve(k)]));
+const at=(k,x)=>{ const i=Math.max(0,Math.min(XS.length-1,Math.round((x-1)/.05))); let v=CUR[k][i]; for(let j=i;v==null&&j>=0;j--) v=CUR[k][j]; return v==null?0:v; };
+// Població a partir de la qual la meitat dels municipis tenen el servei.
+const half=k=>Math.pow(10,-FIT[k].a/FIT[k].b);
+const u1000=MUN.filter(m=>m.p<1000);
+$('#svTitle').textContent='Cada servei necessita un mínim de gent';
+$('#svLede').textContent=`La meitat dels municipis tenen farmàcia a partir d’uns ${fmt(Math.round(half('farmacia')/100)*100)} habitants, institut a partir de ${fmt(Math.round(half('eso')/500)*500)} i cinema a partir de ${fmt(Math.round(half('cinema')/5000)*5000)}. Però el ${pct(u1000.length/947,0)} dels municipis catalans no arriba als 1.000 habitants. Mou el control o busca el teu municipi.`;
+let svX=3, svM=null;
+function drawLad(){
+  const svg=d3.select('#svLad'); const Wd=Math.min(svg.node().parentNode.clientWidth,646), Hd=Math.round(Math.max(300,Math.min(400,Wd*.62))), m={l:36,r:Wd<500?8:96,t:14,b:34};
+  svg.attr('viewBox',`0 0 ${Wd} ${Hd}`).attr('width',Wd).attr('height',Hd); svg.selectAll('*').remove();
+  const x=d3.scaleLinear().domain([1,6.25]).range([m.l,Wd-m.r]), y=d3.scaleLinear().domain([0,1]).range([Hd-m.b,m.t]);
+  [0,.5,1].forEach(v=>{ svg.append('line').attr('x1',m.l).attr('x2',Wd-m.r).attr('y1',y(v)).attr('y2',y(v)).attr('stroke',LINE);
+    svg.append('text').attr('class','ax').attr('x',m.l-6).attr('y',y(v)).attr('dy','.32em').attr('text-anchor','end').text(v*100+'%'); });
+  [[1,'10'],[2,'100'],[3,'1.000'],[4,'10.000'],[5,'100.000'],[6,'1 milió']].forEach(([v,l])=>svg.append('text').attr('class','ax').attr('x',x(v)).attr('y',Hd-14).attr('text-anchor',v===1?'start':'middle').text(l));
+  svg.append('text').attr('class','ax').attr('x',Wd-m.r).attr('y',Hd-1).attr('text-anchor','end').text('habitants del municipi →');
+  // Distribució dels municipis per mida (franja inferior).
+  svg.append('g').selectAll('line').data(byLogP).join('line').attr('x1',d=>x(Math.log10(Math.max(d.p,10)))).attr('x2',d=>x(Math.log10(Math.max(d.p,10)))).attr('y1',Hd-m.b+3).attr('y2',Hd-m.b+9).attr('stroke',MUTED).attr('stroke-opacity',.25);
+  const col=i=>R[Math.min(7,1+Math.round(i*6/(SVS.length-1)))];
+  const g=svg.append('g');
+  SVS.forEach(([k,l],i)=>{ const pts=XS.map((xx,j)=>[xx,CUR[k][j]]).filter(p=>p[1]!=null);
+    const pth=g.append('path').datum(pts).attr('fill','none').attr('stroke',col(i)).attr('stroke-width',2).attr('stroke-linejoin','round').attr('d',d3.line().x(p=>x(p[0])).y(p=>y(p[1])).curve(d3.curveMonotoneX));
+    if(!svShown){ const L=pth.node().getTotalLength(); pth.attr('stroke-dasharray',L).attr('stroke-dashoffset',L).attr('data-l',L); }
+    // Número de cada servei on la seva corba creua el 50% (o el 75%, alternant, perquè no es trepitgin).
+    const lv=i%2?.75:.5, xl=(Math.log(lv/(1-lv))-FIT[k].a)/FIT[k].b; if(xl>=1&&xl<=6.25){ const gl=svg.append('g').attr('class','svl').attr('opacity',svShown?1:0).attr('transform',`translate(${x(xl)},${y(lv)})`);
+      gl.append('circle').attr('r',8.5).attr('fill',col(i)).attr('stroke',BG).attr('stroke-width',1.5); gl.append('text').attr('text-anchor','middle').attr('dy','.35em').style('font-size','10.5px').style('font-weight',650).attr('fill',i<3?INK:BG).text(i+1); } });
+  const mk=svg.append('g').attr('id','svMark');
+  mk.append('line').attr('y1',m.t).attr('y2',Hd-m.b).attr('stroke',INK).attr('stroke-width',1);
+  mk.selectAll('circle').data(SVS).join('circle').attr('r',3.5).attr('fill',(d,i)=>col(i)).attr('stroke',BG).attr('stroke-width',1.2);
+  svg.node()._s={x,y,col};
+  svg.node()._rv=()=>{ svg.selectAll('path[data-l]').transition().duration(1400).delay((d,i)=>i*120).ease(d3.easeCubicInOut).attr('stroke-dashoffset',0); svg.selectAll('.svl').transition().delay(1200).duration(500).attr('opacity',1); };
+  updLad();
+}
+let svShown=false;
+function updLad(){
+  const svg=d3.select('#svLad'), S=svg.node()._s; if(!S) return; const {x,y}=S;
+  const mk=svg.select('#svMark'); mk.select('line').attr('x1',x(svX)).attr('x2',x(svX)); mk.selectAll('circle').attr('cx',x(svX)).attr('cy',d=>y(at(d[0],svX)));
+  const N=Math.round(Math.pow(10,svX)); $('#svNout').textContent=fmt(svM?svM.p:(N<1000?Math.round(N/10)*10:N<10000?Math.round(N/100)*100:Math.round(N/1000)*1000));
+  const smaller=MUN.filter(m=>m.p<(svM?svM.p:N));
+  let html;
+  if(svM){ const m=svM;
+    html=`<div class="hd"><b>${m.n}</b> <span class="m">· ${m.com} · ${fmt(m.p)} habitants</span></div>`+SVS.map(([k,l])=>{ const y1=has(k,m), dk=SV.d[k]&&SV.d[k][m.i];
+      const extra = y1 ? (SV.n[k][m.i]>1?`${fmt(SV.n[k][m.i])} al municipi`:'al municipi') : (k==='hospital' ? `urgències a ${fmt(SV.min[m.i])} min en cotxe` : (dk?`el més proper, a ${fmt(dk,1)} km`:'no n’hi ha'));
+      return `<div class="it"><i style="background:${y1?RED:'transparent'}"></i><span><b>${SVS.findIndex(d=>d[0]===k)+1}. ${l}</b><small>${extra}</small></span></div>`; }).join('');
+  } else {
+    html=`<div class="hd">Dels municipis d’uns <b>${$('#svNout').textContent} habitants</b>, quants tenen…</div>`+SVS.map(([k,l])=>{ const v=at(k,svX);
+      return `<div class="it"><i style="background:${rgba(RED,v)}"></i><span><b>${SVS.findIndex(d=>d[0]===k)+1}. ${l}</b><small>${pct(v,0)}</small></span></div>`; }).join('')+
+      `<div class="hd" style="margin:.5rem 0 0;font-size:13px;color:var(--muted)">${fmt(smaller.length)} municipis són més petits: el ${pct(d3.sum(smaller,m=>m.a)/TA,0)} del territori i el ${pct(d3.sum(smaller,m=>m.p)/TP)} de la gent.</div>`;
+  }
+  $('#svCard').innerHTML=html;
+}
+$('#svN').addEventListener('input',e=>{ svX=+e.target.value; svM=null; $('#svQ').value=''; updLad(); });
+$('#svQ').addEventListener('change',e=>{ const m=byName.get(e.target.value.trim().toLowerCase()); if(!m) return; svM=m; svX=Math.log10(Math.max(m.p,10)); $('#svN').value=svX; updLad(); });
+$('#svNote').textContent='Corbes de regressió logística: probabilitat que un municipi tingui el servei segons el seu nombre d’habitants, ajustada amb els 947 municipis. Els números marquen on cada corba passa del 50% (o del 75%). Les ratlletes de sota són els municipis. Centres docents del curs 2025/26; farmàcies i hospitals de la xarxa pública, 2026; biblioteques i cinemes, 2025; estacions de Renfe i FGC (sense metro). Les distàncies són en línia recta des de l’ajuntament.';
+
+/* --- 14b. Temps fins a urgències --- */
+let hoT=30, hoShown=false;
+const HB=[10,20,30,45,60], HC=[R[0],R[1],R[3],R[4],R[5],R[7]];
+const hcls=v=>{ for(let i=0;i<HB.length;i++) if(v<HB[i]) return i; return HB.length; };
+const hoFill=m=>{ const v=SV.min[m.i]; return v>hoT ? HC[hcls(v)] : LAND; };
+const over=t=>MUN.filter(m=>SV.min[m.i]>t);
+{ const o=over(30); $('#hoTitle').textContent=`${fmt(Math.round(d3.sum(o,m=>m.p)/1000)*1000)} persones viuen a més de mitja hora d’unes urgències`; }
+const hSvg2=baseMap('#mHosp');
+const hoRead=()=>{ const o=over(hoT), p=d3.sum(o,m=>m.p);
+  return `<b>${fmt(p)} persones</b> (${pct(p/TP)}) viuen a més de ${hoT} minuts. Els seus ${fmt(o.length)} municipis ocupen el <b>${pct(d3.sum(o,m=>m.a)/TA,0)}</b> del territori. <span class="m">Toca un municipi.</span>`; };
+const hoL=muniLayer(hSvg2,()=>LAND,m=>{ const h=MUN[SV.hosp[m.i]];
+  $('#rHosp').innerHTML=`<b>${m.n}</b> <span class="m">${m.com}</span><br><span class="num">${fmt(SV.min[m.i])} minuts en cotxe (${fmt(SV.km[m.i])} km) fins a l’hospital ${h===m?'del mateix municipi':pr('de',h.n)}.</span>`; },()=>{ $('#rHosp').innerHTML=hoRead(); });
+meshLayer(hSvg2,'mesh',COMMESH); meshLayer(hSvg2,'outline',OUTLINE);
+const hosDots=hSvg2.append('g').style('pointer-events','none').selectAll('circle').data(SV.hospitals).join('circle').attr('transform',d=>`translate(${proj([d[0],d[1]])})`).attr('r',0).attr('fill',INK).attr('stroke',BG).attr('stroke-width',1.5).style('vector-effect','non-scaling-stroke');
+function hoPaint(){ $('#hoTout').textContent=hoT+'′'; if(hoShown) paint(hoL.ps,hoFill); $('#rHosp').innerHTML=hoRead(); }
+$('#hoT').addEventListener('input',e=>{ hoT=+e.target.value; hoL.clear(); hoPaint(); });
+$('#legHosp').innerHTML=HC.map((c,i)=>`<div><i style="background:${c}"></i><span>${i?HB[i-1]+'′':''}</span></div>`).join('')+'<span style="font-size:11px;color:var(--muted);align-self:flex-end;margin-left:.5rem;white-space:nowrap">minuts · ● hospital</span>';
+hoPaint();
+onView($('#mHosp'),()=>{ hoShown=true; revealFill(hoL.ps,hoFill); hosDots.transition().delay((d,i)=>RM?0:600+i*20).duration(RM?0:400).attr('r',3.2*W/Math.max(300,$('#mHosp').clientWidth)); });
+{ const cw={}; MUN.forEach(m=>{ (cw[m.com]=cw[m.com]||[0,0]); cw[m.com][0]+=SV.min[m.i]*m.p; cw[m.com][1]+=m.p; }); const cm=Object.entries(cw).map(([c,[a,p]])=>[c,a/p]).sort((a,b)=>b[1]-a[1]);
+  $('#hoNote').textContent=`De mitjana, ponderant per població: ${fmt(cw['Barcelonès'][0]/cw['Barcelonès'][1],0)} minuts al Barcelonès i ${fmt(cm[0][1],0)} ${de(byC[cm[0][0]])}. Hospitals de la xarxa pública (SISCAT) amb urgències 24 h; no hi ha els privats ni els de fora de Catalunya. Ruta per carretera amb OSRM i dades d’OpenStreetMap, sense trànsit: és un temps optimista. Surt de l’ajuntament o del punt de la carretera principal més proper, a menys de 700 m.`; }
+
+/* --- 14c. Universitat --- */
+const UNI=Object.fromEntries(SV.uni), UT=d3.sum(SV.uni,d=>d[1]);
+const UC=C.map(c=>({c, p:c.p/CTP, u:(UNI[c.n]||0)/UT})).filter(d=>d.p>=.012||d.u>=.01).sort((a,b)=>b.u-a.u);
+const rest={c:{n:'Resta de comarques',s:'Resta'}, p:1-d3.sum(UC,d=>d.p), u:1-d3.sum(UC,d=>d.u)};
+{ const bv=(UNI['Barcelonès']+UNI['Vallès Occidental'])/UT; $('#unTitle').textContent=`El ${pct(bv,0)} dels universitaris estudien al Barcelonès o al Vallès Occidental`; }
+let uniSel='Baix Llobregat', uniShown=false;
+function drawUni(){
+  const svg=d3.select('#uni'); const Wd=Math.min(svg.node().parentNode.clientWidth,560), Hd=Math.round(Math.max(360,Math.min(480,Wd*.85))), m={l:Wd<440?84:128,r:Wd<440?84:128,t:28,b:12};
+  svg.attr('viewBox',`0 0 ${Wd} ${Hd}`).attr('width',Wd).attr('height',Hd); svg.selectAll('*').remove();
+  const y=d3.scaleSqrt().domain([0,.55]).range([Hd-m.b,m.t]), x0=m.l, x1=Wd-m.r;
+  svg.append('text').attr('class','ax').attr('x',x0).attr('y',12).attr('text-anchor','middle').text('Població');
+  svg.append('text').attr('class','ax').attr('x',x1).attr('y',12).attr('text-anchor','middle').text('Universitaris');
+  [x0,x1].forEach(xx=>svg.append('line').attr('x1',xx).attr('x2',xx).attr('y1',m.t-6).attr('y2',Hd-m.b).attr('stroke',LINE));
+  const data=[...UC,rest];
+  const g=svg.selectAll('g.un').data(data).join('g').attr('class','un').style('cursor','pointer').attr('tabindex',0).attr('role','button').attr('aria-label',d=>d.c.n)
+    .on('click pointerenter',(e,d)=>{ uniSel=d.c.n; updUni(); }).on('keydown',(e,d)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); uniSel=d.c.n; updUni(); } });
+  g.append('line').attr('x1',x0).attr('x2',x1).attr('y1',d=>y(d.p)).attr('y2',d=>y(uniShown?d.u:d.p)).attr('stroke-width',2.2).attr('stroke',d=>d.u>d.p?RED:MUTED);
+  g.append('circle').attr('cx',x0).attr('cy',d=>y(d.p)).attr('r',4).attr('fill',MUTED);
+  g.append('circle').attr('class','u2').attr('cx',x1).attr('cy',d=>y(uniShown?d.u:d.p)).attr('r',4.5).attr('fill',d=>d.u>d.p?RED:MUTED).attr('opacity',uniShown?1:0);
+  // Etiquetes dels extrems sense trepitjar-se.
+  const lab=(side,key)=>{ const ys=[]; [...data].sort((a,b)=>b[key]-a[key]).forEach(d=>{ const yy=y(d[key]); if(ys.some(v=>Math.abs(v-yy)<12)) return; ys.push(yy);
+    svg.append('text').attr('class','ax ul '+side).style('font-size',Wd<440?'10px':null).attr('x',side==='l'?x0-8:x1+8).attr('y',yy).attr('dy','.32em').attr('text-anchor',side==='l'?'end':'start').attr('data-n',d.c.n).attr('opacity',side==='r'&&!uniShown?0:1).text(`${d.c.s||d.c.n} ${pct(d[key],1)}`); }); };
+  lab('l','p'); lab('r','u');
+  svg.node()._rv=()=>{ g.select('line').transition().duration(1400).delay((d,i)=>i*60).ease(d3.easeCubicInOut).attr('y2',d=>y(d.u)); g.select('.u2').transition().duration(1400).delay((d,i)=>i*60).ease(d3.easeCubicInOut).attr('cy',d=>y(d.u)).attr('opacity',1); svg.selectAll('.ul.r').transition().delay(1300).duration(500).attr('opacity',1); };
+  updUni();
+}
+function updUni(){
+  d3.selectAll('#uni g.un').attr('opacity',d=>d.c.n===uniSel?1:.35); d3.selectAll('#uni .ul').attr('font-weight',function(){ return this.dataset.n===uniSel?600:null; }).style('fill',function(){ return this.dataset.n===uniSel?INK:null; });
+  const d=[...UC,rest].find(v=>v.c.n===uniSel); if(!d) return; const nm=d.c.art!==undefined?cap(withArt(d.c)):d.c.n;
+  $('#rUni').innerHTML=`<b>${nm}</b>: el ${pct(d.p)} de la població i el ${pct(d.u)} dels estudiants universitaris${d.u>d.p?`, ${fmt(d.u/d.p,1)} vegades el seu pes.`:d.u<d.p/5?`: ${fmt(Math.round(d.p/Math.max(d.u,.0001)))} vegades menys del que li tocaria per població.`:'.'}`;
+}
+$('#unNote').textContent=`Matrícula presencial de grau, màster i doctorat, curs ${SV.uniCurs} (${fmt(UT)} estudiants), per comarca del centre. No inclou la UOC ni les files amb secret estadístic. Es mostren les comarques amb almenys l’1% de la població o dels estudiants.`;
+
+/* --- 14d. Per habitant o per km² --- */
+const PKS=[['farmacia','Farmàcies'],['primaria','Escoles'],['biblioteca_publica','Biblioteques'],['esport_installacio','Instal·lacions esportives'],['estacio_tren','Estacions de tren']];
+let pkS='farmacia', pkU='hab', pkShown=false;
+const comN=C.map(c=>c.n), comIdx=Object.fromEntries(D.coms.map((n,i)=>[n,i]));
+const CV=D.coms.map((n,ci)=>{ const ms=MUN.filter(m=>m.c===ci); return {n, c:byC[n], ms, p:d3.sum(ms,m=>m.p), a:d3.sum(ms,m=>m.a)}; });
+const pkVal=(c,k,u)=>{ const n=d3.sum(c.ms,m=>SV.n[k][m.i]); return u==='hab' ? n/c.p*1e4 : n/c.a*100; };
+const grp=(k,u,metro)=>{ const cs=CV.filter(c=>METRO.has(c.n)===metro); const n=d3.sum(cs,c=>d3.sum(c.ms,m=>SV.n[k][m.i])); return u==='hab'? n/d3.sum(cs,c=>c.p)*1e4 : n/d3.sum(cs,c=>c.a)*100; };
+const pkSvg=baseMap('#mPk');
+const comShapes=CV.map((c,ci)=>gp(topojson.merge(D.topo,OBJ.geometries.filter(g=>MUN[g.id].c===ci))));
+const pkPs=pkSvg.append('g').selectAll('path').data(CV).join('path').attr('class','mp').attr('d',(c,i)=>comShapes[i]).attr('fill',LAND);
+meshLayer(pkSvg,'outline',OUTLINE);
+let pkBins=[];
+const pkFill=c=>{ const v=pkVal(c,pkS,pkU); let i=0; while(i<pkBins.length&&v>=pkBins[i]) i++; return R[Math.min(7,i+1)]; };
+const pkRead=()=>{ const a=grp(pkS,pkU,true), b=grp(pkS,pkU,false), l=PKS.find(d=>d[0]===pkS)[1].toLowerCase(), u=pkU==='hab'?'per 10.000 habitants':'per 100 km²';
+  const r=a>b?a/b:b/a; return `<b>${cap(l)} ${u}</b>: ${fmt(a,a<10?1:0)} a l’àmbit metropolità i ${fmt(b,b<10?1:0)} a la resta de Catalunya. ${r>=1.15?`<b>${fmt(r,1)} vegades</b> més ${a>b?'a l’àrea metropolitana':'a la resta del país'}.`:'Pràcticament igual.'} <span class="m">Toca una comarca.</span>`; };
+const pkH=hoverable(pkSvg,pkPs,c=>{ const v=pkVal(c,pkS,pkU); $('#rPk').innerHTML=`<b>${cap(withArt(c.c))}</b>: ${fmt(v,v<10?1:0)} ${PKS.find(d=>d[0]===pkS)[1].toLowerCase()} ${pkU==='hab'?'per 10.000 habitants':'per 100 km²'}. <span class="m">${fmt(d3.sum(c.ms,m=>SV.n[pkS][m.i]))} en total.</span>`; },()=>{ $('#rPk').innerHTML=pkRead(); });
+function pkPaint(){
+  const vs=CV.map(c=>pkVal(c,pkS,pkU)).sort((a,b)=>a-b); pkBins=[1,2,3,4,5,6].map(q=>d3.quantileSorted(vs,q/7));
+  if(pkShown) paint(pkPs,pkFill); pkH.clear(); $('#rPk').innerHTML=pkRead();
+  const f=v=>fmt(v,v<10?1:0); $('#legPk').innerHTML=[0,...pkBins].map((b,i)=>`<div><i style="background:${R[i+1]}"></i><span>${i?f(b):''}</span></div>`).join('')+`<span style="font-size:11px;color:var(--muted);align-self:flex-end;margin-left:.5rem;white-space:nowrap">${pkU==='hab'?'per 10.000 hab.':'per 100 km²'}</span>`;
+  $('#pkS').innerHTML=PKS.map(([k,l])=>`<button class="chip" data-pks="${k}" aria-pressed="${k===pkS}">${l}</button>`).join('');
+  $$('[data-pks]').forEach(b=>b.addEventListener('click',()=>{ pkS=b.dataset.pks; pkPaint(); }));
+}
+$$('[data-pk]').forEach(b=>b.addEventListener('click',()=>{ pkU=b.dataset.pk; $$('[data-pk]').forEach(x=>x.setAttribute('aria-pressed',x===b)); pkPaint(); }));
+pkPaint();
+onView($('#mPk'),()=>{ pkShown=true; revealFill(pkPs,pkFill); });
+
+return {drawLad, drawUni, reveal:()=>{
+  onView($('#svLad'),()=>{ svShown=true; const f=$('#svLad')._rv; f&&f(); },.3);
+  onView($('#uni'),()=>{ uniShown=true; const f=$('#uni')._rv; f&&f(); },.3);
+}};
+}).catch(e=>{ console.error(e); return null; });
+
 /* ---------- boot ---------- */
-function layoutAll(){ if(spkShown) spkPaint(false); drawDots(); drawLor(); drawAlt(); drawHip(); drawBal(); cart.W=0; drawCart(); drawKm(); drawGrid(); }
+function layoutAll(){ svReady.then(sv=>{ if(sv){ sv.drawLad(); sv.drawUni(); } }); if(spkShown) spkPaint(false); drawDots(); drawLor(); drawAlt(); drawHip(); drawBal(); cart.W=0; drawCart(); drawKm(); drawGrid(); }
 function boot(){
   requestAnimationFrame(()=>requestAnimationFrame(()=>heroPaint(true)));
   tramPaint(); cRead(); layoutAll();
@@ -542,6 +700,7 @@ function boot(){
   onView($('#hip'),()=>{ hipShown=true; const f=$('#hip')._rv; f&&f(); },.2);
   onView($('#bal'),()=>{ balShown=true; const f=$('#bal')._rv; f&&f(); },.15);
   onView($('#cart'),()=>{ cart.shown=true; drawCart(); },.25);
+  svReady.then(sv=>sv&&sv.reveal());
   $$('.rv').forEach(el=>onView(el,()=>el.classList.add('in'),.15));
   // Scroll suau (Lenis), només amb roda o trackpad; al mòbil el scroll és el natiu.
   if(!RM && window.Lenis){ const lenis=new Lenis({lerp:.1, wheelMultiplier:.9}); const raf=t=>{ lenis.raf(t); requestAnimationFrame(raf); }; requestAnimationFrame(raf); }

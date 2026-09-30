@@ -154,6 +154,47 @@
     <p class="readout" id="rGrid" aria-live="polite"></p>
   </section>
 
+  <section>
+    <h2 id="svTitle"></h2>
+    <p id="svLede"></p>
+    <input class="search" id="svQ" list="munlist" placeholder="Busca el teu municipi" autocomplete="off" aria-label="Busca un municipi">
+    <div class="slider rv"><span class="yr" id="svNout"></span><input type="range" id="svN" min="1" max="6.25" step="0.01" value="3" aria-label="Habitants del municipi (escala logarítmica)"></div>
+    <svg class="viz" id="svLad" role="img" aria-label="Percentatge de municipis que tenen cada servei segons el nombre d’habitants" style="max-width:646px"></svg>
+    <div class="svcard" id="svCard" aria-live="polite"></div>
+    <p class="note" id="svNote"></p>
+  </section>
+
+  <section>
+    <h2 id="hoTitle"></h2>
+    <p>Temps en cotxe des de cada municipi fins a l’hospital públic amb urgències les 24 hores més proper. Mou el llindar.</p>
+    <div class="slider rv"><span class="yr" id="hoTout">30′</span><input type="range" id="hoT" min="5" max="90" step="5" value="30" aria-label="Minuts fins a l’hospital"></div>
+    <svg class="map" id="mHosp" role="img" aria-label="Mapa del temps en cotxe fins a l’hospital amb urgències més proper"></svg>
+    <div class="legend rv" id="legHosp"></div>
+    <p class="readout" id="rHosp" aria-live="polite"></p>
+    <p class="note" id="hoNote"></p>
+  </section>
+
+  <section>
+    <h2 id="unTitle"></h2>
+    <p>A l’esquerra, el pes de cada comarca en població. A la dreta, el pes en estudiants universitaris presencials, segons on és el campus. Toca una línia.</p>
+    <svg class="viz" id="uni" role="img" aria-label="Població i alumnat universitari per comarques" style="max-width:560px"></svg>
+    <p class="readout" id="rUni" aria-live="polite"></p>
+    <p class="note" id="unNote"></p>
+  </section>
+
+  <section>
+    <h2>Per habitant, a l’interior no hi falten serveis. Per quilòmetre quadrat, sí.</h2>
+    <p>Tria un servei i canvia la manera de comptar. La mateixa xarxa dibuixa dos països diferents.</p>
+    <div class="chips" id="pkS" role="group" aria-label="Servei"></div>
+    <div class="seg" role="group" aria-label="Com es compta">
+      <button data-pk="hab" aria-pressed="true">Per 10.000 habitants</button>
+      <button data-pk="km" aria-pressed="false">Per 100 km²</button>
+    </div>
+    <svg class="map" id="mPk" role="img" aria-label="Serveis per comarca, per habitant o per superfície"></svg>
+    <div class="legend rv" id="legPk"></div>
+    <p class="readout" id="rPk" aria-live="polite"></p>
+  </section>
+
   <section class="closing">
     <h2>Catalunya no és només on som. També és on hem deixat de ser.</h2>
     <p>En un segle i mig la població s’ha multiplicat per quatre, però gairebé tot el creixement s’ha abocat a l’entorn de Barcelona i al litoral. Mentrestant, comarques senceres del Pirineu, de l’Ebre i de Ponent tenen avui menys gent que fa cent anys.</p>
@@ -167,6 +208,8 @@
         <li>Idescat. <a href="https://www.idescat.cat/pub/?id=shd&n=1341&t=199100&by=com">Sèries històriques demogràfiques. Evolució de la població de fet</a>, comarques i <a href="https://www.idescat.cat/pub/?id=shd&n=1341&geo=mun&t=199100">municipis</a>, 1857–1991.</li>
         <li>Idescat. <a href="https://govern.cat/salapremsa/notes-premsa/833960/l-any-2025-el-614-percent-de-la-poblacio-viu-en-centres-urbans-que-ocupen-l-138-percent-de-la-superficie-de-catalunya">Estadística del grau d’urbanització 2025</a> (quadrícula d’1 km²).</li>
         <li>Límits municipals: Instituto Geográfico Nacional, via es-atlas (TopoJSON).</li>
+        <li>Serveis: Dades obertes de Catalunya (<a href="https://analisi.transparenciacatalunya.cat/d/kvmv-ahh4">centres docents 2025/26</a>, <a href="https://analisi.transparenciacatalunya.cat/d/8gmd-gz7i">equipaments</a>, <a href="https://analisi.transparenciacatalunya.cat/d/nrmq-ytje">establiments sanitaris</a>, <a href="https://analisi.transparenciacatalunya.cat/d/48s6-82h2">equipaments culturals</a>, <a href="https://analisi.transparenciacatalunya.cat/d/5zd6-bk6r">instal·lacions esportives</a>, <a href="https://analisi.transparenciacatalunya.cat/d/5kd9-2wex">alumnat universitari</a>); estacions de Renfe i FGC (GTFS); límits municipals de l’ICGC.</li>
+        <li>Temps en cotxe: <a href="https://project-osrm.org/">OSRM</a> amb dades d’OpenStreetMap.</li>
         <li>Altituds del territori: <a href="https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM">Copernicus DEM GLO-90</a>, Agència Espacial Europea.</li>
         <li>Cartograma: M. T. Gastner i M. E. J. Newman, «Diffusion-based method for producing density-equalizing maps», <i>PNAS</i> 101 (2004).</li>
       </ul>

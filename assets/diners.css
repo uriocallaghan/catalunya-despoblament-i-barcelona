@@ -1,0 +1,22 @@
+/* Diners de paper: complements de style.css */
+.top a{ color:inherit; text-decoration:none; }
+.top a:hover b{ color:var(--red); }
+.line{ fill:none; stroke-width:2px; stroke-linejoin:round; stroke-linecap:round; }
+.grid line{ stroke:var(--line); stroke-width:1px; shape-rendering:crispEdges; }
+.ann line{ stroke:var(--muted); stroke-width:1px; stroke-dasharray:2 3; }
+.ann text{ font-size:11px; fill:var(--muted); }
+.ann.hot line{ stroke:var(--red); stroke-dasharray:none; }
+.ann.hot text{ fill:var(--red); font-weight:600; }
+.cross line{ stroke:var(--ink); stroke-width:1px; }
+.endlab{ font-size:12.5px; font-weight:600; letter-spacing:-.02em; paint-order:stroke; stroke:var(--bg); stroke-width:3px; stroke-linejoin:round; }
+.endlab tspan.v{ font-weight:640; }
+.coin{ transition:fill .45s ease, stroke .45s ease; }
+.calc{ display:flex; flex-direction:column; align-items:center; gap:.2rem; margin-top:.8rem; }
+.calc label{ display:flex; align-items:baseline; justify-content:center; gap:.6rem; font-size:15px; color:var(--muted); }
+.calc .search{ width:10ch; font-size:clamp(1.6rem,4.5vw,2.2rem); font-weight:620; letter-spacing:-.05em; font-variant-numeric:tabular-nums; }
+.big{ margin:1.6rem auto 0; max-width:40rem; }
+.big .n{ display:block; font-size:clamp(2.6rem,9vw,4.6rem); font-weight:640; letter-spacing:-.065em; line-height:1; color:var(--red); font-variant-numeric:tabular-nums; }
+.big .t{ display:block; font-size:15px; color:var(--ink); margin-top:.6rem; line-height:1.45; }
+.big .t .m{ color:var(--muted); }
+.back{ color:var(--ink); text-underline-offset:2px; text-decoration-thickness:1px; }
+.rent-b{ cursor:pointer; }

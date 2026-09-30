@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Inflació, creació de diners, la fi del patró or i l’habitatge a Catalunya: gràfics interactius amb dades oficials de l’INE, el BCE, la Reserva Federal i el Ministeri d’Habitatge.">
+<meta property="og:title" content="Diners de paper: què s’ha fet del que guanyem">
+<meta property="og:description" content="100 € guardats el 2002 avui compren el que llavors en compraven 54. Inflació, creació de diners, or i habitatge, amb dades oficials.">
+<meta property="og:url" content="https://catalunya.uriocallaghan.com/diners/">
+<meta property="og:type" content="article">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#F1F1EE">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://catalunya.uriocallaghan.com/diners/">
+<title>Diners de paper: què s’ha fet del que guanyem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&display=swap" rel="stylesheet">
+<script src="../assets/vendor/d3.v7.8.5.min.js"></script>
+<script src="../assets/vendor/lenis.v1.3.26.min.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/diners.css">
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><a href="../"><b>Terra i gent</b></a><span>Diners de paper</span><span id="upd"></span></div>
+
+  <header>
+    <h1 id="h1"></h1>
+    <p class="lead" id="lead"></p>
+    <div class="seg" role="group" aria-label="Des de quan">
+      <button data-base="1961M01" aria-pressed="false">1961</button>
+      <button data-base="1986M01" aria-pressed="false">1986</button>
+      <button data-base="2002M01" aria-pressed="true">2002, l’euro</button>
+    </div>
+    <div class="slider"><button class="play" id="coinPlay" aria-label="Reprodueix">▶</button><span class="yr" id="coinYr"></span><input type="range" id="coinT" min="0" max="1" step="1" value="0" aria-label="Mes"></div>
+    <svg class="viz" id="coins" role="img" aria-label="Cent monedes d’un euro que es buiden a mesura que pugen els preus" style="max-width:420px"></svg>
+    <div class="gkey"><span><i style="background:var(--red)"></i>El que encara compren</span><span><i style="border:1.3px solid var(--muted)"></i>El que s’ha endut la inflació</span></div>
+    <p class="readout" id="rCoins" aria-live="polite"></p>
+    <p class="note" id="coinNote"></p>
+  </header>
+
+  <section>
+    <h2 id="usTitle"></h2>
+    <p>L’índex de preus al consum dels Estats Units és la sèrie de preus més llarga que hi ha: arriba fins al 1800. Durant més d’un segle i mig els preus van pujar amb les guerres i van tornar a baixar amb la pau. Mira què passa a partir del 1971.</p>
+    <div class="seg" role="group" aria-label="Escala">
+      <button data-uss="lin" aria-pressed="true">Escala normal</button>
+      <button data-uss="log" aria-pressed="false">Logarítmica</button>
+    </div>
+    <svg class="viz" id="us" role="img" aria-label="Índex de preus al consum dels Estats Units, 1800–2025" style="max-width:697px"></svg>
+    <p class="readout" id="rUs" aria-live="polite"></p>
+    <p class="note">Índex de preus al consum, mitjana anual (1967 = 100). Fins al 1912, estimacions històriques; des del 1913, Oficina d’Estadístiques Laborals. Recopilació: Banc de la Reserva Federal de Minneapolis.</p>
+  </section>
+
+  <section>
+    <h2>15 d’agost de 1971: el dòlar deixa de ser or</h2>
+    <p>Des del 1944, els acords de Bretton Woods lligaven totes les grans monedes al dòlar, i el dòlar a l’or: qualsevol banc central podia canviar 35 dòlars per una unça a la Reserva Federal. Aquell diumenge al vespre, el president Nixon va anunciar per televisió que suspenia «temporalment» la conversió. Mai més no es va restablir.</p>
+    <div class="seg" role="group" aria-label="Moneda">
+      <button data-gc="usd" aria-pressed="true">En dòlars</button>
+      <button data-gc="eur" aria-pressed="false">En euros</button>
+    </div>
+    <svg class="viz" id="gold" role="img" aria-label="Preu de l’or per unça des del 1960" style="max-width:697px"></svg>
+    <p class="readout" id="rGold" aria-live="polite"></p>
+    <h3 class="sub" id="ozTitle"></h3>
+    <p id="ozLede"></p>
+    <svg class="viz" id="oz" role="img" aria-label="Quadrats: el valor d’una unça d’or el 1971 comparat amb avui" style="max-width:646px"></svg>
+    <p class="readout" id="rOz"></p>
+  </section>
+
+  <section>
+    <h2 id="cashTitle"></h2>
+    <p>La resta són dipòsits: xifres en un compte. I la major part d’aquests diners no els imprimeix cap govern. Els creen els bancs comercials quan concedeixen un crèdit: quan et donen una hipoteca, no et deixen els estalvis d’un altre client, sinó que t’escriuen el saldo al compte. Ho explica el mateix Banc d’Anglaterra.</p>
+    <svg class="viz" id="waffle" role="img" aria-label="De cada cent euros, quants són bitllets i monedes" style="max-width:360px"></svg>
+    <div class="gkey"><span><i style="background:var(--red);border-radius:1px"></i>Bitllets i monedes</span><span><i style="background:var(--r1);border-radius:1px"></i>Dipòsits i altres actius monetaris</span></div>
+    <h3 class="sub" id="m3Title"></h3>
+    <p>M3 és el diner ampli de la zona euro: efectiu, comptes corrents, dipòsits i instruments a curt termini. Toca el gràfic per veure qualsevol mes.</p>
+    <svg class="viz" id="m3" role="img" aria-label="Diner en circulació a la zona euro (M3) des del 1980" style="max-width:697px"></svg>
+    <p class="readout" id="rM3" aria-live="polite"></p>
+    <p class="note">Agregat monetari M3 de la zona euro, saldo a final de mes (Banc Central Europeu). Abans del 1999, dades reconstruïdes per als països que van adoptar l’euro.</p>
+  </section>
+
+  <section>
+    <h2 id="cbTitle"></h2>
+    <p>Des del 2008, quan el crèdit bancari es va encallar, els bancs centrals van començar a crear diner a gran escala per comprar deute públic i privat. El balanç d’un banc central és la mida de tot el que ha comprat pagant amb diner que ell mateix crea.</p>
+    <svg class="viz" id="cb" role="img" aria-label="Balanç del Banc Central Europeu i de la Reserva Federal" style="max-width:697px"></svg>
+    <div class="gkey"><span><i style="background:var(--red);border-radius:1px"></i>Eurosistema (BCE i bancs centrals nacionals)</span><span><i style="background:var(--ink);border-radius:1px"></i>Reserva Federal</span></div>
+    <p class="readout" id="rCb" aria-live="polite"></p>
+  </section>
+
+  <section>
+    <h2>Els diners nous no arriben a tothom alhora</h2>
+    <p id="canLede"></p>
+    <svg class="viz" id="can" role="img" aria-label="Evolució de l’or, el diner, l’habitatge, els preus i els sous des del 2000" style="max-width:697px"></svg>
+    <p class="readout" id="rCan" aria-live="polite"></p>
+    <p class="note">Mitjanes anuals, 2000 = 1. Or: preu en euros (Banc Mundial i BCE). Diner: M3 de la zona euro. Habitatge: valor taxat de l’habitatge lliure a la província de Barcelona, €/m² (Ministeri d’Habitatge). Preus: IPC de Catalunya (INE). Sou: cost salarial total per treballador a Catalunya (INE). Escala logarítmica: cada línia horitzontal duplica l’anterior.</p>
+  </section>
+
+  <section>
+    <h2 id="salTitle"></h2>
+    <p id="salLede"></p>
+    <div class="seg" role="group" aria-label="Com es compta">
+      <button data-sal="real" aria-pressed="true">En euros d’avui</button>
+      <button data-sal="nom" aria-pressed="false">En euros de cada any</button>
+    </div>
+    <svg class="viz" id="sal" role="img" aria-label="Sou brut mitjà a Catalunya, nominal i descomptant la inflació" style="max-width:646px"></svg>
+    <p class="readout" id="rSal" aria-live="polite"></p>
+    <p class="note">Cost salarial total per treballador i mes (inclou les pagues extres prorratejades), mitjana dels quatre trimestres × 12. Enquesta trimestral de cost laboral, INE. Deflactat amb l’IPC de Catalunya. És una mitjana: la crisi del 2008 va destruir sobretot llocs de treball mal pagats, cosa que va apujar la mitjana d’aquells anys.</p>
+  </section>
+
+  <section>
+    <h2 id="brTitle"></h2>
+    <p id="brLede"></p>
+    <svg class="viz" id="bricks" role="img" aria-label="Anys de sou brut necessaris per comprar un pis de 80 m² a la província de Barcelona" style="max-width:697px"></svg>
+    <p class="readout" id="rBr" aria-live="polite"></p>
+    <p class="note">Valor taxat mitjà de l’habitatge lliure a la província de Barcelona (Ministeri d’Habitatge i Agenda Urbana), mitjana anual, per 80 m². Dividit pel sou brut mitjà anual a Catalunya (INE). Cada maó és un any de sou sencer, sense impostos, sense menjar i sense interessos de la hipoteca.</p>
+  </section>
+
+  <section>
+    <h2 id="rentTitle"></h2>
+    <p id="rentLede"></p>
+    <svg class="viz" id="rent" role="img" aria-label="Part del sou brut mitjà que es menja el lloguer mitjà de Barcelona" style="max-width:697px"></svg>
+    <p class="readout" id="rRent" aria-live="polite"></p>
+    <p class="note" id="rentNote"></p>
+    <h3 class="sub" id="emTitle"></h3>
+    <p id="emLede"></p>
+    <svg class="viz" id="em" role="img" aria-label="Edat mitjana a la qual els joves marxen de casa dels pares, per països" style="max-width:560px"></svg>
+    <p class="note">Edat mitjana estimada a la qual els joves deixen la llar dels pares, 2025 (Eurostat).</p>
+  </section>
+
+  <section>
+    <h2>Quant valdrien avui els teus diners?</h2>
+    <p>Escriu una quantitat i tria l’any. Abans del 2002, en pessetes.</p>
+    <div class="calc">
+      <label><input class="search" id="cAmt" type="text" inputmode="decimal" value="100.000" aria-label="Quantitat"><span id="cUnit">pessetes</span></label>
+      <div class="slider"><span class="yr" id="cYr">1990</span><input type="range" id="cY" min="1961" max="2025" step="1" value="1990" aria-label="Any"></div>
+    </div>
+    <div class="big" id="cOut" aria-live="polite"></div>
+    <p class="note" id="cNote"></p>
+  </section>
+
+  <section class="closing">
+    <h2>La inflació és un impost que ningú no vota</h2>
+    <p id="close1"></p>
+    <p>No és un accident. El Banc Central Europeu té com a objectiu que els preus pugin un 2% l’any, perquè considera que una mica d’inflació és més sana que el risc de deflació. Però un 2% anual vol dir que els preus es dupliquen cada 35 anys. Qui té deutes, com els estats, en surt guanyant. Qui té estalvis en un compte o viu d’un sou que s’actualitza tard, hi perd.</p>
+    <p>Tornar a l’or no és la solució: el patró or també tenia deflacions i crisis dures, i va agreujar la Gran Depressió dels anys trenta. Però entendre com es creen els diners ajuda a entendre per què els actius (l’or, els pisos) pugen més de pressa que els sous, i per què treballar ja no garanteix poder tenir una casa.</p>
+    <div class="sources">
+      <p class="note" style="margin:0">Fonts</p>
+      <ul>
+        <li>INE. <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=24077">Índex de preus de consum</a>: índex general nacional i taxes des del 1961 (<a href="https://www.ine.es/jaxiT3/Tabla.htm?t=76134">76134</a>) i per comunitats autònomes des del 1978 (<a href="https://www.ine.es/jaxiT3/Tabla.htm?t=24078">24078</a>, <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=76140">76140</a>). Abans del 2002, l’índex s’enllaça amb la taxa interanual de cada mes.</li>
+        <li>INE. <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=59392">Enquesta trimestral de cost laboral</a>, sèries per comunitat autònoma des del 2000.</li>
+        <li>Federal Reserve Bank of Minneapolis. <a href="https://www.minneapolisfed.org/about-us/monetary-policy/inflation-calculator/consumer-price-index-1800-">Consumer Price Index, 1800–</a>.</li>
+        <li>Banc Mundial. <a href="https://www.worldbank.org/en/research/commodity-markets">Commodity Price Data (Pink Sheet)</a>, preu mensual de l’or des del 1960.</li>
+        <li>Banc Central Europeu, <a href="https://data.ecb.europa.eu/">ECB Data Portal</a>: agregats monetaris M1, M2, M3 i efectiu en circulació (BSI), balanç de l’Eurosistema (ILM) i tipus de canvi dòlar/euro (EXR).</li>
+        <li>Federal Reserve Bank of St. Louis, FRED: <a href="https://fred.stlouisfed.org/series/WALCL">actius totals de la Reserva Federal</a> i <a href="https://fred.stlouisfed.org/series/M2SL">M2</a>.</li>
+        <li>Ministeri d’Habitatge i Agenda Urbana. <a href="https://apps.fomento.gob.es/BoletinOnline2/?nivel=2&orden=35000000">Valor taxat de l’habitatge lliure</a>, per comunitats i províncies, des del 1995.</li>
+        <li>Incasòl. <a href="https://analisi.transparenciacatalunya.cat/d/qww9-bvhh">Preu mitjà del lloguer d’habitatges per municipi</a> (fiances dipositades), Dades obertes de Catalunya.</li>
+        <li>Eurostat. <a href="https://ec.europa.eu/eurostat/databrowser/view/yth_demo_030/default/table">Estimated average age of young people leaving the parental household</a> (yth_demo_030).</li>
+        <li>Federal Reserve History. <a href="https://www.federalreservehistory.org/essays/gold-convertibility-ends">Nixon Ends Convertibility of U.S. Dollars to Gold</a>.</li>
+        <li>Paritat de la pesseta: 60 pessetes per dòlar des del juliol del 1959 i 70 des del <a href="https://www.boe.es/boe/dias/1967/11/22/pdfs/A16183-16183.pdf">Decret 2731/1967</a> (BOE, 22-11-1967).</li>
+        <li>M. McLeay, A. Radia i R. Thomas, <a href="https://www.bankofengland.co.uk/quarterly-bulletin/2014/q1/money-creation-in-the-modern-economy">«Money creation in the modern economy»</a>, <i>Bank of England Quarterly Bulletin</i>, 2014 Q1.</li>
+      </ul>
+    </div>
+    <p class="note" style="margin-top:2rem"><a href="../" class="back">← Terra i gent: on vivim a Catalunya</a></p>
+  </section>
+  <footer></footer>
+</main>
+
+<script src="../assets/diners.js"></script>
+</body>
+</html>

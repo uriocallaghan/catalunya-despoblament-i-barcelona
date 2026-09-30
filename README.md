@@ -22,6 +22,10 @@ scripts/historic.mjs       població municipal 1857–1991 sobre els municipis a
 scripts/serveis/           descàrrega i anàlisi de serveis (escoles, farmàcies, hospitals, tren…)
 data/serveis.json          serveis per municipi, temps a urgències i alumnat (generat)
 scripts/hipsometria.mjs    superfície per franges d’altitud des del Copernicus DEM
+diners/index.html          subpàgina «Diners de paper» (inflació, diners, or i habitatge)
+assets/diners.js           gràfics de la subpàgina
+data/diners.json           sèries de preus, diners, or, sous i habitatge (generat)
+scripts/diners/            descàrrega de fonts i generació de data/diners.json
 netlify.toml               configuració de desplegament a Netlify
 ```
 
@@ -55,6 +59,15 @@ node scripts/serveis/dades.mjs      # regenera data/serveis.json des de data/raw
 ```
 
 Per actualitzar les fonts, vegeu `scripts/serveis/descarrega.sh`.
+
+## Diners de paper
+
+```bash
+python3 scripts/diners/descarrega.py   # descarrega les fonts a data/raw/diners-*.csv (cal: pip install xlrd)
+node scripts/diners/dades.mjs          # regenera data/diners.json i mostra les xifres clau
+```
+
+Fonts: INE (IPC des del 1961 i Enquesta trimestral de cost laboral), BCE (M3, efectiu, balanç de l'Eurosistema i canvi dòlar/euro), FRED (balanç de la Reserva Federal i M2), Banc de la Reserva Federal de Minneapolis (IPC dels EUA des del 1800), Banc Mundial (preu de l'or), Ministeri d'Habitatge (valor taxat de l'habitatge), Incasòl (lloguer a Barcelona) i Eurostat (edat d'emancipació).
 
 ## Fonts
 

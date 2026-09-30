@@ -1,0 +1,9 @@
+# Web estàtica: sense pas de build, es publica la carpeta arrel.
+[build]
+  publish = "."
+  command = ""
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="On vivim a Catalunya: mapes i gràfics interactius dels 947 municipis sobre el desequilibri territorial i el despoblament. Dades oficials de l’Idescat.">
+<meta property="og:title" content="Terra i gent: on vivim a Catalunya">
+<meta property="og:description" content="Barcelona té tants habitants com 843 municipis catalans junts. Mapes interactius dels 947 municipis amb dades de l’Idescat.">
+<meta property="og:image" content="https://catalunya.uriocallaghan.com/assets/og.png">
+<meta property="og:url" content="https://catalunya.uriocallaghan.com/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F1F1EE">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://catalunya.uriocallaghan.com/">
+<title>Terra i gent: on vivim a Catalunya</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&display=swap" rel="stylesheet">
+<script src="assets/vendor/d3.v7.8.5.min.js"></script>
+<script src="assets/vendor/topojson-client.v3.1.0.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><b>Terra i gent</b><span>Catalunya, 1 de gener de 2025</span></div>
+
+  <header>
+    <h1 id="h1"></h1>
+    <p class="lead" id="lead"></p>
+    <div class="seg" role="group" aria-label="Què vols veure">
+      <button data-hero="both" aria-pressed="true">Tots dos</button>
+      <button data-hero="bcn" aria-pressed="false">Barcelona</button>
+      <button data-hero="small" aria-pressed="false" id="heroSmallBtn"></button>
+    </div>
+    <svg class="map" id="mHero" role="img" aria-label="Mapa dels 947 municipis de Catalunya"></svg>
+    <p class="readout" id="rHero" aria-live="polite"></p>
+  </header>
+
+  <section>
+    <h2>947 municipis, pintats per la densitat de gent</h2>
+    <p id="densLede"></p>
+    <input class="search" id="q" list="munlist" placeholder="Busca un municipi" autocomplete="off" aria-label="Busca un municipi">
+    <datalist id="munlist"></datalist>
+    <svg class="map" id="mDens" role="img" aria-label="Mapa de densitat de població per municipi"></svg>
+    <div class="legend" id="legDens"></div>
+    <p class="readout" id="rDens" aria-live="polite">Passa per sobre d’un municipi o toca’l.</p>
+  </section>
+
+  <section>
+    <h2>Cada punt són 500 persones</h2>
+    <p>Els punts es col·loquen a l’atzar dins del terme municipal on viuen aquestes persones. On no hi ha punts, no hi ha prou gent per fer-ne un.</p>
+    <canvas class="map" id="cDots" role="img" aria-label="Mapa de punts: cada punt representa 500 habitants"></canvas>
+    <p class="note" id="dotsNote"></p>
+  </section>
+
+  <section>
+    <h2>El mateix mapa, si cada municipi pesés per la seva gent</h2>
+    <p>Cada bombolla és un municipi, amb una mida proporcional als seus habitants i col·locada tan a prop com pot del seu lloc real.</p>
+    <div class="seg" role="group" aria-label="Forma del mapa">
+      <button data-dor="map" aria-pressed="true">Mapa</button>
+      <button data-dor="bub" aria-pressed="false">Bombolles</button>
+    </div>
+    <svg class="map" id="mDor" role="img" aria-label="Mapa de bombolles proporcionals a la població de cada municipi"></svg>
+    <p class="readout" id="rDor" aria-live="polite"></p>
+  </section>
+
+  <section>
+    <h2>L’horitzó de Catalunya</h2>
+    <p>Cada pic s’aixeca sobre un municipi i és tan alt com la seva població. A escala lineal, el país és pla amb una muntanya. A escala logarítmica apareixen els pobles.</p>
+    <div class="seg" role="group" aria-label="Escala dels pics">
+      <button data-spk="lin" aria-pressed="true">Escala lineal</button>
+      <button data-spk="log" aria-pressed="false">Escala logarítmica</button>
+    </div>
+    <svg class="map" id="mSpk" role="img" aria-label="Mapa de pics de població per municipi"></svg>
+  </section>
+
+  <section>
+    <h2 id="tramTitle"></h2>
+    <p>Els municipis agrupats per nombre d’habitants. Toca un tram per veure’l al mapa i comparar quants ajuntaments són, quanta terra ocupen i quanta gent hi viu.</p>
+    <div class="chips" id="tramChips" role="group" aria-label="Trams de població"></div>
+    <div class="tri" id="tri"></div>
+    <svg class="map" id="mTram" role="img" aria-label="Mapa dels municipis per tram de població"></svg>
+    <p class="readout" id="rTram" aria-live="polite"></p>
+  </section>
+
+  <section>
+    <h2 id="lorTitle"></h2>
+    <p>Ordenem els 947 municipis del més dens al menys dens i anem sumant terra i gent. Si tothom visqués repartit igual, la corba seria la diagonal.</p>
+    <svg class="viz" id="lor" role="img" aria-label="Corba de concentració de la població segons el territori" style="max-width:560px"></svg>
+    <div class="slider"><input type="range" id="lorIn" min="1" max="99" value="50" aria-label="Percentatge de la població"></div>
+    <p class="readout" id="rLor" aria-live="polite"></p>
+  </section>
+
+  <section>
+    <h2 id="altTitle"></h2>
+    <p>Cada cercle és un municipi: a la dreta, més amunt a la muntanya; a dalt, més gent per km². La mida és la població.</p>
+    <svg class="viz" id="alt" role="img" aria-label="Gràfic de dispersió: altitud i densitat dels municipis" style="max-width:820px"></svg>
+    <p class="readout" id="rAlt" aria-live="polite"></p>
+    <div class="tri" id="altBars"></div>
+  </section>
+
+  <section>
+    <h2 id="balTitle"></h2>
+    <p>Ara per comarques. A l’esquerra, la terra que ocupa cadascuna; a la dreta, la gent que hi viu. Toca una franja.</p>
+    <svg class="viz" id="bal" role="img" aria-label="Comparació de superfície i població per comarques" style="max-width:760px"></svg>
+    <p class="readout" id="rBal" aria-live="polite"></p>
+  </section>
+
+  <section>
+    <h2>Si cada comarca fos tan gran com la gent que hi viu</h2>
+    <p>Cada bombolla és una comarca. Canvia de superfície a població i, després, tira enrere en el temps fins al 1857.</p>
+    <div class="seg" role="group" aria-label="Mida de les bombolles">
+      <button data-cart="area" aria-pressed="true">Superfície</button>
+      <button data-cart="pop" aria-pressed="false">Població</button>
+    </div>
+    <div class="slider" id="yearBox" hidden><span class="yr" id="yearOut">2025</span><input type="range" id="yearIn" min="0" max="6" step="1" value="6" aria-label="Any"></div>
+    <svg class="map" id="cart" role="img" aria-label="Cartograma de bombolles de les comarques"></svg>
+    <p class="readout" id="rCart" aria-live="polite"></p>
+    <p class="note">Fins al 1991, població de fet (sèrie històrica de l’Idescat). El Moianès i el Lluçanès no existien com a comarques i els seus municipis compten dins les comarques d’on provenen.</p>
+  </section>
+
+  <section>
+    <h2 id="ghostTitle"></h2>
+    <p id="ghostLede"></p>
+    <div class="rows" id="rows"></div>
+    <div class="seg" role="group" aria-label="Quines comarques"><button id="moreBtn" aria-pressed="false">Mostra també les que creixen</button></div>
+    <p class="note">1857–1991: població de fet (Idescat). 2025: Cens de població. Per comparar, el 2025 el Moianès se suma al Bages i el Lluçanès a Osona.</p>
+  </section>
+
+  <section>
+    <h2>El mateix quilòmetre quadrat, dos països diferents</h2>
+    <p>Tria dos municipis. Cada quadrat és 1 km² i cada punt, una persona.</p>
+    <div class="km">
+      <div><input class="search" id="kA" list="munlist" aria-label="Primer municipi" autocomplete="off"><canvas id="cvA"></canvas><div class="d" id="dA"></div></div>
+      <div><input class="search" id="kB" list="munlist" aria-label="Segon municipi" autocomplete="off"><canvas id="cvB"></canvas><div class="d" id="dB"></div></div>
+    </div>
+    <div id="kmText" class="readout" aria-live="polite"></div>
+  </section>
+
+  <section>
+    <h2>Dividim Catalunya en 32.915 quadrats d’1 km². En 23.763 no hi viu ningú.</h2>
+    <p>És la quadrícula estàndard europea que publica l’Idescat. El nombre de cel·les de cada tram és real; la posició dels quadrets és il·lustrativa.</p>
+    <div class="seg" role="group" aria-label="Què ressaltes">
+      <button data-g="all" aria-pressed="true">Totes</button>
+      <button data-g="empty" aria-pressed="false">Buides</button>
+      <button data-g="most" aria-pressed="false">98,5%</button>
+      <button data-g="half" aria-pressed="false">50%</button>
+    </div><button class="btn" id="sortBtn">Ajunta-les</button>
+    <canvas id="grid" role="img" aria-label="Graella de 32.915 quadrats d’1 km²"></canvas>
+    <div class="gl" id="gridLeg"></div>
+    <p class="readout" id="rGrid" aria-live="polite"></p>
+  </section>
+
+  <section class="closing">
+    <h2>Catalunya no és només on som. També és on hem deixat de ser.</h2>
+    <p>En un segle i mig la població s’ha multiplicat per quatre, però gairebé tot el creixement s’ha abocat a l’entorn de Barcelona i al litoral. Mentrestant, comarques senceres del Pirineu, de l’Ebre i de Ponent tenen avui menys gent que fa cent anys.</p>
+    <p>Aquest desequilibri no és natural. Depèn, en bona part, d’on posem la feina, les escoles, els metges, el tren i l’habitatge. Quan la meitat de la gent s’estreny en menys del 2% del sòl, el preu es paga pels dos costats: pisos impossibles a la ciutat i pobles que es buiden.</p>
+    <p>Mirar el mapa sencer és el primer pas per repartir-lo millor.</p>
+    <div class="sources">
+      <p class="note" style="margin:0">Fonts</p>
+      <ul>
+        <li>Idescat. <a href="https://www.idescat.cat/indicadors/?id=aec&n=15903">Altitud, superfície i població. Municipis</a>, 2025 (Cens de població anual).</li>
+        <li>Idescat. <a href="https://www.idescat.cat/indicadors/?id=aec&n=15227">Densitat de població. Comarques i Aran</a> i <a href="https://www.idescat.cat/indicadors/?id=aec&n=15902">Nombre de municipis i població</a>, 2025.</li>
+        <li>Idescat. <a href="https://www.idescat.cat/pub/?id=shd&n=1341&t=199100&by=com">Sèries històriques demogràfiques. Evolució de la població de fet</a>, 1857–1991.</li>
+        <li>Idescat. <a href="https://govern.cat/salapremsa/notes-premsa/833960/l-any-2025-el-614-percent-de-la-poblacio-viu-en-centres-urbans-que-ocupen-l-138-percent-de-la-superficie-de-catalunya">Estadística del grau d’urbanització 2025</a> (quadrícula d’1 km²).</li>
+        <li>Límits municipals: Instituto Geográfico Nacional, via es-atlas (TopoJSON).</li>
+      </ul>
+    </div>
+  </section>
+  <footer></footer>
+</main>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

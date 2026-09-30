@@ -29,6 +29,8 @@
     <h1 id="h1"></h1>
     <p class="lead" id="lead"></p>
     <label class="netin">Cobro <input class="search" id="net" type="text" inputmode="decimal" value="2.000" aria-label="Ingressos nets al mes"> € nets al mes</label>
+    <label class="netin" style="margin-top:.4rem">i tinc <input class="search" id="sav" type="text" inputmode="decimal" value="50.000" aria-label="Estalvis" style="width:7.5ch"> € estalviats</label>
+    <div class="ctrl"><label>que rendeixen <input type="range" id="ret" min="0" max="10" step=".5" value="5"><output id="retV">5%</output> l’any</label></div>
     <div class="units" id="units"></div>
     <p class="note">Mateix poder de compra en tots dos anys, descomptant l’IPC de Catalunya (INE). Pis: valor taxat a la província de Barcelona (Ministeri d’Habitatge). Or: Banc Mundial i BCE. Lloguer: contractes nous a Barcelona (Incasòl), comparat amb el primer any de la sèrie. <span id="upd"></span>.</p>
   </header>
@@ -42,6 +44,14 @@
   </section>
 
   <section>
+    <h2 id="cushTitle"></h2>
+    <p id="cushLede"></p>
+    <svg class="viz" id="cush" role="img" aria-label="Els teus estalvis d’aquí a deu anys, invertits o al compte, en euros d’avui" style="max-width:697px"></svg>
+    <p class="readout" id="rCush" aria-live="polite"></p>
+    <p class="note">En euros d’avui, descomptant una inflació igual a la mitjana dels últims deu anys a Catalunya (INE). Rendiment abans d’impostos i sense comissions; sense aportacions noves.</p>
+  </section>
+
+  <section>
     <h2 id="raceTitle"></h2>
     <p id="raceLede"></p>
     <div class="segs">
@@ -52,7 +62,7 @@
       <span class="cap">i els pisos pugen</span>
       <div class="seg" role="group" aria-label="Com pugen els pisos"><button data-hg="hab" aria-pressed="true">com fins ara</button><button data-hg="ipc" aria-pressed="false">com la inflació</button><button data-hg="flat" aria-pressed="false">gens</button></div>
       <span class="cap">i els meus estalvis rendeixen</span>
-      <div class="seg" role="group" aria-label="Rendiment dels estalvis"><button data-sg="cash" aria-pressed="true">0%</button><button data-sg="inf" aria-pressed="false">com la inflació</button><button data-sg="more" aria-pressed="false">inflació + 3</button></div>
+      <div class="seg" role="group" aria-label="Rendiment dels estalvis"><button data-sg="cash" aria-pressed="false">0%</button><button data-sg="inf" aria-pressed="false">com la inflació</button><button data-sg="mine" aria-pressed="true">el meu 5%</button></div>
     </div>
     <svg class="viz" id="race" role="img" aria-label="Estalvi acumulat contra el preu de l’entrada d’un pis" style="max-width:697px"></svg>
     <div class="gkey"><span><i style="background:var(--red)"></i>El teu estalvi</span><span><i style="background:var(--ink)"></i>L’entrada (30% del preu)</span></div>
@@ -64,7 +74,7 @@
     <h2 id="levTitle"></h2>
     <p id="levLede"></p>
     <svg class="viz" id="lev" role="img" aria-label="Quant afegeix al teu patrimoni d’aquí a deu anys cada millora" style="max-width:697px"></svg>
-    <p class="note">Patrimoni d’aquí a deu anys en euros d’avui, estalviant la part triada al gràfic anterior. Cada barra canvia una sola cosa respecte del cas base (ingrés constant, rendiment real zero). Els ingressos dels productes també s’estalvien en la mateixa proporció.</p>
+    <p class="note">Patrimoni d’aquí a deu anys en euros d’avui, estalviant la part triada al gràfic anterior. Cada barra canvia una sola cosa respecte del cas base (els teus estalvis i el teu rendiment, ingrés constant). Els ingressos dels productes també s’estalvien en la mateixa proporció.</p>
   </section>
 
   <section>
@@ -95,12 +105,13 @@
     <svg class="viz" id="lives" role="img" aria-label="Ingressos totals en deu anys de quatre-centes vides simulades amb tres estratègies" style="max-width:697px"></svg>
     <div class="gkey"><span><i style="background:var(--red)"></i>Guanyes més que ara</span><span><i style="background:var(--muted)"></i>Guanyes menys que ara</span></div>
     <p class="readout" id="rLives" aria-live="polite"></p>
-    <p class="note">A temps complet, dos llançaments l’any; al 70 / 30, un cada vint mesos. Un producte que funciona et paga cada mes entre un terç i el doble dels teus ingressos actuals, fins al final de la dècada; els serveis, un 15% més o menys del que factures ara. Tot en euros d’avui, sense inflació ni estalvi. La forma importa més que les xifres: canvia la probabilitat i mira com es mouen els núvols.</p>
+    <p class="note">A temps complet, dos llançaments l’any; al 70 / 30, un cada vint mesos. Un producte que funciona et paga cada mes entre un terç i el doble dels teus ingressos actuals, fins al final de la dècada; els serveis, un 15% més o menys del que factures ara. Tot en euros d’avui. Cada vida parteix dels teus estalvis i gasta el que gastes ara (el que no estalvies, segons el gràfic de l’entrada); si els estalvis s’acaben, torna a fer només serveis. La forma importa més que les xifres: canvia la probabilitat i mira com es mouen els núvols.</p>
   </section>
 
   <section class="closing">
     <h2>Una estratègia per als pròxims deu anys</h2>
     <p id="close1"></p>
+    <p id="close2"></p>
     <ol class="plan">
       <li><b>Primer, l’ingrés.</b> Amb poc capital, guanyar més pesa molt més que invertir bé. Posa preu al teu temps pensant en el valor que genera al client, no en les hores, i apuja les tarifes cada gener, com a mínim amb la inflació.</li>
       <li><b>No venguis «disseny». Ven un resultat.</b> El disseny genèric i les apps genèriques es tornen commodity: la IA els fa barats per a tothom. El que no s’abarateix és el gust, saber quin problema val la pena resoldre i tenir la confiança d’un grup de clients. Tria un nínxol que coneguis bé i fes-t’hi conegut.</li>

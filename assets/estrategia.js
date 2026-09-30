@@ -15,11 +15,15 @@ const eur=v=>Math.abs(v)>=10000?k1(v)+' €':fmt(Math.round(v))+' €';
 $('#upd').textContent=`Dades fins al ${YL}`;
 
 /* ---------- el teu ingrés ---------- */
-let NET=2000;
+let NET=2000, SAV=50000, RET=.05;
+const RR=()=>(1+RET)/(1+INF)-1;   // rendiment real dels estalvis
 const parseAmt=s=>{ const v=parseFloat(String(s).replace(/\./g,'').replace(',','.')); return isFinite(v)&&v>0?v:0; };
 const redraw=[];
 $('#net').addEventListener('input',()=>{ const v=parseAmt($('#net').value); if(v>=300&&v<=50000){ NET=v; redraw.forEach(f=>f()); } });
 $('#net').addEventListener('change',()=>{ $('#net').value=fmt(NET); });
+$('#sav').addEventListener('input',()=>{ const t=$('#sav').value.trim(), v=t==='0'?0:parseAmt(t); if(t==='0'||(v>0&&v<=1e8)){ SAV=v; redraw.forEach(f=>f()); } });
+$('#sav').addEventListener('change',()=>{ $('#sav').value=fmt(SAV); });
+$('#ret').addEventListener('input',e=>{ RET=+e.target.value/100; $('#retV').textContent=fmt(RET*100,1).replace(',0','')+'%'; $('[data-sg="mine"]').textContent=`el meu ${$('#retV').textContent}`; redraw.forEach(f=>f()); });
 
 /* =========== 1. EL TEU SOU EN ALTRES UNITATS =========== */
 // El mateix poder de compra (descomptant l'IPC) l'any 2000 i avui
@@ -68,21 +72,48 @@ $('#fY').max=YL-1; $('#fYr').textContent=fy;
 $('#freezeLede').textContent=`Un autònom no té conveni que li apugi el sou. Si no apuges les tarifes, la inflació te’l baixa cada any. Als últims deu anys, els preus a Catalunya han pujat de mitjana un ${fmt(INF*100,1)}% l’any. Tria des de quan no has tocat els preus.`;
 redraw.push(()=>drawFreeze({freeze:true}));
 
+/* =========== 2b. EL TEU COIXÍ =========== */
+function drawCush(shown){
+  const svg=d3.select('#cush'); const [W,H]=sizeOf(svg,697,.5,250,360); const t=18,b=24,rp=W<500?100:150;
+  const pts=d3.range(0,11).map(i=>[YL+i,SAV*Math.pow(1+RR(),i),SAV/Math.pow(1+INF,i)]);
+  const x=d3.scaleLinear().domain([YL,YL+10]).range([0,W-rp]); const ymax=Math.max(1,d3.max(pts,p=>Math.max(p[1],p[2])));
+  const step=ymax>150000?50000:ymax>60000?20000:ymax>20000?10000:5000; const y=d3.scaleLinear().domain([0,Math.ceil(ymax/step)*step]).range([H-b,t]);
+  yGrid(svg,y,0,W-rp,d3.range(0,y.domain()[1]+1,step),v=>v?k1(v)+(v===y.domain()[1]?' €':''):'0');
+  xAxis(svg,x,H-b,d3.range(YL,YL+11,W<500?5:2));
+  const ar=svg.append('path').attr('d',d3.area().x(p=>x(p[0])).y0(p=>y(p[2])).y1(p=>y(p[1]))(pts)).attr('fill',R[0]);
+  const ln=k=>d3.line().x(p=>x(p[0])).y(p=>y(p[k]));
+  const p2=svg.append('path').attr('class','line').attr('d',ln(2)(pts)).attr('stroke',MUTED).attr('stroke-dasharray','4 3');
+  const p1=svg.append('path').attr('class','line').attr('d',ln(1)(pts)).attr('stroke',RED).attr('stroke-width',2.8);
+  const e=pts[10], rl=$('#retV').textContent;
+  const L=endLabels(svg,[{y:y(e[1]),c:RED,n:W<500?'al '+rl:`invertits al ${rl}`,v:k1(e[1])},{y:y(e[2]),c:MUTED,n:W<500?'compte':'al compte (0%)',v:k1(e[2])}],W-rp+8,15,shown.cush);
+  if(!shown.cush){ [p1,p2,ar].forEach(p=>p.attr('opacity',0)); svg.node()._rv=()=>{ p1.attr('opacity',1); p2.attr('opacity',1); drawOn(p1,1400); drawOn(p2,1400,150); ar.transition().delay(RM?0:1300).duration(600).attr('opacity',1); L.forEach(l=>l.transition().delay(RM?0:1500).attr('opacity',1)); }; }
+  const d1=svg.append('circle').attr('r',4).attr('fill',RED).style('display','none'), d2=svg.append('circle').attr('r',4).attr('fill',MUTED).style('display','none');
+  const int1=SAV*RET, runway=NET?SAV/NET:0;
+  const R0=`El primer any, el ${rl} de ${eur(SAV)} són <b>${eur(int1)}</b> d’interessos: ${fmt(int1/NET,1)} mesos del teu sou. I si un dia deixes de facturar, aquests estalvis et donen <b>${fmt(runway,0)} mesos</b> de marge per viure. <span class="m">Toca el gràfic.</span>`;
+  crosshair(svg,x,t,H-b,xv=>{ const p=nearest(pts,xv); d1.style('display',null).attr('cx',x(p[0])).attr('cy',y(p[1])); d2.style('display',null).attr('cx',x(p[0])).attr('cy',y(p[2]));
+    $('#rCush').innerHTML=`<b>${p[0]}</b>, en euros d’avui: invertits, <b>${eur(p[1])}</b>; al compte, ${eur(p[2])}. <span class="m">Diferència: ${eur(p[1]-p[2])}.</span>`; return p[0]; },
+    ()=>{ d1.style('display','none'); d2.style('display','none'); $('#rCush').innerHTML=R0; });
+  $('#rCush').innerHTML=R0;
+  $('#cushTitle').textContent=SAV?`Els teus ${eur(SAV)} valen, sobretot, ${fmt(runway,0)} mesos de llibertat`:'Sense estalvis, cada mes sense facturar és un problema';
+  $('#cushLede').textContent=SAV?`Un ${rl} l’any sembla molt, però la inflació se n’emporta una part: als últims deu anys ha estat del ${fmt(INF*100,1)}% de mitjana, i per tant guanyes de veritat un ${fmt(RR()*100,1)}% real. D’aquí a deu anys, en euros d’avui, tindries ${eur(e[1])}; al compte corrent, ${eur(e[2])}. Però el valor més gran d’aquests diners no és el que rendeixen: és el temps que et compren per apostar sense por. Un ${rl} continuat només s’aconsegueix amb inversió que té anys dolents (borsa, fons diversificats): la part que puguis necessitar aviat, millor tenir-la a part i segura.`:'';
+}
+redraw.push(()=>drawCush({cush:true}));
+
 /* =========== 3. LA CURSA DE L'ENTRADA =========== */
-let sRate=.2, m2=70, hMode='hab', sMode='cash';
+let sRate=.2, m2=70, hMode='hab', sMode='mine';
 const HMODES={hab:{g:HAB,n:`com els últims deu anys (+${fmt(HAB*100,1)}% l’any)`},ipc:{g:INF,n:`com la inflació (+${fmt(INF*100,1)}% l’any)`},flat:{g:0,n:'congelats'}};
-const SMODES={cash:{r:0,n:'al compte corrent (0%)'},inf:{r:INF,n:`protegit de la inflació (+${fmt(INF*100,1)}%)`},more:{r:INF+.03,n:`inflació + 3 punts (+${fmt((INF+.03)*100,1)}%)`}};
+const SMODES={cash:{r:()=>0},inf:{r:()=>INF},mine:{r:()=>RET}};
 const RACE_Y=15;
 function race(){
-  const g=HMODES[hMode].g, r=SMODES[sMode].r, mo=RACE_Y*12;
-  let sv=0; const pts=[[YL,0,.3*price(YL)*m2*1.0]];
-  let hit=null;
+  const g=HMODES[hMode].g, r=SMODES[sMode].r(), mo=RACE_Y*12;
+  let sv=SAV; const pts=[[YL,sv,.3*price(YL)*m2]];
+  let hit=sv>=pts[0][2]?{t:YL,v:pts[0][2]}:null;
   for(let i=1;i<=mo;i++){ const t=i/12; sv=sv*Math.pow(1+r,1/12)+sRate*NET*Math.pow(1+SALG,Math.floor(t));
     const target=.3*price(YL)*m2*Math.pow(1+g,t); if(i%3===0) pts.push([YL+t,sv,target]); if(hit==null&&sv>=target) hit={t:YL+t,v:target}; }
   return {pts,hit};
 }
 function drawRace(shown){
-  const svg=d3.select('#race'); const [W,H]=sizeOf(svg,697,.56,280,400); const t=18,b=24,rp=W<500?78:120;
+  const svg=d3.select('#race'); const [W,H]=sizeOf(svg,697,.56,280,400); const t=18,b=24,rp=W<500?108:120;
   const {pts,hit}=race();
   const x=d3.scaleLinear().domain([YL,YL+RACE_Y]).range([0,W-rp]); const ymax=d3.max(pts,p=>Math.max(p[1],p[2]));
   const step=ymax>200000?50000:ymax>100000?25000:10000; const y=d3.scaleLinear().domain([0,Math.ceil(ymax/step)*step]).range([H-b,t]);
@@ -98,15 +129,16 @@ function drawRace(shown){
   if(!shown.race){ [pT,pS].forEach(p=>p.attr('opacity',0)); L.forEach(l=>l.attr('opacity',0)); svg.node()._rv=()=>{ pT.attr('opacity',1); pS.attr('opacity',1); drawOn(pT,1500); drawOn(pS,1500,200); L.forEach(l=>l.transition().delay(RM?0:1600).attr('opacity',1)); }; }
   const d1=svg.append('circle').attr('r',4).attr('fill',RED).style('display','none'), d2=svg.append('circle').attr('r',4).attr('fill',INK).style('display','none');
   const yrs=hit?hit.t-YL:null;
-  const R0=hit?`Estalviant ${fmt(Math.round(sRate*NET))} € al mes, arribes a l’entrada d’un pis de ${m2} m² <b>d’aquí a ${fmt(yrs,1)} anys</b>, el ${Math.floor(hit.t)}. <span class="m">Toca el gràfic.</span>`:`Estalviant ${fmt(Math.round(sRate*NET))} € al mes, <b>en ${RACE_Y} anys no atrapes l’entrada</b>: el preu corre més que el teu estalvi. <span class="m">Toca el gràfic.</span>`;
+  const st0=SAV?`Partint de ${eur(SAV)} i estalviant`:'Estalviant';
+  const R0=hit&&yrs===0?`Els teus ${eur(SAV)} ja cobreixen l’entrada d’un pis de ${m2} m² (${eur(pts[0][2])}). La pregunta aleshores és la hipoteca: la quota ha de cabre en el que guanyes. <span class="m">Toca el gràfic.</span>`:hit?`${st0} ${fmt(Math.round(sRate*NET))} € al mes, arribes a l’entrada d’un pis de ${m2} m² <b>d’aquí a ${fmt(yrs,1)} anys</b>, el ${Math.floor(hit.t)}. <span class="m">Toca el gràfic.</span>`:`${st0} ${fmt(Math.round(sRate*NET))} € al mes, <b>en ${RACE_Y} anys no atrapes l’entrada</b>: el preu corre més que el teu estalvi. <span class="m">Toca el gràfic.</span>`;
   crosshair(svg,x,t,H-b,xv=>{ const p=nearest(pts,xv); d1.style('display',null).attr('cx',x(p[0])).attr('cy',y(p[1])); d2.style('display',null).attr('cx',x(p[0])).attr('cy',y(p[2]));
     $('#rRace').innerHTML=`<b>${Math.floor(p[0])}</b>: tens ${eur(p[1])}; l’entrada val ${eur(p[2])}. <span class="m">${p[1]>=p[2]?'Ja hi ets.':`Et falten ${eur(p[2]-p[1])}.`}</span>`; return p[0]; },
     ()=>{ d1.style('display','none'); d2.style('display','none'); $('#rRace').innerHTML=R0; });
   $('#rRace').innerHTML=R0;
-  $('#raceTitle').textContent=hit?`Si estalvies el ${pct(sRate,0)}, l’entrada d’un pis arriba el ${Math.floor(hit.t)}`:`Estalviant el ${pct(sRate,0)}, l’entrada d’un pis s’escapa`;
+  $('#raceTitle').textContent=hit&&yrs===0?`Ja tens l’entrada d’un pis. El que falta és el sou per a la hipoteca`:hit?`${SAV?`Amb ${eur(SAV)} estalviats i`:'Si'} ${SAV?'estalviant':'estalvies'} el ${pct(sRate,0)}, l’entrada d’un pis arriba el ${Math.floor(hit.t)}`:`Estalviant el ${pct(sRate,0)}, l’entrada d’un pis s’escapa`;
 }
-$('#raceLede').textContent=`L’entrada és el 30% del preu: el 20% que el banc no finança i un 10% d’impostos i despeses. Els preus són el valor taxat a la província de Barcelona; a la ciutat són més alts. El teu estalvi creix cada any com ho han fet els sous (+${fmt(SALG*100,1)}% l’any als últims deu anys). Juga amb les tres variables: quant estalvies, on el guardes i què fan els pisos.`;
-seg('sr',v=>{ sRate=+v; drawRace({race:true}); drawLev({lev:true}); });
+$('#raceLede').textContent=`L’entrada és el 30% del preu: el 20% que el banc no finança i un 10% d’impostos i despeses. Els preus són el valor taxat a la província de Barcelona; a la ciutat són més alts. Partim dels estalvis que has escrit a dalt. El que estalvies cada mes creix com ho han fet els sous (+${fmt(SALG*100,1)}% l’any als últims deu anys). Juga amb les tres variables: quant estalvies, on el guardes i què fan els pisos.`;
+seg('sr',v=>{ sRate=+v; drawRace({race:true}); drawLev({lev:true}); drawLives({lives:true}); });
 seg('m2',v=>{ m2=+v; drawRace({race:true}); });
 seg('hg',v=>{ hMode=v; drawRace({race:true}); });
 seg('sg',v=>{ sMode=v; drawRace({race:true}); });
@@ -114,12 +146,12 @@ redraw.push(()=>drawRace({race:true}));
 
 /* =========== 4. PALANQUES =========== */
 // Patrimoni real d'aquí a deu anys (euros d'avui): estalvi anual que creix amb l'ingrés real i rendeix r real
-const wealth=({inc=NET*12,s=sRate,gi=0,r=0,extra=0,from=0})=>{ let w=0; for(let t=1;t<=10;t++){ const i=inc*Math.pow(1+gi,t-1)+(t>from?extra*12:0); w=w*(1+r)+i*s; } return w; };
+const wealth=({inc=NET*12,s=sRate,gi=0,r=RR(),extra=0,from=0})=>{ let w=SAV; for(let t=1;t<=10;t++){ const i=inc*Math.pow(1+gi,t-1)+(t>from?extra*12:0); w=w*(1+r)+i*s; } return w; };
 function drawLev(shown){
   const svg=d3.select('#lev'); const W=pw(svg,697);
   const base=wealth({});
   const L=[
-    {n:'Aconseguir un 1% més de rendiment',d:wealth({r:.01})-base},
+    {n:'Aconseguir un punt més de rendiment',d:wealth({r:RR()+.01})-base},
     {n:'Estalviar 5 punts més del que guanyes',d:wealth({s:sRate+.05})-base},
     {n:'Guanyar un 25% més des de l’any que ve',d:wealth({inc:NET*12*1.25})-base},
     {n:'Que els ingressos creixin un 5% real cada any',d:wealth({gi:.05})-base},
@@ -135,9 +167,9 @@ function drawLev(shown){
     r.datum(d); const tx=svg.append('text').attr('class','lab').attr('x',x(d.d)+6).attr('y',y0+(W<500?13:15)).text('+'+eur(d.d)).attr('opacity',shown.lev?1:0);
     (svg.node()._q||(svg.node()._q=[])).push(()=>{ r.transition().delay(RM?0:i*120).duration(700).ease(d3.easeCubicOut).attr('width',x(d.d)-x(0)); tx.transition().delay(RM?0:500+i*120).attr('opacity',1); }); });
   svg.node()._rv=()=>(svg.node()._q||[]).forEach(f=>f());
-  const r1=L.find(d=>d.n.startsWith('Aconseguir'));
-  $('#levTitle').textContent=`Amb el que tens ara, guanyar més pesa ${fmt(L[0].d/r1.d,0)} vegades més que invertir millor`;
-  $('#levLede').textContent=`Si estalvies el ${pct(sRate,0)} de ${fmt(NET)} € durant deu anys, sense rendiment, tindràs uns ${eur(base)} d’avui. Cada barra és el que afegeix una sola millora. Quan encara no tens gaire capital, un punt més de rentabilitat mou poc: el que mou l’agulla és l’ingrés. La inversió es torna la palanca principal més endavant, quan el patrimoni ja és gran.`;
+  const r1=L.find(d=>d.n.startsWith('Aconseguir')), iBest=L.find(d=>d.n.startsWith('Guanyar un 25%'));
+  $('#levTitle').textContent= iBest.d>r1.d ? `Guanyar un 25% més pesa ${fmt(iBest.d/r1.d,1)} vegades més que un punt més de rendiment` : `Amb el teu capital, un punt més de rendiment ja pesa tant com cobrar un 25% més`;
+  $('#levLede').textContent=`Partint de ${eur(SAV)} al ${$('#retV').textContent} (un ${fmt(RR()*100,1)}% real) i estalviant el ${pct(sRate,0)} de ${fmt(NET)} € al mes, d’aquí a deu anys tindries uns ${eur(base)} d’avui. Cada barra és el que afegeix una sola millora. Com més capital tens, més pesa el rendiment; però a la teva escala, l’ingrés encara és la palanca gran, i el rendiment et ve sol si no toques els diners.`;
 }
 redraw.push(()=>drawLev({lev:true}));
 
@@ -201,11 +233,14 @@ function rng(seed){ return ()=>{ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imu
 const LIVES=400;
 function simulate(sh){
   const rnd=rng(12345), M=NET, out=[];
-  for(let l=0;l<LIVES;l++){ let tot=0, prod=0, acc=0; const sv=.85+.3*rnd();   // cada vida factura una mica més o menys
-    for(let yr=1;yr<=10;yr++){ acc+=sh*2; while(acc>=1){ acc-=1; const u=rnd(), m=Math.exp(Math.log(.3)+rnd()*Math.log(2/.3)); if(u<pWin) prod+=M*m; }   // dues apostes l'any a temps complet; l'èxit paga entre 0,3 i 2 sous
-      tot+=12*(NET*sv*(1-sh)+prod); }
-    out.push(tot); }
-  return out.sort((a,b)=>a-b);
+  let quit=0;
+  for(let l=0;l<LIVES;l++){ let tot=0, prod=0, acc=0, cush=SAV, s2=sh, q=false; const sv=.85+.3*rnd();   // cada vida factura una mica més o menys
+    for(let yr=1;yr<=10;yr++){ const sh=s2; acc+=sh*2; while(acc>=1){ acc-=1; const u=rnd(), m=Math.exp(Math.log(.3)+rnd()*Math.log(2/.3)); if(u<pWin) prod+=M*m; }   // dues apostes l'any a temps complet; l'èxit paga entre 0,3 i 2 sous
+      const inc=12*(NET*sv*(1-sh)+prod); tot+=inc;
+      // Gastes el que gastes ara (el que no estalvies); si el coixí s'esgota, tornes a fer només serveis
+      cush+=inc-12*NET*(1-sRate); if(cush<0&&s2>0){ s2=0; q=true; } }
+    if(q) quit++; out.push(tot); }
+  out.sort((a,b)=>a-b); out.quit=quit/LIVES; return out;
 }
 function drawLives(shown){
   const svg=d3.select('#lives'); const W=pw(svg,697), bandH=W<500?130:120, t=10, H=t+STRATS.length*bandH+26;
@@ -219,7 +254,7 @@ function drawLives(shown){
   const stats=[];
   STRATS.forEach((s,j)=>{ const a=sims[j], y0=t+j*bandH, cy=y0+bandH/2+18;
     const med=a[Math.floor(a.length/2)], below=a.filter(v=>v<base).length/a.length, top=a[Math.floor(a.length*.9)], zero=a.filter(v=>v<base*.25).length/a.length;
-    stats.push({s,med,below,top,zero});
+    stats.push({s,med,below,top,zero,quit:a.quit});
     svg.append('text').attr('x',0).attr('y',y0+14).style('font-size','13px').style('font-weight',600).style('fill',s.k===share?RED:INK).text(s.n);
     svg.append('text').attr('class','ax').attr('x',0).attr('y',y0+29).text(`la meitat, més de ${eur(med)}`);
     // Eixam: cada punt és una vida; s'apilen verticalment dins la franja
@@ -231,7 +266,7 @@ function drawLives(shown){
   });
   svg.node()._rv=()=>(svg.node()._q||[]).forEach(f=>f());
   const st=stats.find(o=>o.s.k===share)||stats[1], all=stats[2], srv=stats[0];
-  $('#rLives').innerHTML=`<b>${st.s.n}</b>: en la meitat de les vides guanyes més de ${eur(st.med)} en deu anys; el 10% més afortunat, més de ${eur(st.top)}. En un ${pct(st.below,0)} de les vides acabes per sota del que guanyaries només amb serveis.`+(share===1?` <span class="m">I en un ${pct(all.zero,0)} gairebé no ingresses res durant la dècada: sense coixí, hauries d’abandonar molt abans.</span>`:'');
+  $('#rLives').innerHTML=`<b>${st.s.n}</b>: en la meitat de les vides guanyes més de ${eur(st.med)} en deu anys; el 10% més afortunat, més de ${eur(st.top)}. En un ${pct(st.below,0)} de les vides acabes per sota del que guanyaries només amb serveis.`+(st.quit?` <span class="m">En un ${pct(st.quit,0)} de les vides, el coixí de ${eur(SAV)} s’acaba abans que arribi l’èxit i has de tornar a fer només serveis.</span>`:'');
 }
 $('#pWin').addEventListener('input',e=>{ pWin=+e.target.value/100; $('#pWinV').textContent=pct(pWin,0); drawLives({lives:true}); });
 seg('sh',v=>{ share=+v; drawLives({lives:true}); });
@@ -241,8 +276,10 @@ redraw.push(()=>drawLives({lives:true}));
 function closing(){
   const U=units();
   $('#close1').textContent=`Amb ${fmt(NET)} € nets al mes, avui compres ${fmt(U[0].b,1)} m² de pis l’any; qui cobrava el mateix el 2000 en comprava ${fmt(U[0].a,1)}. No és culpa teva ni ho arreglaràs estalviant més: els actius s’han allunyat dels sous. L’única manera de tornar-hi a acostar-se és tenir una part del que guanyes en forma de propietat.`;
+  const ent50=.3*price(YL)*50;
+  $('#close2').textContent=SAV?`Els teus ${eur(SAV)} canvien el problema: ${SAV>=ent50?'ja tens l’entrada d’un pis petit':`tens ${pct(SAV/ent50,0)} de l’entrada d’un pis petit`} i ${fmt(SAV/NET,0)} mesos de marge. No els gastis per anar més de pressa ni els apostis tots en un sol producte: la seva feina és comprar-te temps per a les apostes i créixer tranquil·lament mentre tu augmentes l’ingrés.`:'';
 }
 redraw.push(closing);
 
-Comu.boot([drawUnits,drawFreeze,drawRace,drawLev,drawDots,drawRank,drawLives,closing],[['freeze'],['race'],['lev'],['dots',.15],['rank'],['lives',.2]]);
+Comu.boot([drawUnits,drawFreeze,drawCush,drawRace,drawLev,drawDots,drawRank,drawLives,closing],[['freeze'],['cush'],['race'],['lev'],['dots',.15],['rank'],['lives',.2]]);
 }).catch(e=>{ console.error(e); document.body.insertAdjacentHTML("beforeend","<p style=\"padding:2rem\">No s’han pogut carregar les dades.</p>"); });

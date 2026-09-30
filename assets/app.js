@@ -19,6 +19,7 @@ const OBJ=D.topo.objects.m;
 const feats=topojson.feature(D.topo,OBJ).features;
 const PD=new Array(MUN.length); feats.forEach(f=>{ PD[f.id]=gp(f); });
 const OUTLINE=gp(topojson.mesh(D.topo,OBJ,(a,b)=>a===b));
+const MUNMESH=gp(topojson.mesh(D.topo,OBJ,(a,b)=>a!==b));
 const COMMESH=gp(topojson.mesh(D.topo,OBJ,(a,b)=>a!==b && MUN[a.id].c!==MUN[b.id].c));
 const BINS=[10,25,50,100,250,1000,5000];
 const dcls=d=>{ for(let i=0;i<BINS.length;i++) if(d<BINS[i]) return i; return 7; };
@@ -105,7 +106,7 @@ function drawDots(){
   const ctx=cv.getContext('2d'); const s=cw/W; ctx.setTransform(dpr*s,0,0,dpr*s,0,0);
   ctx.fillStyle=LAND;
   const land=new Path2D(); feats.forEach(f=>land.addPath(new Path2D(PD[f.id])));
-  ctx.fill(land); ctx.strokeStyle='#fff'; ctx.lineWidth=.9/s; ctx.stroke(new Path2D(COMMESH));
+  ctx.fill(land); ctx.strokeStyle=BG; ctx.lineWidth=.5/s; ctx.stroke(new Path2D(MUNMESH)); ctx.strokeStyle='#fff'; ctx.lineWidth=1.1/s; ctx.stroke(new Path2D(COMMESH));
   ctx.fillStyle=rgba(RED,.6); const r=(cw<500?.95:1.25)/s;
   const n=Math.round(DORD.length*dotsP);
   for(let k=0;k<n;k++){ const i=DORD[k]*2; ctx.beginPath(); ctx.arc(DOTS[i]/8, DOTS[i+1]/8, r, 0, 6.2832); ctx.fill(); }

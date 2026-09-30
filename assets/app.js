@@ -38,6 +38,9 @@ function hoverable(svg, ps, onHover, onClear){
   const clear=()=>{ if(!last) return; d3.select(last).classed('hl',false); last=null; svg.select(':scope > path.hlo').remove(); onClear && onClear(); };
   ps.on('pointerenter',act).on('click',act);
   svg.on('pointerleave.hv',e=>{ if(e.pointerType==='mouse') clear(); });
+  // Amb el ratolí sobre el mar o fora de qualsevol municipi, també s'esborra.
+  const nodes=new Set(ps.nodes());
+  svg.on('pointermove.hv',e=>{ if(e.pointerType==='mouse' && !nodes.has(e.target)) clear(); });
   CLEARS.push([svg.node(),clear]);
   return {act,clear};
 }

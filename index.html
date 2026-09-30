@@ -62,7 +62,7 @@
       <button data-dor="map" aria-pressed="true">Mapa</button>
       <button data-dor="cart" aria-pressed="false">Cartograma</button>
     </div>
-    <div class="slider" id="dorYearBox" hidden><button class="play" id="dorPlay" aria-label="Reprodueix de 1857 a 2025">▶</button><span class="yr" id="dorYearOut">2025</span><input type="range" id="dorYear" min="0" max="6" step="1" value="6" aria-label="Any del cartograma"></div>
+    <div class="slider" id="dorYearBox" hidden><button class="play" id="dorPlay" aria-label="Reprodueix de 1857 a 2025">▶</button><span class="yr" id="dorYearOut">2025</span><input type="range" id="dorYear" min="0" max="16" step="1" value="16" aria-label="Any del cartograma"></div>
     <svg class="map" id="mDor" role="img" aria-label="Mapa de Catalunya i cartograma continu de la població per municipi"></svg>
     <p class="readout" id="rDor" aria-live="polite"></p>
     <p class="note" id="cartNote"></p>
@@ -86,7 +86,7 @@
   <section>
     <h2 id="lorTitle"></h2>
     <p>Ordenem els 947 municipis del més dens al menys dens i anem sumant terra i gent. Si tothom visqués repartit igual, la corba seria la diagonal.</p>
-    <svg class="viz" id="lor" role="img" aria-label="Corba de concentració de la població segons el territori" style="max-width:560px"></svg>
+    <svg class="viz" id="lor" role="img" aria-label="Corba de concentració de la població segons el territori" style="max-width:476px"></svg>
     <div class="slider"><input type="range" id="lorIn" min="1" max="99" value="50" aria-label="Percentatge de la població"></div>
     <p class="readout" id="rLor" aria-live="polite"></p>
   </section>
@@ -94,7 +94,7 @@
   <section>
     <h2 id="altTitle"></h2>
     <p>Cada cercle és un municipi: a la dreta, més amunt a la muntanya; a dalt, més gent per km². La mida és la població.</p>
-    <svg class="viz" id="alt" role="img" aria-label="Gràfic de dispersió: altitud i densitat dels municipis" style="max-width:820px"></svg>
+    <svg class="viz" id="alt" role="img" aria-label="Gràfic de dispersió: altitud i densitat dels municipis" style="max-width:697px"></svg>
     <p class="readout" id="rAlt" aria-live="polite"></p>
     <h3 class="sub" id="hipTitle"></h3>
     <p id="hipLede"></p>
@@ -105,7 +105,7 @@
   <section>
     <h2 id="balTitle"></h2>
     <p>Ara per comarques. A l’esquerra, la terra que ocupa cadascuna; a la dreta, la gent que hi viu. Toca una franja.</p>
-    <svg class="viz" id="bal" role="img" aria-label="Comparació de superfície i població per comarques" style="max-width:760px"></svg>
+    <svg class="viz" id="bal" role="img" aria-label="Comparació de superfície i població per comarques" style="max-width:646px"></svg>
     <p class="readout" id="rBal" aria-live="polite"></p>
   </section>
 
@@ -205,7 +205,7 @@
       <ul>
         <li>Idescat. <a href="https://www.idescat.cat/indicadors/?id=aec&n=15903">Altitud, superfície i població. Municipis</a>, 2025 (Cens de població anual).</li>
         <li>Idescat. <a href="https://www.idescat.cat/indicadors/?id=aec&n=15227">Densitat de població. Comarques i Aran</a> i <a href="https://www.idescat.cat/indicadors/?id=aec&n=15902">Nombre de municipis i població</a>, 2025.</li>
-        <li>Idescat. <a href="https://www.idescat.cat/pub/?id=shd&n=1341&t=199100&by=com">Sèries històriques demogràfiques. Evolució de la població de fet</a>, comarques i <a href="https://www.idescat.cat/pub/?id=shd&n=1341&geo=mun&t=199100">municipis</a>, 1857–1991.</li>
+        <li>Idescat. <a href="https://www.idescat.cat/pub/?id=shd&n=1341&t=199100&by=com">Sèries històriques demogràfiques. Evolució de la població de fet</a>, comarques i <a href="https://www.idescat.cat/pub/?id=shd&n=1341&geo=mun&t=199100">municipis</a>, 1857–1991, i <a href="https://www.idescat.cat/pub/?id=pmh&n=446&geo=mun">padró municipal</a>, 2001–2021.</li>
         <li>Idescat. <a href="https://govern.cat/salapremsa/notes-premsa/833960/l-any-2025-el-614-percent-de-la-poblacio-viu-en-centres-urbans-que-ocupen-l-138-percent-de-la-superficie-de-catalunya">Estadística del grau d’urbanització 2025</a> (quadrícula d’1 km²).</li>
         <li>Límits municipals: Instituto Geográfico Nacional, via es-atlas (TopoJSON).</li>
         <li>Serveis: Dades obertes de Catalunya (<a href="https://analisi.transparenciacatalunya.cat/d/kvmv-ahh4">centres docents 2025/26</a>, <a href="https://analisi.transparenciacatalunya.cat/d/8gmd-gz7i">equipaments</a>, <a href="https://analisi.transparenciacatalunya.cat/d/nrmq-ytje">establiments sanitaris</a>, <a href="https://analisi.transparenciacatalunya.cat/d/48s6-82h2">equipaments culturals</a>, <a href="https://analisi.transparenciacatalunya.cat/d/5zd6-bk6r">instal·lacions esportives</a>, <a href="https://analisi.transparenciacatalunya.cat/d/5kd9-2wex">alumnat universitari</a>); estacions de Renfe i FGC (GTFS); límits municipals de l’ICGC.</li>

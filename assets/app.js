@@ -118,7 +118,7 @@ onView($('#cDots'),()=>{ const t0=performance.now(), dur=RM?0:1800; const st=now
 function labName(m){ return ({"L'Hospitalet de Llobregat":"L’Hospitalet","Santa Coloma de Gramenet":"Sta. Coloma","Sant Cugat del Vallès":"Sant Cugat","Cornellà de Llobregat":"Cornellà","Sant Boi de Llobregat":"Sant Boi"}[m.n]||m.n); }
 const bSvg=baseMap('#mDor').attr('viewBox',`0 0 ${W} ${W}`);
 fetch('data/cartograma.json').then(r=>r.json()).then(CA=>{
-const dec=a=>{ const o=new Float32Array(a.length); let x=0,y=0; for(let i=0;i<a.length;i+=2){ x+=a[i]; y+=a[i+1]; o[i]=x/10; o[i+1]=y/10; } return o; };
+const Q=CA.q||10, dec=a=>{ const o=new Float32Array(a.length); let x=0,y=0; for(let i=0;i<a.length;i+=2){ x+=a[i]; y+=a[i+1]; o[i]=x/Q; o[i+1]=y/Q; } return o; };
 const YR=CA.years, NY=YR.length, V=[CA.a0.map(dec),...CA.a.map(v=>v.map(dec))]; // V[0] mapa, V[k+1] cartograma de YR[k]
 const KT=V[0].map(a=>new Float32Array(a)), KS=V[0].map(a=>new Float32Array(a));
 const MERGED=CA.merged.map(l=>new Set(l));
@@ -130,6 +130,7 @@ const geoD=i=>GEO[i].map(p=>p.map(ringD).join('')).join('');
 const arcsD=list=>list.map(a=>'M'+arcPts(a,false)).join('');
 const COMARC=own.map((o,a)=>o.length===2&&MUN[o[0]].c!==MUN[o[1]].c?a:-1).filter(a=>a>=0), OUTARC=own.map((o,a)=>o.length===1?a:-1).filter(a=>a>=0);
 const st={mode:'map', yi:NY-1, timer:null, shown:false, play:null};
+$('#dorYear').max=NY-1; $('#dorYear').value=NY-1;
 const bPs=bSvg.append('g').selectAll('path').data(MUN).join('path').attr('class','mp').attr('fill-rule','evenodd').attr('fill',LAND);
 const bMu=bSvg.append('path').attr('class','mesh-u'), bMesh=bSvg.append('path').attr('class','mesh'), bOut=bSvg.append('path').attr('class','outline');
 const BIGL=[...MUN].sort((a,b)=>b.p-a.p).slice(0,14);
@@ -175,14 +176,14 @@ function stopPlay(){ if(st.play){ clearTimeout(st.play); st.play=null; } $('#dor
 $('#dorPlay').addEventListener('click',()=>{
   if(st.play){ stopPlay(); return; }
   $('#dorPlay').setAttribute('aria-pressed','true'); $('#dorPlay').textContent='❚❚';
-  let yi=st.yi===NY-1?0:st.yi; const next=()=>{ setYear(yi,1300); if(yi>=NY-1){ st.play=setTimeout(stopPlay,1300); return; } yi++; st.play=setTimeout(next,2100); }; next();
+  let yi=st.yi===NY-1?0:st.yi; const next=()=>{ setYear(yi,1000); if(yi>=NY-1){ st.play=setTimeout(stopPlay,1000); return; } yi++; st.play=setTimeout(next,1350); }; next();
 });
 $$('[data-dor]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.dor)));
-$('#dorYear').addEventListener('input',e=>{ stopPlay(); setYear(+e.target.value,1300); });
+$('#dorYear').addEventListener('input',e=>{ stopPlay(); setYear(+e.target.value,900); });
 $('#rDor').innerHTML=READ0();
 onView($('#mDor'),()=>{ st.shown=true; revealFill(bPs,m=>dcol(densNow(m))); });
 const errs=CA.err.map(e=>e*100);
-$('#cartNote').textContent=`Mètode: cartograma de difusió de Gastner i Newman (PNAS, 2004) sobre una projecció azimutal d’àrea igual de Lambert, en una malla de 512 × 512 cel·les i refinat en fins a 5 iteracions. Error d’àrea mitjà, ponderat per població: entre el ${fmt(d3.min(errs),1)}% i el ${fmt(d3.max(errs),1)}% segons l’any. Fins al 1991, població de fet per municipis (Idescat). Els municipis que encara no existien es compten amb el d’on es van segregar. Tots els anys ocupen la mateixa superfície total: el que canvia és com es reparteix. El color és la densitat de cada any.`;
+$('#cartNote').textContent=`Mètode: cartograma de difusió de Gastner i Newman (PNAS, 2004) sobre una projecció azimutal d’àrea igual de Lambert, en una malla de 512 × 512 cel·les i refinat en fins a 5 iteracions. Error d’àrea mitjà, ponderat per població: entre el ${fmt(d3.min(errs),1)}% i el ${fmt(d3.max(errs),1)}% segons l’any. Fins al 1991, població de fet dels censos; des del 2001, padró municipal (Idescat). Els municipis que encara no existien es compten amb el d’on es van segregar. Tots els anys ocupen la mateixa superfície total: el que canvia és com es reparteix. El color és la densitat de cada any.`;
 }).catch(e=>console.error(e));
 
 /* =========== 5. PICS =========== */

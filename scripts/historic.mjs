@@ -1,4 +1,5 @@
-// Població municipal històrica (Idescat, població de fet 1857–1991) sobre els 947 municipis actuals.
+// Població municipal històrica sobre els 947 municipis actuals: Idescat, població de fet 1857–1991, i
+// padró continu (població a 1 de gener) per als anys amb fitxer data/raw/padro-municipis-<any>.csv.
 // Un municipi que encara no existia en una data es fusiona amb el municipi d'on es va segregar: el grup rep la
 // població conjunta repartida per superfície (mateixa densitat). El municipi d'origen es dedueix del veí que perd
 // la població que el nou municipi guanya quan apareix a la sèrie; els casos posteriors al 1991 són explícits.
@@ -14,8 +15,12 @@ export function historic(M, neighbors, years) {
   const H = {}; L.slice(hi + 1).filter(l => /^\d/.test(l)).forEach(l => { const r = l.split(';'); H[r[0].slice(0, 5)] = Object.fromEntries(hdr.slice(2).map((y, j) => [+y, /^\d+$/.test(r[j + 2]) ? +r[j + 2] : null])); });
   const byN = new Map(M.map(m => [m.n, m]));
   for (const [k, n] of Object.entries(ABSORBED)) { const t = H[byN.get(n).k]; for (const y in H[k]) if (H[k][y] != null && t[y] != null) t[y] += H[k][y]; }
-  const HY = hdr.slice(2).map(Number);
-  const val = (m, y) => y === 2025 ? m.p : (H[m.k] ? H[m.k][y] : null);
+  // Padró municipal (ja referit a la divisió territorial actual).
+  const PY = fs.readdirSync(new URL('../data/raw/', import.meta.url)).map(f => f.match(/^padro-municipis-(\d{4})\.csv$/)).filter(Boolean).map(m => +m[1]).sort();
+  for (const y of PY) fs.readFileSync(new URL(`../data/raw/padro-municipis-${y}.csv`, import.meta.url), 'utf8').split(/\r?\n/).filter(l => /^\d{6};/.test(l)).forEach(l => {
+    const r = l.split(';'), k = r[0].slice(0, 5); (H[k] = H[k] || {})[y] = /^\d+$/.test(r[4]) ? +r[4] : null; });
+  const HY = [...hdr.slice(2).map(Number), ...PY];
+  const val = (m, y) => y === 2025 ? m.p : (H[m.k] && H[m.k][y] != null ? H[m.k][y] : null);
   const out = {}, merged = {}, log = [];
   for (const y of years) {
     if (y === 2025) { out[y] = M.map(m => m.p); merged[y] = []; continue; }

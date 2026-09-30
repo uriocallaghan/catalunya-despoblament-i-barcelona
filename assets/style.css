@@ -108,4 +108,6 @@ footer{ height:5rem; }
 /* Lenis */
 html.lenis, html.lenis body{ height:auto; }
 .lenis.lenis-smooth iframe{ pointer-events:none; }
+/* A partir de tauleta, tota la pàgina a escala 0,85 perquè els mapes càpiguen a la pantalla d'un portàtil. */
+@media (min-width:700px){ body{ zoom:.85; } .map{ max-height:calc(100vh / .85 - 7rem); } }
 @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } .rv{ opacity:1; transform:none; } }

@@ -40,6 +40,7 @@ button{ font:inherit; color:inherit; }
 .map{ display:block; width:100%; max-width:646px; height:auto; margin:1.3rem auto 0; touch-action:manipulation; }
 .mp{ stroke:var(--edge,var(--bg)); stroke-width:.35px; vector-effect:non-scaling-stroke; transition:fill .7s ease; cursor:pointer; }
 .mp.hl{ stroke:var(--ink); stroke-width:1.5px; }
+.hlo{ fill:none; fill-rule:evenodd; stroke:var(--ink); stroke-width:1.6px; stroke-linejoin:round; vector-effect:non-scaling-stroke; pointer-events:none; }
 .mesh{ fill:none; stroke:#fff; stroke-width:.9px; vector-effect:non-scaling-stroke; pointer-events:none; }
 .mesh-u{ fill:none; stroke:rgba(28,28,27,.16); stroke-width:1.9px; vector-effect:non-scaling-stroke; pointer-events:none; }
 .outline{ fill:none; stroke:#B9B9B3; stroke-width:.7px; vector-effect:non-scaling-stroke; pointer-events:none; }

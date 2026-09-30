@@ -31,8 +31,11 @@ const CLEARS=[];
 document.addEventListener('pointerdown',e=>CLEARS.forEach(([n,f])=>{ if(!n.contains(e.target)) f(); }));
 function hoverable(svg, ps, onHover, onClear){
   let last=null;
-  const act=function(e,m){ if(last===this) return; if(last) d3.select(last).classed('hl',false); last=this; d3.select(this).classed('hl',true).raise(); onHover && onHover(m); };
-  const clear=()=>{ if(!last) return; d3.select(last).classed('hl',false); last=null; onClear && onClear(); };
+  // El contorn ressaltat es dibuixa en una capa a sobre de tot, també dels límits comarcals.
+  const over=()=>{ let o=svg.select(':scope > path.hlo'); if(o.empty()) o=svg.append('path').attr('class','hlo'); return o.raise(); };
+  const act=function(e,m){ if(last===this) return; if(last) d3.select(last).classed('hl',false); last=this; d3.select(this).classed('hl',true).raise();
+    if(this.tagName==='path') over().attr('d',this.getAttribute('d')); onHover && onHover(m); };
+  const clear=()=>{ if(!last) return; d3.select(last).classed('hl',false); last=null; svg.select(':scope > path.hlo').remove(); onClear && onClear(); };
   ps.on('pointerenter',act).on('click',act);
   svg.on('pointerleave.hv',e=>{ if(e.pointerType==='mouse') clear(); });
   CLEARS.push([svg.node(),clear]);

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Quants metres quadrats compra un any de sou, quant costaria un pis si hagués pujat com els sous, quants anys calen per a l’entrada i com s’ha disparat el lloguer. Gràfics amb dades oficials.">
+<meta property="og:title" content="La casa: què ha passat amb el preu de l’habitatge">
+<meta property="og:description" content="Un any de sou sencer compra uns pocs metres quadrats de pis. Gràfics interactius sobre l’habitatge a Catalunya amb dades oficials.">
+<meta property="og:url" content="https://catalunya.uriocallaghan.com/habitatge/">
+<meta property="og:type" content="article">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#F1F1EE">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://catalunya.uriocallaghan.com/habitatge/">
+<title>La casa: què ha passat amb el preu de l’habitatge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&display=swap" rel="stylesheet">
+<script src="../assets/vendor/d3.v7.8.5.min.js"></script>
+<script src="../assets/vendor/lenis.v1.3.26.min.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/diners.css">
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><a href="../"><b>Terra i gent</b></a><a href="../diners/">Diners de paper</a><span>La casa</span><span id="upd"></span></div>
+
+  <header>
+    <h1 id="h1"></h1>
+    <p class="lead" id="lead"></p>
+    <div class="seg" role="group" aria-label="On">
+      <button data-geo="bcn" aria-pressed="true">Província de Barcelona</button>
+      <button data-geo="cat" aria-pressed="false">Catalunya</button>
+      <button data-geo="esp" aria-pressed="false">Espanya</button>
+    </div>
+    <div class="slider"><button class="play" id="planPlay" aria-label="Reprodueix">▶</button><span class="yr" id="planYr"></span><input type="range" id="planT" step="1" aria-label="Any"></div>
+    <svg class="viz" id="plan" role="img" aria-label="Plànol d’un pis de 80 metres quadrats: en vermell, els metres que compra un any de sou" style="max-width:560px"></svg>
+    <p class="readout" id="rPlan" aria-live="polite"></p>
+    <p class="note">Sou brut anual: cost salarial total per treballador (INE), de Catalunya per a Catalunya i la província de Barcelona, i d’Espanya per a Espanya. Preu: valor taxat mitjà de l’habitatge lliure, €/m², mitjana anual (Ministeri d’Habitatge i Agenda Urbana).</p>
+  </header>
+
+  <section>
+    <h2 id="realTitle"></h2>
+    <p id="realLede"></p>
+    <div class="seg" role="group" aria-label="Com es compta">
+      <button data-hm="nom" aria-pressed="true">En euros de cada any</button>
+      <button data-hm="real" aria-pressed="false">En euros d’avui</button>
+    </div>
+    <svg class="viz" id="hreal" role="img" aria-label="Preu del metre quadrat d’habitatge des del 1995" style="max-width:697px"></svg>
+    <p class="readout" id="rHreal" aria-live="polite"></p>
+    <p class="note">Valor taxat de l’habitatge lliure, trimestral (Ministeri d’Habitatge i Agenda Urbana). El valor de taxació va una mica per darrere dels preus de mercat, i a la ciutat de Barcelona és força més alt que a la província. En euros d’avui: deflactat amb l’IPC de Catalunya (INE).</p>
+  </section>
+
+  <section>
+    <h2 id="cfTitle"></h2>
+    <p id="cfLede"></p>
+    <svg class="viz" id="cf" role="img" aria-label="Preu d’un pis de 80 m² i el que costaria si hagués pujat com el sou o com els preus" style="max-width:697px"></svg>
+    <p class="readout" id="rCf" aria-live="polite"></p>
+    <p class="note">Pis de 80 m² al valor taxat mitjà de la província de Barcelona. Sou: cost salarial total per treballador a Catalunya (INE). Preus: IPC de Catalunya (INE).</p>
+  </section>
+
+  <section>
+    <h2 id="ownTitle"></h2>
+    <p id="ownLede"></p>
+    <div class="seg" role="group" aria-label="Part del sou que s’estalvia">
+      <button data-rate=".1" aria-pressed="false">Estalvio el 10%</button>
+      <button data-rate=".2" aria-pressed="true">el 20%</button>
+      <button data-rate=".3" aria-pressed="false">el 30%</button>
+    </div>
+    <svg class="viz" id="own" role="img" aria-label="Plusvàlua acumulada d’un pis de 80 m² comparada amb l’estalvi acumulat d’un sou mitjà" style="max-width:697px"></svg>
+    <p class="readout" id="rOwn" aria-live="polite"></p>
+    <p class="note">Plusvàlua: diferència entre el valor taxat d’un pis de 80 m² a la província de Barcelona cada any i el del primer any. Estalvi: suma de la part triada del sou brut mitjà de cada any, sense interessos. Tot en euros de cada any.</p>
+  </section>
+
+  <section>
+    <h2 id="downTitle"></h2>
+    <p id="downLede"></p>
+    <svg class="viz" id="down" role="img" aria-label="Anys d’estalvi necessaris per reunir l’entrada d’un pis" style="max-width:697px"></svg>
+    <p class="readout" id="rDown" aria-live="polite"></p>
+    <p class="note">Entrada del 20% del valor taxat d’un pis de 80 m² més un 10% d’impostos i despeses, dividida per la part del sou brut mitjà que s’estalvia (el control de la secció anterior). No compta interessos ni que els preus continuïn pujant mentre s’estalvia.</p>
+  </section>
+
+  <section>
+    <h2 id="rbTitle"></h2>
+    <p id="rbLede"></p>
+    <svg class="viz" id="rb" role="img" aria-label="Evolució del lloguer, del preu de compra, del sou i dels preus des del 2007" style="max-width:697px"></svg>
+    <p class="readout" id="rRb" aria-live="polite"></p>
+    <p class="note">Lloguer: renda mitjana dels contractes nous amb fiança dipositada a l’Incasòl a la ciutat de Barcelona. Preu de compra: valor taxat a la província de Barcelona. Sou i preus: Catalunya (INE). Mitjanes anuals.</p>
+  </section>
+
+  <section class="closing">
+    <h2>El pis ha deixat de ser només un lloc on viure</h2>
+    <p id="close1"></p>
+    <p>Per això qui ja tenia un pis el 2000 i qui en necessita un avui viuen en economies diferents. El primer ha vist créixer el seu patrimoni sense fer res; el segon ha de pagar aquest creixement amb anys de feina, o amb un lloguer que puja encara més de pressa.</p>
+    <div class="sources">
+      <p class="note" style="margin:0">Fonts</p>
+      <ul>
+        <li>Ministeri d’Habitatge i Agenda Urbana. <a href="https://apps.fomento.gob.es/BoletinOnline2/?nivel=2&orden=35000000">Valor taxat de l’habitatge lliure</a>, per comunitats i províncies, des del 1995.</li>
+        <li>INE. <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=59392">Enquesta trimestral de cost laboral</a> i <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=24078">Índex de preus de consum per comunitats autònomes</a>.</li>
+        <li>Incasòl. <a href="https://analisi.transparenciacatalunya.cat/d/qww9-bvhh">Preu mitjà del lloguer d’habitatges per municipi</a> (fiances dipositades), Dades obertes de Catalunya.</li>
+      </ul>
+    </div>
+    <p class="note" style="margin-top:2rem"><a href="../or/" class="back">Mesurat en or: el preu de tot si no comptéssim en euros →</a></p>
+    <p class="note"><a href="../diners/" class="back">← Diners de paper: inflació i creació de diners</a></p>
+  </section>
+  <footer></footer>
+</main>
+
+<script src="../assets/comu.js"></script>
+<script src="../assets/habitatge.js"></script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Què passaria si comptéssim en or en lloc d’euros? El preu de l’habitatge, dels sous i de la cistella de la compra mesurats en or des del 2000, i per què l’or ha pujat tant.">
+<meta property="og:title" content="Mesurat en or: el preu de tot si no comptéssim en euros">
+<meta property="og:description" content="El preu de l’habitatge, dels sous i de la compra comptats en or des del 2000. I si la pujada de l’or té sentit o és qüestió de moment.">
+<meta property="og:url" content="https://catalunya.uriocallaghan.com/or/">
+<meta property="og:type" content="article">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#F1F1EE">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://catalunya.uriocallaghan.com/or/">
+<title>Mesurat en or: el preu de tot si no comptéssim en euros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&display=swap" rel="stylesheet">
+<script src="../assets/vendor/d3.v7.8.5.min.js"></script>
+<script src="../assets/vendor/lenis.v1.3.26.min.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/diners.css">
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><a href="../"><b>Terra i gent</b></a><a href="../diners/">Diners de paper</a><span>Mesurat en or</span><span id="upd"></span></div>
+
+  <header>
+    <h1 id="h1"></h1>
+    <p class="lead" id="lead"></p>
+    <div class="seg" role="group" aria-label="Unitat de mesura">
+      <button data-dual="eur" aria-pressed="true">En euros</button>
+      <button data-dual="au" aria-pressed="false">En or</button>
+    </div>
+    <svg class="viz" id="dual" role="img" aria-label="Or, diners, habitatge, preus i sou des del 2000, comptats en euros o en or" style="max-width:697px"></svg>
+    <p class="readout" id="rDual" aria-live="polite"></p>
+    <p class="note">Mitjana del 2000 = 1, escala logarítmica: cada línia horitzontal duplica o divideix per dos. «En or» vol dir el preu dividit pel preu d’una unça en euros aquell trimestre. Or: Banc Mundial i BCE. Diners: M3 de la zona euro (BCE). Habitatge: valor taxat de l’habitatge lliure a la província de Barcelona (Ministeri d’Habitatge). Preus: IPC de Catalunya (INE). Sou: sou brut mitjà per treballador a Catalunya, mitjana anual (INE).</p>
+  </header>
+
+  <section>
+    <h2 id="boxTitle"></h2>
+    <p id="boxLede"></p>
+    <div class="slider"><span class="yr" id="boxYr"></span><input type="range" id="boxY" step="1" aria-label="Any de compra"></div>
+    <svg class="viz" id="box" role="img" aria-label="Poder de compra de 100 euros guardats en or o en bitllets des de l’any triat" style="max-width:697px"></svg>
+    <div class="gkey"><span><i style="background:var(--red)"></i>100 € convertits en or</span><span><i style="background:var(--ink)"></i>100 € en bitllets</span></div>
+    <p class="readout" id="rBox" aria-live="polite"></p>
+    <h3 class="sub">I si haguessis començat un altre any?</h3>
+    <p id="startsLede"></p>
+    <svg class="viz" id="starts" role="img" aria-label="Valor real avui de 100 euros posats en or el gener de cada any" style="max-width:697px"></svg>
+    <p class="note">Or comprat al preu mitjà del mes de gener de cada any i valorat al preu de l’últim mes, sense comissions ni custòdia. Tot descomptant l’IPC de Catalunya (INE). Escala logarítmica.</p>
+  </section>
+
+  <section>
+    <h2 id="salTitle"></h2>
+    <p id="salLede"></p>
+    <svg class="viz" id="salOz" role="img" aria-label="Sou brut mitjà anual a Catalunya, en unces d’or" style="max-width:697px"></svg>
+    <p class="readout" id="rSalOz" aria-live="polite"></p>
+    <p class="note">Sou brut anual: cost salarial total per treballador a Catalunya, Enquesta trimestral de cost laboral (INE). Dividit pel preu mitjà anual d’una unça troy (31,1 grams) en euros.</p>
+  </section>
+
+  <section>
+    <h2 id="flatTitle"></h2>
+    <p id="flatLede"></p>
+    <div class="slider"><button class="play" id="flatPlay" aria-label="Reprodueix">▶</button><span class="yr" id="flatYr"></span><input type="range" id="flatT" step="1" aria-label="Any"></div>
+    <svg class="viz" id="flat" role="img" aria-label="Quilos d’or que valia un pis de 80 metres quadrats cada any" style="max-width:697px"></svg>
+    <p class="readout" id="rFlat" aria-live="polite"></p>
+    <p class="note">Valor taxat mitjà de l’habitatge lliure a la província de Barcelona (Ministeri d’Habitatge i Agenda Urbana), mitjana anual, per 80 m². A la ciutat de Barcelona els preus són més alts.</p>
+    <p id="ratioP" style="margin-top:2.4rem"></p>
+  </section>
+
+  <section>
+    <h2>Té sentit, o és que el 2000 era un mal moment per comptar?</h2>
+    <p>Que tot sembli més barat en or només vol dir que l’or s’ha encarit respecte de tot. La pregunta és per què. Hi ha raons de fons: l’or no es pot imprimir, i des del 2000 els bancs centrals han creat diners a una escala mai vista. Durant una dècada els tipus d’interès reals van ser negatius, i guardar or, que no dona interessos, no costava res. I des del 2022, després que es congelessin les reserves de Rússia, els bancs centrals compren or com no ho feien des de feia dècades. Però també hi ha el moment triat: mirem-ho amb la sèrie més llarga que hi ha.</p>
+  </section>
+
+  <section style="padding-top:2rem">
+    <h2 id="realTitle"></h2>
+    <p id="realLede"></p>
+    <div class="seg" role="group" aria-label="Com es compta">
+      <button data-rm="real" aria-pressed="true">En dòlars d’avui</button>
+      <button data-rm="nom" aria-pressed="false">En dòlars de cada any</button>
+    </div>
+    <svg class="viz" id="real" role="img" aria-label="Preu d’una unça d’or en dòlars d’avui des del 1800" style="max-width:697px"></svg>
+    <p class="readout" id="rReal" aria-live="polite"></p>
+    <p class="note">Fins al 1959, preu legal de l’or als Estats Units: 19,39 $ l’unça fins al 1833, 20,67 $ del 1834 al 1932 i 35 $ des del 1934. Entre el 1862 i el 1878 els bitllets no es podien canviar per or, i el 1933 el preu no era fix: no s’hi dibuixa res. Des del 1960, preu de mercat (Banc Mundial). Deflactat amb l’IPC dels Estats Units (Banc de la Reserva Federal de Minneapolis).</p>
+  </section>
+
+  <section>
+    <h2>A la llarga, l’or segueix els diners. Però no gaire de prop</h2>
+    <p id="monLede"></p>
+    <div class="seg" role="group" aria-label="On">
+      <button data-mreg="us" aria-pressed="true">Estats Units, des del 1971</button>
+      <button data-mreg="eu" aria-pressed="false">Zona euro, des del 1999</button>
+    </div>
+    <svg class="viz" id="mon" role="img" aria-label="Preu de l’or i quantitat de diners, indexats" style="max-width:697px"></svg>
+    <div class="gkey"><span><i style="background:var(--red)"></i>Preu de l’or</span><span><i style="background:var(--ink)"></i>Quantitat de diners</span></div>
+    <p class="readout" id="rMon" aria-live="polite"></p>
+    <p class="note" id="monNote"></p>
+  </section>
+
+  <section>
+    <h2>El guany depèn, sobretot, de quan compres</h2>
+    <p id="heatLede"></p>
+    <svg class="viz" id="heat" role="img" aria-label="Rendiment real anual de l’or segons l’any de compra i de venda, 1971–2025" style="max-width:640px"></svg>
+    <div class="gkey"><span><i style="background:var(--r5);border-radius:1px"></i>Guany real</span><span><i style="background:#8A8A84;border-radius:1px"></i>Pèrdua real</span><span>Color més intens: 15% l’any o més</span></div>
+    <p class="readout" id="rHeat" aria-live="polite"></p>
+    <p class="note">Preu mitjà anual de l’or en dòlars (Banc Mundial), descomptant l’IPC dels Estats Units. Sense comissions ni costos de custòdia.</p>
+  </section>
+
+  <section>
+    <h2 id="ddTitle"></h2>
+    <p id="ddLede"></p>
+    <svg class="viz" id="dd" role="img" aria-label="Distància del preu real de l’or respecte del seu màxim anterior" style="max-width:697px"></svg>
+    <p class="readout" id="rDd" aria-live="polite"></p>
+  </section>
+
+  <section class="closing">
+    <h2>L’or és un bon regle per veure què fan els diners. No és un regle fix</h2>
+    <p id="close1"></p>
+    <p>Comptar en or ensenya una cosa certa: els euros que cobrem són una unitat que s’encongeix, i els que tenen actius, com l’or o els pisos, en surten millor que els que només tenen sou. Però l’or també es mou per la por, pels tipus d’interès i per les compres dels bancs centrals. Mesurat en or, el 2000 tot semblava car i avui tot sembla barat. Cap dels dos extrems no és el preu «de veritat».</p>
+    <div class="sources">
+      <p class="note" style="margin:0">Fonts</p>
+      <ul>
+        <li>Banc Mundial. <a href="https://www.worldbank.org/en/research/commodity-markets">Commodity Price Data (Pink Sheet)</a>, preu mensual de l’or des del 1960.</li>
+        <li>Banc Central Europeu, <a href="https://data.ecb.europa.eu/">ECB Data Portal</a>: tipus de canvi dòlar/euro (EXR) i agregat monetari M3 (BSI).</li>
+        <li>Federal Reserve Bank of St. Louis, FRED: <a href="https://fred.stlouisfed.org/series/M2SL">M2</a>.</li>
+        <li>Federal Reserve Bank of Minneapolis. <a href="https://www.minneapolisfed.org/about-us/monetary-policy/inflation-calculator/consumer-price-index-1800-">Consumer Price Index, 1800–</a>.</li>
+        <li>INE. <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=24078">Índex de preus de consum per comunitats autònomes</a> i <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=59392">Enquesta trimestral de cost laboral</a>.</li>
+        <li>Ministeri d’Habitatge i Agenda Urbana. <a href="https://apps.fomento.gob.es/BoletinOnline2/?nivel=2&orden=35000000">Valor taxat de l’habitatge lliure</a>.</li>
+        <li>Preus legals de l’or: Coinage Act (1792 i 1834) i <a href="https://www.federalreservehistory.org/essays/gold-reserve-act">Gold Reserve Act</a> (1934), Federal Reserve History.</li>
+      </ul>
+    </div>
+    <p class="note" style="margin-top:2rem"><a href="../habitatge/" class="back">La casa: com ha canviat el preu de l’habitatge →</a></p>
+    <p class="note"><a href="../diners/" class="back">← Diners de paper: inflació i creació de diners</a></p>
+  </section>
+  <footer></footer>
+</main>
+
+<script src="../assets/comu.js"></script>
+<script src="../assets/or.js"></script>
+</body>
+</html>

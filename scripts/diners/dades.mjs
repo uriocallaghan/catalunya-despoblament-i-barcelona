@@ -46,6 +46,9 @@ const usCpi = csv('ipc-eua').map(r => [r.any, r.ipc_1967_100]);
 /* ---- Or i canvi ---- */
 const gold = csv('or'), eur = new Map(csv('eurusd').map(r => [r.mes.replace('-', 'M'), r.usd_per_euro]));
 const goldFrom = gold[0].mes;
+// Abans del 1960, preu legal de l'or als EUA ($/unça): 19,39 (Coinage Act 1792), 20,67 (1834–1933, llevat de 1862–1878,
+// quan el dòlar de paper no es podia canviar per or) i 35 (Gold Reserve Act, gener del 1934). [des, fins, $/unça]
+const goldPar = [[1800, 1833, 19.39], [1834, 1861, 20.67], [1879, 1932, 20.67], [1934, 1959, 35]];
 
 /* ---- Diner: BCE i Fed, a final de cada mes, en milers de milions ---- */
 const agg = csv('bce-agregats');
@@ -60,7 +63,7 @@ const usM2 = csv('eua-m2').map(r => [r.data.slice(0, 7), r.M2SL]);
 const hab = csv('habitatge').map(r => [r.trimestre, r.espanya, r.catalunya, r.provincia_barcelona]);
 const salQ = csv('salaris');
 const salY = {}; salQ.forEach(r => { const y = r.trimestre.slice(0, 4); (salY[y] ||= []).push(r); });
-// Salari brut anual = mitjana dels quatre trimestres del cost salarial mensual (inclou pagues extres prorratejades) × 12
+// Salari brut anual = mitjana dels quatre trimestres del cost salarial mensual × 12 (cada trimestre inclou les pagues extres que s'hi cobren)
 const sal = Object.entries(salY).filter(([, a]) => a.length === 4).map(([y, a]) => [+y, Math.round(mean(a.map(r => r.catalunya)) * 12), Math.round(mean(a.map(r => r.espanya)) * 12)]);
 const habY = {}; hab.forEach(r => { const y = r[0].slice(0, 4); (habY[y] ||= []).push(r); });
 const habA = Object.fromEntries(Object.entries(habY).filter(([, a]) => a.length === 4).map(([y, a]) => [y, [1, 2, 3].map(k => mean(a.map(r => r[k])))]));
@@ -71,7 +74,7 @@ const out = {
   updated: new Date().toISOString().slice(0, 10),
   ipc: { es: ipcES, ct: ipcCT },
   usCpi,
-  gold: { from: goldFrom, v: gold.map(r => r.usd_unca) },
+  gold: { from: goldFrom, v: gold.map(r => r.usd_unca) }, goldPar,
   eurusd: { from: '1999M01', v: [...eur.values()].map(v => r1(v, 4)) },
   m3: agg.map(r => [r.mes, r1(r.M3 / 1000), r1(r.efectiu / 1000), r1(r.M1 / 1000)]),
   ecbBal, fedBal, usM2,

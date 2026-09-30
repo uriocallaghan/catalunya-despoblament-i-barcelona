@@ -6,6 +6,7 @@ Projecte: **Terra i gent**, web estàtica de visualització de dades sobre el de
 - Allotjament: Netlify (no GitHub Pages), desplegament continu des de la branca `main` del repositori `uriocallaghan/catalunya-despoblament-i-barcelona`, carpeta arrel (`/`). Configuració a `netlify.toml`.
 - Domini: `catalunya.uriocallaghan.com`, configurat com a domini personalitzat al projecte de Netlify. Cal un registre DNS `CNAME catalunya -> <projecte>.netlify.app` al proveïdor DNS de uriocallaghan.com.
 - No afegir pas de build.
+- GitHub (`main`) és la font de veritat: publicar només fent push a `main`. No desplegar mai amb `netlify deploy` ni pujant fitxers a mà. Fer `git pull` abans de començar a editar, i commit i push en acabar.
 
 ## Codi
 - `assets/app.js` carrega `data/catalunya.json` amb `fetch` i dibuixa totes les seccions amb D3 v7 (vendoritzat a `assets/vendor/`).

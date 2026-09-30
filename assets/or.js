@@ -129,7 +129,7 @@ function drawSalOz(shown){
   const R0='<span class="m">Toca una barra.</span>';
   const sel=d=>{ g.attr('opacity',o=>o===d?1:.5); $('#rSalOz').innerHTML=`<b>${d.y}</b>: sou brut de ${fmt(d.e)} €, a ${fmt(gE(d.y))} € l’unça: <b>${fmt(d.oz,1)} unces</b>, ${fmt(d.oz*OZ,0)} grams d’or.`; };
   const clear=()=>{ g.attr('opacity',1); $('#rSalOz').innerHTML=R0; };
-  g.on('pointerenter',(e,d)=>sel(d)).on('click',(e,d)=>sel(d)); svg.on('pointerleave',e=>{ if(e.pointerType==='mouse') clear(); }); CLEARS.push([svg.node(),clear]);
+  g.on('pointerenter',(e,d)=>sel(d)).on('click',(e,d)=>sel(d)); svg.on('pointerleave',e=>{ if(e.pointerType==='mouse') clear(); }); Comu.setClear(svg.node(),clear);
   $('#rSalOz').innerHTML=R0;
 }
 
@@ -261,7 +261,7 @@ function drawHeat(shown){
     hl.style('display',null).attr('x',cx(c.b)).attr('y',cy(c.a)).attr('width',s).attr('height',s);
     $('#rHeat').innerHTML=`Comprant el <b>${c.a}</b> i venent el <b>${c.b}</b>: ${c.tot>=1?'guanyes':'perds'} <b>${pct(Math.abs(c.tot-1),0)}</b> de poder de compra, ${c.ann>=0?'+':'−'}${fmt(Math.abs(c.ann)*100,1)}% l’any.`; };
   svg.on('pointermove',pick).on('pointerdown',pick).on('pointerleave',e=>{ if(e.pointerType==='mouse'){ hl.style('display','none'); $('#rHeat').innerHTML=R0; } });
-  CLEARS.push([svg.node(),()=>{ hl.style('display','none'); $('#rHeat').innerHTML=R0; }]);
+  Comu.setClear(svg.node(),()=>{ hl.style('display','none'); $('#rHeat').innerHTML=R0; });
   $('#rHeat').innerHTML=R0;
 }
 

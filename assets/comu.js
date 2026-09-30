@@ -54,6 +54,8 @@ function onView(el, fn, th){
 // Ressaltat: desapareix en sortir del gràfic amb el ratolí o en tocar fora.
 const CLEARS=[];
 document.addEventListener('pointerdown',e=>{ for(let i=CLEARS.length-1;i>=0;i--){ const [n,f]=CLEARS[i]; if(!n.isConnected){ CLEARS.splice(i,1); continue; } if(!n.contains(e.target)) f(); } });
+// Una sola funció d'esborrar per gràfic: en redibuixar-lo, substitueix l'anterior
+const setClear=(node,f)=>{ for(let i=CLEARS.length-1;i>=0;i--) if(CLEARS[i][0]===node) CLEARS.splice(i,1); CLEARS.push([node,f]); };
 const pw=(svg,maxW)=>Math.min(svg.node().parentNode.clientWidth||Math.max(280,innerWidth-40),maxW);
 function sizeOf(svg,maxW,ratio,minH,maxH){ const W=pw(svg,maxW); const H=Math.round(Math.max(minH,Math.min(maxH,W*ratio))); svg.attr('viewBox',`0 0 ${W} ${H}`).attr('width',W).attr('height',H); svg.selectAll('*').remove(); svg.on('.',null); return [W,H]; }
 const drawOn=(path,dur,delay)=>{ if(RM) return; const n=path.node(), L=n.getTotalLength(); path.attr('stroke-dasharray',L+' '+L).attr('stroke-dashoffset',L).transition().delay(delay||0).duration(dur||1800).ease(d3.easeCubicInOut).attr('stroke-dashoffset',0).on('end',()=>path.attr('stroke-dasharray',null)); };
@@ -63,7 +65,7 @@ function crosshair(svg, x, y0, y1, onMove, onClear){
   const mv=e=>{ const [px]=d3.pointer(e,svg.node()); const xv=onMove(x.invert(Math.max(x.range()[0],Math.min(x.range()[1],px)))); if(xv==null) return; g.style('display',null).select('line').attr('x1',x(xv)).attr('x2',x(xv)); };
   const clear=()=>{ g.style('display','none'); onClear&&onClear(); };
   hit.on('pointermove',mv).on('pointerdown',mv).on('pointerleave',e=>{ if(e.pointerType==='mouse') clear(); });
-  CLEARS.push([svg.node(),clear]);
+  setClear(svg.node(),clear);
   return {g,clear};
 }
 function yGrid(svg,y,x0,x1,ticks,f){ const g=svg.append('g').attr('class','grid'); ticks.forEach(t=>{ g.append('line').attr('x1',x0).attr('x2',x1).attr('y1',y(t)).attr('y2',y(t)); svg.append('text').attr('class','ax').attr('x',x0).attr('y',y(t)-4).text(f(t)); }); }
@@ -86,5 +88,5 @@ function boot(draws,ids,after){
   if(document.fonts&&document.fonts.ready) document.fonts.ready.then(go); else go();
   return shown;
 }
-return {RM,$,$$,fmt,pct,C,MESOS,cap,de,kParse,kMake,kAdd,kDiff,kT,kLabel,mser,mean,series,OZ,onView,CLEARS,pw,sizeOf,drawOn,crosshair,yGrid,xAxis,ann,nearest,endLabels,seg,boot};
+return {RM,$,$$,fmt,pct,C,MESOS,cap,de,kParse,kMake,kAdd,kDiff,kT,kLabel,mser,mean,series,OZ,onView,CLEARS,setClear,pw,sizeOf,drawOn,crosshair,yGrid,xAxis,ann,nearest,endLabels,seg,boot};
 })();

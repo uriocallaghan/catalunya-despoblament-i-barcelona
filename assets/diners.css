@@ -20,3 +20,24 @@
 .big .t .m{ color:var(--muted); }
 .back{ color:var(--ink); text-underline-offset:2px; text-decoration-thickness:1px; }
 .rent-b{ cursor:pointer; }
+/* Deu anys (estratègia) */
+.netin{ display:flex; align-items:baseline; justify-content:center; gap:.5rem; font-size:15px; color:var(--muted); margin-top:1.4rem; }
+.netin .search{ width:6.5ch; text-align:center; font-size:clamp(1.8rem,5vw,2.4rem); font-weight:620; letter-spacing:-.05em; color:var(--red); margin:0; font-variant-numeric:tabular-nums; }
+.units{ display:grid; grid-template-columns:repeat(auto-fit,minmax(15rem,1fr)); gap:1.6rem 2rem; max-width:697px; margin:2rem auto 0; text-align:left; }
+.u .uh{ font-size:15px; color:var(--ink); letter-spacing:-.02em; }
+.u .uh b{ font-size:2rem; font-weight:640; letter-spacing:-.06em; color:var(--red); margin-right:.15rem; font-variant-numeric:tabular-nums; }
+.u .us{ font-size:12.5px; color:var(--muted); margin-bottom:.5rem; }
+.u .ub{ position:relative; height:20px; margin-top:4px; }
+.u .ub span{ display:block; height:100%; border-radius:2px; transition:width .6s ease; }
+.u .ub em{ position:absolute; left:6px; top:2px; font-style:normal; font-size:11.5px; color:var(--ink); font-weight:560; mix-blend-mode:multiply; }
+.ctrl{ display:flex; flex-wrap:wrap; justify-content:center; gap:.4rem 1.4rem; margin-top:1rem; font-size:13.5px; color:var(--muted); }
+.ctrl label{ display:flex; align-items:center; gap:.6rem; }
+.ctrl input[type=range]{ width:9rem; }
+.ctrl output{ color:var(--ink); font-weight:600; min-width:4.5ch; text-align:left; font-variant-numeric:tabular-nums; }
+.segs{ display:flex; flex-direction:column; align-items:center; gap:.1rem; }
+.segs .seg{ margin-top:.4rem; }
+.segs .cap{ font-size:12px; color:var(--muted); margin-top:.7rem; }
+.plan{ text-align:left; max-width:34rem; margin:1.5rem auto 0; padding:0; list-style:none; counter-reset:p; }
+.plan li{ counter-increment:p; position:relative; padding-left:2.4rem; margin-bottom:1.3rem; color:var(--text); }
+.plan li::before{ content:counter(p); position:absolute; left:0; top:-.1rem; font-size:1.6rem; font-weight:640; letter-spacing:-.06em; color:var(--red); }
+.plan li b{ color:var(--ink); font-weight:600; }

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Què pot fer un autònom amb un sou normal davant de la inflació i el preu de l’habitatge? Gràfics interactius per decidir els pròxims deu anys: tarifes, estalvi, entrada d’un pis, productes propis i risc.">
+<meta property="og:title" content="Deu anys: què faig amb el que guanyo">
+<meta property="og:description" content="Gràfics que s’adapten al teu sou per decidir els pròxims deu anys com a autònom: tarifes, estalvi, l’entrada d’un pis, productes propis i risc.">
+<meta property="og:url" content="https://catalunya.uriocallaghan.com/estrategia/">
+<meta property="og:type" content="article">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#F1F1EE">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://catalunya.uriocallaghan.com/estrategia/">
+<title>Deu anys: què faig amb el que guanyo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&display=swap" rel="stylesheet">
+<script src="../assets/vendor/d3.v7.8.5.min.js"></script>
+<script src="../assets/vendor/lenis.v1.3.26.min.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/diners.css">
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><a href="../"><b>Terra i gent</b></a><a href="../diners/">Diners</a><a href="../or/">Or</a><a href="../habitatge/">Casa</a><span>Deu anys</span></div>
+
+  <header>
+    <h1 id="h1"></h1>
+    <p class="lead" id="lead"></p>
+    <label class="netin">Cobro <input class="search" id="net" type="text" inputmode="decimal" value="2.000" aria-label="Ingressos nets al mes"> € nets al mes</label>
+    <div class="units" id="units"></div>
+    <p class="note">Mateix poder de compra en tots dos anys, descomptant l’IPC de Catalunya (INE). Pis: valor taxat a la província de Barcelona (Ministeri d’Habitatge). Or: Banc Mundial i BCE. Lloguer: contractes nous a Barcelona (Incasòl), comparat amb el primer any de la sèrie. <span id="upd"></span>.</p>
+  </header>
+
+  <section>
+    <h2>Si no apuges preus, et baixes el sou</h2>
+    <p id="freezeLede"></p>
+    <div class="slider"><span class="yr" id="fYr"></span><input type="range" id="fY" min="2010" step="1" value="2019" aria-label="Any des que no apuges preus"></div>
+    <svg class="viz" id="freeze" role="img" aria-label="Poder de compra d’uns ingressos que no s’actualitzen" style="max-width:697px"></svg>
+    <p class="readout" id="rFreeze" aria-live="polite"></p>
+  </section>
+
+  <section>
+    <h2 id="raceTitle"></h2>
+    <p id="raceLede"></p>
+    <div class="segs">
+      <span class="cap">Estalvio</span>
+      <div class="seg" role="group" aria-label="Part que estalvies"><button data-sr=".1" aria-pressed="false">10%</button><button data-sr=".2" aria-pressed="true">20%</button><button data-sr=".3" aria-pressed="false">30%</button><button data-sr=".4" aria-pressed="false">40%</button></div>
+      <span class="cap">per a un pis de</span>
+      <div class="seg" role="group" aria-label="Mida del pis"><button data-m2="50" aria-pressed="false">50 m²</button><button data-m2="70" aria-pressed="true">70 m²</button><button data-m2="90" aria-pressed="false">90 m²</button></div>
+      <span class="cap">i els pisos pugen</span>
+      <div class="seg" role="group" aria-label="Com pugen els pisos"><button data-hg="hab" aria-pressed="true">com fins ara</button><button data-hg="ipc" aria-pressed="false">com la inflació</button><button data-hg="flat" aria-pressed="false">gens</button></div>
+      <span class="cap">i els meus estalvis rendeixen</span>
+      <div class="seg" role="group" aria-label="Rendiment dels estalvis"><button data-sg="cash" aria-pressed="true">0%</button><button data-sg="inf" aria-pressed="false">com la inflació</button><button data-sg="more" aria-pressed="false">inflació + 3</button></div>
+    </div>
+    <svg class="viz" id="race" role="img" aria-label="Estalvi acumulat contra el preu de l’entrada d’un pis" style="max-width:697px"></svg>
+    <div class="gkey"><span><i style="background:var(--red)"></i>El teu estalvi</span><span><i style="background:var(--ink)"></i>L’entrada (30% del preu)</span></div>
+    <p class="readout" id="rRace" aria-live="polite"></p>
+    <p class="note">Simulació en euros de cada any. Les hipòtesis «com fins ara» fan servir els ritmes dels últims deu anys: preu de l’habitatge a la província de Barcelona, IPC de Catalunya i sou mitjà de Catalunya. No és una predicció.</p>
+  </section>
+
+  <section>
+    <h2 id="levTitle"></h2>
+    <p id="levLede"></p>
+    <svg class="viz" id="lev" role="img" aria-label="Quant afegeix al teu patrimoni d’aquí a deu anys cada millora" style="max-width:697px"></svg>
+    <p class="note">Patrimoni d’aquí a deu anys en euros d’avui, estalviant la part triada al gràfic anterior. Cada barra canvia una sola cosa respecte del cas base (ingrés constant, rendiment real zero). Els ingressos dels productes també s’estalvien en la mateixa proporció.</p>
+  </section>
+
+  <section>
+    <h2>Les hores tenen sostre. Els clients, no</h2>
+    <p id="dotsLede"></p>
+    <div class="ctrl">
+      <label>Et queda net <input type="range" id="keep" min="35" max="85" value="60"><output id="keepV">60%</output></label>
+      <label>Tarifa per hores <input type="range" id="rateH" min="20" max="120" step="5" value="40"><output id="rateHV">40 €/h</output></label>
+    </div>
+    <svg class="viz" id="dots" role="img" aria-label="Clients necessaris per cobrar el teu sou segons el preu" style="max-width:697px"></svg>
+    <p class="note" id="dotsKey"></p>
+    <p class="readout" id="rDots" aria-live="polite"></p>
+    <p class="note">Clients que paguen de manera continuada per igualar els teus ingressos nets. «Et queda net» és el que queda de cada euro facturat després d’IVA, IRPF, quota d’autònoms i comissions de les botigues d’apps o de pagament: ajusta-ho al teu cas. No compta els clients que marxen cada mes.</p>
+  </section>
+
+  <section>
+    <h2 id="rankTitle"></h2>
+    <p id="rankLede"></p>
+    <svg class="viz" id="rank" role="img" aria-label="Quant s’han multiplicat el sou, els preus, el lloguer, l’or i els diners" style="max-width:697px"></svg>
+    <p class="note">Mitjanes anuals. Sou: cost salarial mitjà per treballador a Catalunya (INE). Lloguer: Incasòl. Pis: valor taxat a la província de Barcelona. Or en euros: Banc Mundial i BCE. Diners: M3 de la zona euro (BCE). Escala logarítmica.</p>
+  </section>
+
+  <section>
+    <h2>Enriquir-se de pressa vol dir apostar. Mira com acaben les apostes</h2>
+    <p>Aquest gràfic és un joc, no una estadística: simula quatre-centes vides de deu anys. Cada any dediques una part del temps a llançar productes, i cada llançament té una probabilitat de funcionar i pagar-te cada mes a partir d’aleshores una quantitat semblant al teu sou. La resta del temps factures serveis. Cada punt és una vida, i la posició és el que has guanyat en total.</p>
+    <div class="ctrl"><label>Probabilitat que un llançament funcioni <input type="range" id="pWin" min="2" max="30" value="10"><output id="pWinV">10%</output></label></div>
+    <div class="seg" role="group" aria-label="Estratègia a ressaltar"><button data-sh="0" aria-pressed="false">Només serveis</button><button data-sh=".3" aria-pressed="true">70 / 30</button><button data-sh="1" aria-pressed="false">Tot a producte</button></div>
+    <svg class="viz" id="lives" role="img" aria-label="Ingressos totals en deu anys de quatre-centes vides simulades amb tres estratègies" style="max-width:697px"></svg>
+    <div class="gkey"><span><i style="background:var(--red)"></i>Guanyes més que ara</span><span><i style="background:var(--muted)"></i>Guanyes menys que ara</span></div>
+    <p class="readout" id="rLives" aria-live="polite"></p>
+    <p class="note">A temps complet, dos llançaments l’any; al 70 / 30, un cada vint mesos. Un producte que funciona et paga cada mes entre un terç i el doble dels teus ingressos actuals, fins al final de la dècada; els serveis, un 15% més o menys del que factures ara. Tot en euros d’avui, sense inflació ni estalvi. La forma importa més que les xifres: canvia la probabilitat i mira com es mouen els núvols.</p>
+  </section>
+
+  <section class="closing">
+    <h2>Una estratègia per als pròxims deu anys</h2>
+    <p id="close1"></p>
+    <ol class="plan">
+      <li><b>Primer, l’ingrés.</b> Amb poc capital, guanyar més pesa molt més que invertir bé. Posa preu al teu temps pensant en el valor que genera al client, no en les hores, i apuja les tarifes cada gener, com a mínim amb la inflació.</li>
+      <li><b>No venguis «disseny». Ven un resultat.</b> El disseny genèric i les apps genèriques es tornen commodity: la IA els fa barats per a tothom. El que no s’abarateix és el gust, saber quin problema val la pena resoldre i tenir la confiança d’un grup de clients. Tria un nínxol que coneguis bé i fes-t’hi conegut.</li>
+      <li><b>Converteix serveis en productes, a poc a poc.</b> Allò que fas cada setmana per a clients diferents (un sistema de disseny, una plantilla, un flux, una eina interna) pot ser un servei de preu tancat o un producte. Els gràfics de clients diuen que és més fàcil trobar cinquanta empreses que paguin 49 € que mil persones que en paguin 4.</li>
+      <li><b>Barra, no tot o res.</b> Mantén una base de serveis ben pagada que et cobreixi la vida i dedica una part fixa del temps a apostes petites i ràpides. Mata de pressa les que no funcionen. Així el pitjor cas és viure com ara, i el millor, que un producte et pagui un segon sou.</li>
+      <li><b>Distribució abans que codi.</b> Una app la pot fer qualsevol; un públic que et llegeix, no. Publica el procés, ensenya el que saps, construeix una llista de persones interessades abans de construir el producte.</li>
+      <li><b>Un coixí i, després, propietat.</b> Primer, uns quants mesos de despeses en un lloc segur: és el que et permet dir que no a un mal client o aguantar una aposta. Després, que una part del que guanyes es converteixi en actius que no depenguin de les teves hores: participacions en projectes, productes propis, i inversió diversificada i de cost baix, sense concentrar-ho tot en una sola cosa.</li>
+      <li><b>El pis no és una carrera que hagis de guanyar ara.</b> Mira el gràfic de l’entrada: si els preus segueixen com fins ara, estalviar sol no hi arriba. El que hi arriba és un ingrés més alt. Llogar mentre fas créixer l’ingrés no és perdre: és no lligar-te abans d’hora.</li>
+    </ol>
+    <p class="note" style="margin-top:1.5rem">Aquesta pàgina fa servir dades públiques i models simplificats. No és assessorament financer ni fiscal: per a les decisions concretes, parla amb un gestor.</p>
+    <div class="sources">
+      <p class="note" style="margin:0">Fonts</p>
+      <ul>
+        <li>INE. <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=24078">Índex de preus de consum per comunitats autònomes</a> i <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=59392">Enquesta trimestral de cost laboral</a>.</li>
+        <li>Ministeri d’Habitatge i Agenda Urbana. <a href="https://apps.fomento.gob.es/BoletinOnline2/?nivel=2&orden=35000000">Valor taxat de l’habitatge lliure</a>.</li>
+        <li>Incasòl. <a href="https://analisi.transparenciacatalunya.cat/d/qww9-bvhh">Preu mitjà del lloguer d’habitatges per municipi</a>, Dades obertes de Catalunya.</li>
+        <li>Banc Mundial, <a href="https://www.worldbank.org/en/research/commodity-markets">Pink Sheet</a>, i Banc Central Europeu, <a href="https://data.ecb.europa.eu/">ECB Data Portal</a>.</li>
+      </ul>
+    </div>
+    <p class="note" style="margin-top:2rem"><a href="../habitatge/" class="back">← La casa</a> · <a href="../or/" class="back">Mesurat en or</a> · <a href="../diners/" class="back">Diners de paper</a></p>
+  </section>
+  <footer></footer>
+</main>
+
+<script src="../assets/comu.js"></script>
+<script src="../assets/estrategia.js"></script>
+</body>
+</html>

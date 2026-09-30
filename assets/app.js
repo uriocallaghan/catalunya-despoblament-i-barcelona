@@ -13,6 +13,7 @@ const W=D.W, H=D.H;
 const MUN=D.mun.map((r,i)=>({i,n:r[0],c:r[1],com:D.coms[r[1]],p:r[2],a:r[3],alt:r[4],cx:r[5],cy:r[6],dx:r[7],dy:r[8],dr:r[9],d:r[2]/r[3]}));
 const TP=d3.sum(MUN,m=>m.p), TA=d3.sum(MUN,m=>m.a);
 const byName=new Map(MUN.map(m=>[m.n.toLowerCase(),m]));
+Object.entries(D.aliases||{}).forEach(([oldName,name])=>{ const m=byName.get(name.toLowerCase()); if(m) byName.set(oldName.toLowerCase(),m); });
 const proj=d3.geoMercator().scale(D.scale).translate(D.translate);
 const gp=d3.geoPath(proj);
 const OBJ=D.topo.objects.m;
@@ -170,14 +171,15 @@ function labels(delay){
 }
 const READ0=()=>{ if(st.mode==='map') return '<span class="m">Toca un municipi o passa al cartograma.</span>';
   const t=Math.round(st.t), tot=totT(t), bcn=popT(BCN,t);
-  if(isData(t)) return `L’any <b>${t}</b> Catalunya tenia ${fmt(tot)} habitants. Barcelona n’era el ${pct(bcn/tot,0)} i ocupa el mateix tros del mapa. <span class="m">Toca un municipi.</span>`;
-  const {k}=seg(t); return `<b>${t}</b>: Catalunya tenia uns ${fmt(Math.round(tot/1e4)*1e4)} habitants. Barcelona, prop del ${pct(bcn/tot,0)}. <span class="m">No hi ha dades municipals d’aquest any: el mapa s’interpola entre el ${YR[k]} i el ${YR[k+1]}.</span>`; };
+  if(isData(t)) return `L’any <b>${t}</b> aquesta sèrie suma ${fmt(tot)} habitants. Barcelona n’era el ${pct(bcn/tot,0)}, la seva superfície objectiu al cartograma. <span class="m">Toca un municipi.</span>`;
+  const {k}=seg(t); return `<b>${t}</b>: aquesta sèrie interpolada suma uns ${fmt(Math.round(tot/1e4)*1e4)} habitants. Barcelona, prop del ${pct(bcn/tot,0)}. <span class="m">No hi ha dades municipals d’aquest any: el mapa s’interpola entre el ${YR[k]} i el ${YR[k+1]}.</span>`; };
 const bH=hoverable(bSvg,bPs,m=>{
-  if(st.mode==='map'){ $('#rDor').innerHTML=muniHTML(m)+`<br><span class="m">Al mapa real ocupa el ${pct(m.a/TA)} de Catalunya; al cartograma del 2025, el ${pct(m.p/TP)}.</span>`; return; }
+  if(st.mode==='map'){ $('#rDor').innerHTML=muniHTML(m)+`<br><span class="m">Al mapa real ocupa el ${pct(m.a/TA)} de Catalunya; el ${pct(m.p/TP)} és la seva superfície objectiu al cartograma del 2025.</span>`; return; }
   const t=Math.round(st.t), v=popT(m,t), {k}=seg(t), exact=isData(t);
-  $('#rDor').innerHTML=`<b>${m.n}</b> <span class="m">${m.com}</span><br>`+(MERGED[k].has(m.i)
-    ? `<span class="m">El ${YR[k]} encara formava part d’un altre municipi. Es compta amb aquell, amb la mateixa densitat.</span>`
-    : `<span class="num">${exact?'':'Uns '}${fmt(exact?v:Math.round(v/(v>1000?100:10))*(v>1000?100:10))} habitants el ${t}${exact?'':' (interpolat)'}: ocupa el ${pct(v/totT(t))} del cartograma i el ${pct(m.a/TA)} del territori.</span>`);
+  const estimated=exact ? MERGED[YR.indexOf(t)].has(m.i) : MERGED[k].has(m.i)||MERGED[k+1].has(m.i);
+  $('#rDor').innerHTML=`<b>${m.n}</b> <span class="m">${m.com}</span><br>`+(estimated
+    ? `<span class="m">${fmt(v)} habitants estimats el ${t}${exact?'':' (interpolat)'}. Una dada absent dins del grup obliga a repartir-ne la població per superfície, també als municipis d’origen. No és una reconstrucció exacta del terme històric.</span>`
+    : `<span class="num">${exact?'':'Uns '}${fmt(exact?v:Math.round(v/(v>1000?100:10))*(v>1000?100:10))} habitants el ${t}${exact?'':' (interpolat)'}: el ${pct(v/totT(t))} de la població representada i el ${pct(m.a/TA)} del territori actual.</span>`);
 },()=>{ $('#rDor').innerHTML=READ0(); });
 function yearUI(){ const t=Math.round(st.t); $('#dorYearOut').textContent=t; $('#dorYear').value=t; $$('#dorTicks i').forEach(i=>i.classList.toggle('on',+i.dataset.y===t)); }
 // Anima l'any mostrat (i, si cal, la barreja mapa-cartograma) fins a l'objectiu.
@@ -205,7 +207,7 @@ $('#dorYear').addEventListener('input',e=>{ if(st.play){ st.play=null; $('#dorPl
 shapeAt(st.t); yearUI(); $('#rDor').innerHTML=READ0();
 onView($('#mDor'),()=>{ st.shown=true; revealFill(bPs,m=>dcol(densNow(m))); });
 const errs=CA.err.map(e=>e*100);
-$('#cartNote').textContent=`Mètode: cartograma de difusió de Gastner i Newman (PNAS, 2004) sobre una projecció azimutal d’àrea igual de Lambert, en una malla de 512 × 512 cel·les i refinat en fins a 5 iteracions. Error d’àrea mitjà, ponderat per població: entre el ${fmt(d3.min(errs),1)}% i el ${fmt(d3.max(errs),1)}% segons l’any. Fins al 1991, població de fet dels censos; des del 2001, padró municipal (Idescat). Els municipis que encara no existien es compten amb el d’on es van segregar. Hi ha dades de ${NY} anys (les marques del control); entre dos d’ells, el mapa s’interpola. Tots els anys ocupen la mateixa superfície total: el que canvia és com es reparteix. El color és la densitat de cada any.`;
+$('#cartNote').textContent=`Mètode: difusió de Gastner i Newman (PNAS, 2004), projecció d’àrea igual de Lambert, malla de 512 × 512 i fins a 5 iteracions. Error d’àrea final, ponderat per població: ${fmt(d3.min(errs),1)}–${fmt(d3.max(errs),1)}% segons l’any, després de simplificar i quantitzar. Fins al 1991, població de fet de censos i padrons referida als municipis existents el 1991; 1998–2021, padró; 2025, cens anual (Idescat). Els buits s’imputen per superfície dins de grups documentats o inferits del veïnat i de la variació demogràfica: no són genealogies municipals certificades. Hi ha ${NY} anys de referència; entre ells s’interpolen població i geometria. Tots els mapes s’ajusten a la mateixa caixa, no a una àrea total idèntica.`;
 }).catch(e=>console.error(e));
 
 /* =========== 5. PICS =========== */
@@ -290,7 +292,7 @@ $('#lorIn').addEventListener('input',updLor);
 /* =========== 8. ALTITUD =========== */
 const ALTB=[[0,100,'< 100 m'],[100,500,'100–500 m'],[500,1000,'500–1.000 m'],[1000,3000,'> 1.000 m']];
 const altS=ALTB.map(([a,b,l])=>{ const ms=MUN.filter(m=>m.alt>=a&&m.alt<b); return {l,n:ms.length,a:d3.sum(ms,m=>m.a),p:d3.sum(ms,m=>m.p)}; });
-$('#altTitle').textContent=`El ${pct(altS[0].p/TP,0)} de la gent viu per sota dels 100 metres`;
+$('#altTitle').textContent=`El ${pct(altS[0].p/TP,0)} de la gent viu en municipis amb la capital sota els 100 metres`;
 function drawAlt(){
   const svg=d3.select('#alt'); const Wd=Math.min(svg.node().parentNode.clientWidth,697), Hd=Math.round(Math.max(320,Math.min(520,Wd*.66))); const m={l:44,r:10,t:40,b:34};
   svg.attr('viewBox',`0 0 ${Wd} ${Hd}`).attr('width',Wd).attr('height',Hd); svg.selectAll('*').remove();
@@ -317,8 +319,8 @@ const hipTop=HIP.reduce((k,a,i)=>a>0?i:k,0);
 const hipMed=(()=>{ let c=0; for(let i=0;i<HB;i++){ c+=HIP[i]; if(c>=HTA/2) return (i+(HTA/2-(c-HIP[i]))/HIP[i])*100; } })();
 const hip1000=d3.sum(HIP.slice(10))/HTA, popLow=hipPop[0]/TP;
 $('#hipTitle').textContent=`Però només el ${pct(HIP[0]/HTA,0)} del territori és per sota dels 100 metres`;
-$('#hipLede').textContent=`La meitat del sòl de Catalunya és per sobre dels ${fmt(Math.round(hipMed/10)*10)} metres i el ${pct(hip1000,0)} passa dels 1.000. A l’esquerra, quanta terra hi ha a cada altitud; a la dreta, quanta gent hi viu.`;
-$('#hipNote').textContent=`Territori: model digital d’elevacions Copernicus GLO-90 (ESA), ${fmt(HTA)} km² en píxels de 90 m dins del límit de Catalunya. Població: cada municipi, a l’altitud del seu nucli (Idescat). Franges de 100 metres.`;
+$('#hipLede').textContent=`La meitat de la superfície estimada de Catalunya és per sobre dels ${fmt(Math.round(hipMed/10)*10)} metres i el ${pct(hip1000,0)} passa dels 1.000. A l’esquerra, superfície per altitud; a la dreta, població classificada per l’altitud del nucli capital municipal.`;
+$('#hipNote').textContent=`Territori: model digital de superfície Copernicus GLO-90 (inclou vegetació i edificacions), ${fmt(HTA)} km² mostrejats dins del límit de Catalunya, resolució nominal d’uns 90 m. Població: tota la del municipi a l’altitud del punt central del nucli capital (Idescat); no és l’altitud de cada domicili. Franges de 100 m. Adscripció comarcal a 1 de gener de 2025.`;
 let hipShown=false;
 function drawHip(){
   const svg=d3.select('#hip'); const Wd=Math.min(svg.node().parentNode.clientWidth,646), rows=hipTop+1, rh=Wd<500?9:11, top=26, Hd=top+rows*rh+8;
@@ -436,7 +438,9 @@ function cLayout(){
   for(let i=0;i<380;i++){ sim.tick(); nodes.forEach(d=>{ d.x=Math.max(d.r,Math.min(cart.W-d.r,d.x)); d.y=Math.max(d.r,Math.min(cart.H-d.r,d.y)); }); }
   const o={}; nodes.forEach(d=>o[d.id]=d); cart.cache[key]=o; return o;
 }
+const CHANGED_COM=new Set(['Bages','Osona','Vallès Oriental','Segarra','Solsonès']);
 const cDens=(c,y)=>{ if(y===null||y===2025) return c.d; const v=popAt(c,y); return v?v/c.a:c.d; };
+const cFill=(c,y)=>y!==null&&y!==2025&&CHANGED_COM.has(c.n)?LAND:dcol(cDens(c,y));
 const fsFor=(c,r)=>Math.min(15,(2*r*.88)/(c.s.length*.52));
 function drawCart(){
   const svg=d3.select('#cart'); const Wd=Math.min(svg.node().parentNode.clientWidth,646); let instant=false;
@@ -450,30 +454,31 @@ function drawCart(){
   ge.append('text').attr('class','blab').attr('dy','.36em').attr('x',d=>L[d.n].x).attr('y',d=>L[d.n].y).attr('opacity',0);
   g=ge.merge(g);
   const t=svg.transition().duration(instant||RM?0:1150).ease(d3.easeCubicInOut);
-  g.select('circle').transition(t).attr('cx',d=>L[d.n].x).attr('cy',d=>L[d.n].y).attr('r',d=>cart.shown?L[d.n].r:0).attr('fill',d=>dcol(cDens(d,y)))
+  g.select('circle').transition(t).attr('cx',d=>L[d.n].x).attr('cy',d=>L[d.n].y).attr('r',d=>cart.shown?L[d.n].r:0).attr('fill',d=>cFill(d,y))
     .attr('stroke',d=>d.n===cart.sel?INK:BG).attr('stroke-width',d=>d.n===cart.sel?2.2:.8);
-  g.select('text').text(d=>d.s).attr('fill',d=>dcls(cDens(d,y))>=4?BG:INK).transition(t).attr('x',d=>L[d.n].x).attr('y',d=>L[d.n].y)
+  g.select('text').text(d=>d.s).attr('fill',d=>cFill(d,y)===LAND?INK:dcls(cDens(d,y))>=4?BG:INK).transition(t).attr('x',d=>L[d.n].x).attr('y',d=>L[d.n].y)
     .attr('font-size',d=>Math.max(6,fsFor(d,L[d.n].r))).attr('opacity',d=>cart.shown&&fsFor(d,L[d.n].r)>=8.5?1:0);
 }
 function cRead(){
   const y=cYear(), c=cart.sel?byC[cart.sel]:null; let s;
   if(!c) s = cart.mode==='area' ? '<span class="m">Mida segons els km² de cada comarca. Toca una bombolla.</span>' : (y===2025 ? 'El Barcelonès engoleix el mapa. L’Alta Ribagorça és un punt.' : `Catalunya l’any ${y}: ${fmt(d3.sum(C,cc=>popAt(cc,y)))} habitants.`);
   else if(y===null) s=`<b>${cap(withArt(c))}</b>: ${fmt(c.a)} km² i ${fmt(c.p)} habitants.`;
-  else { const v=popAt(c,y); s = v ? `<b>${cap(withArt(c))}</b> l’any ${y}: ${fmt(v)} habitants.` + (y!==2025&&c.h ? ` <span class="m">Avui: ${fmt(c.p)} (${c.p>=v?'+':'−'}${fmt(Math.abs(c.p/v-1)*100)}%).</span>` : '') : `El ${y}, els municipis ${de(c)} formaven part d’altres comarques.`; }
+  else { const v=popAt(c,y); s = v ? `<b>${cap(withArt(c))}</b> l’any ${y}: ${fmt(v)} habitants.` + (y!==2025&&c.h ? CHANGED_COM.has(c.n)?` <span class="m">El territori comarcal ha canviat: el recompte actual (${fmt(c.p)}) no és directament comparable. Color neutre perquè no es calcula densitat històrica amb l’àrea actual.</span>`:` <span class="m">Avui: ${fmt(c.p)} (${c.p>=v?'+':'−'}${fmt(Math.abs(c.p/v-1)*100)}%).</span>` : '') : `El ${y}, els municipis ${de(c)} formaven part d’altres comarques.`; }
   $('#rCart').innerHTML=s;
 }
 $$('[data-cart]').forEach(b=>b.addEventListener('click',()=>{ cart.mode=b.dataset.cart; $$('[data-cart]').forEach(x=>x.setAttribute('aria-pressed',x===b)); $('#yearBox').hidden=cart.mode!=='pop'; cRead(); drawCart(); }));
 $('#yearIn').addEventListener('input',e=>{ cart.yi=+e.target.value; $('#yearOut').textContent=YOPTS[cart.yi]; cRead(); drawCart(); });
 
 /* =========== 11. FANTASMES =========== */
-// Comarques amb menys habitants avui que el 1900. Cada punt són 500 persones del 1900: les que ja no hi són queden buides.
-const GH=C.filter(c=>c.h).map(c=>{ let now=c.p; if(c.n==='Bages') now+=byC['Moianès'].p; if(c.n==='Osona') now+=byC['Lluçanès'].p;
-  return {c,series:[...c.h,now],now,y1900:c.h[4]}; }).filter(g=>g.now<g.y1900).sort((a,b)=>a.now/a.y1900-b.now/b.y1900);
+// Saldo de població, no seguiment de les mateixes persones. No es comparen els territoris amb canvis comarcals indicats.
+const GH=C.filter(c=>c.h&&!CHANGED_COM.has(c.n)).map(c=>({c,series:[...c.h,c.p],now:c.p,y1900:c.h[4]})).filter(g=>g.now<g.y1900).sort((a,b)=>a.now/a.y1900-b.now/b.y1900);
 $('#ghostTitle').textContent=`${GH.length} comarques tenen avui menys habitants que l’any 1900`;
 $('#ghostLede').textContent=`Mentrestant, Catalunya ha passat d’${fmt(1.966382,2)} a ${fmt(8.124126,2)} milions de persones, i el Barcelonès, de ${fmt(570253)} a ${fmt(2398280)}.`;
 const GPER=500, GCOLS=10, GD=11;
+const histStart=d3.sum(C,c=>c.h?c.h[0]:0);
+$('#closingPop').textContent=`Entre el 1857 i el 2025 la població de Catalunya s’ha multiplicat per ${fmt(CTP/histStart,1)}. La concentració actual a Barcelona i altres nuclis contrasta amb aquestes ${GH.length} comarques, que tenen menys població que el 1900.`;
 $('#ghosts').innerHTML=GH.map((g,k)=>{
-  const n=Math.round(g.y1900/GPER), keep=n-Math.max(1,Math.round((g.y1900-g.now)/GPER)), rows=Math.ceil(n/GCOLS), w=GCOLS*GD, h=rows*GD;
+  const n=Math.round(g.y1900/GPER), keep=n-Math.round((g.y1900-g.now)/GPER), rows=Math.ceil(n/GCOLS), w=GCOLS*GD, h=rows*GD;
   const dots=d3.range(n).map(i=>`<circle cx="${(i%GCOLS)*GD+GD/2}" cy="${Math.floor(i/GCOLS)*GD+GD/2}" r="4" fill="${RED}" stroke="${RED}" stroke-width="1.2"${i>=keep?' class="lost"':''}/>`).join('');
   const sw=w, sh=34, xs=d3.scaleLinear().domain([1857,2025]).range([2,sw-2]), ys=d3.scaleLinear().domain([0,d3.max(g.series)]).range([sh-3,3]);
   const line=d3.line().x((v,i)=>xs(YEARS[i])).y(v=>ys(v)).curve(d3.curveMonotoneX)(g.series);
@@ -534,9 +539,9 @@ const sx=new Float32Array(NC),sy=new Float32Array(NC),tx=new Float32Array(NC),ty
   let k=0; for(let c=5;c>=0;c--) byCat[c].forEach(cid=>{ tx[cid]=k%GC; ty[cid]=Math.floor(k/GC); k++; });
   for(let i=0;i<NC;i++) dl[i]=rr()*.35; })();
 let gT=0,gTo=0,gMode='all',gRaf=0;
-const GTXT={all:`${fmt(NC-CN[0])} cel·les habitades i ${fmt(CN[0])} de buides.`, empty:`${fmt(CN[0])} cel·les sense ningú: el ${pct(CN[0]/NC)} del territori.`,
-  most:`Les ${fmt(CN[2]+CN[3]+CN[4]+CN[5])} cel·les amb 100 habitants o més, el ${pct((CN[2]+CN[3]+CN[4]+CN[5])/NC)} del territori, apleguen el 98,5% de la població.`,
-  half:`Només ${fmt(CN[4]+CN[5])} cel·les, el ${pct((CN[4]+CN[5])/NC)} del territori, apleguen el 50,6% de la població.`};
+const GTXT={all:`${fmt(NC-CN[0])} cel·les habitades i ${fmt(CN[0])} de buides.`, empty:`${fmt(CN[0])} cel·les sense ningú: el ${pct(CN[0]/NC)} de les cel·les.`,
+  most:`Les ${fmt(CN[2]+CN[3]+CN[4]+CN[5])} cel·les amb 100 habitants o més, el ${pct((CN[2]+CN[3]+CN[4]+CN[5])/NC)} de les cel·les, apleguen el 98,5% de la població.`,
+  half:`Només ${fmt(CN[4]+CN[5])} cel·les, el ${pct((CN[4]+CN[5])/NC)} de les cel·les, apleguen el 50,6% de la població.`};
 const gSt=c=>{ if(gMode==='all') return [GCOL[c],1]; if(gMode==='empty') return c===0?[R[3],1]:[GCOL[c],.14];
   if(gMode==='most') return c===0?[LAND,.5]:(c===1?[GCOL[1],.3]:[GCOL[c],1]); return c>=4?[R[5],1]:(c===0?[LAND,.45]:[GCOL[c],.14]); };
 const eIO=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
@@ -560,8 +565,8 @@ $('#rGrid').textContent=GTXT.all;
 const svReady=fetch('data/serveis.json').then(r=>r.json()).then(SV=>{
 const METRO=new Set(['Barcelonès','Baix Llobregat','Vallès Occidental','Vallès Oriental','Maresme']);
 /* --- 14a. El llindar: quins serveis té un municipi segons la mida --- */
-const SVS=[['primaria','Escola primària','escola'],['farmacia','Farmàcia','farmàcia'],['biblioteca_publica','Biblioteca pública','biblioteca'],['eso','Institut (ESO)','institut'],
-  ['batxillerat','Batxillerat','batxillerat'],['piscina_coberta','Piscina coberta','piscina coberta'],['estacio_tren','Estació de tren','estació de tren'],['cinema','Cinema','cinema'],['hospital','Hospital públic','hospital']];
+const SVS=[['primaria','Centre amb primària','centre'],['farmacia','Farmàcia','farmàcia'],['biblioteca_publica','Biblioteca pública','biblioteca'],['eso','Centre amb ESO','centre'],
+  ['batxillerat','Batxillerat','batxillerat'],['piscina_coberta','Piscina coberta','piscina coberta'],['estacio_tren','Estació de tren','estació de tren'],['cinema','Cinema','cinema'],['hospital','Hospital SISCAT','hospital']];
 const has=(k,m)=>SV.n[k][m.i]>0;
 const byLogP=[...MUN].sort((a,b)=>a.p-b.p);
 // Regressió logística: probabilitat que un municipi tingui el servei segons log10(habitants). Ajust per Newton-Raphson.
@@ -575,8 +580,8 @@ const at=(k,x)=>{ const i=Math.max(0,Math.min(XS.length-1,Math.round((x-1)/.05))
 // Població a partir de la qual la meitat dels municipis tenen el servei.
 const half=k=>Math.pow(10,-FIT[k].a/FIT[k].b);
 const u1000=MUN.filter(m=>m.p<1000);
-$('#svTitle').textContent='Cada servei necessita un mínim de gent';
-$('#svLede').textContent=`La meitat dels municipis tenen farmàcia a partir d’uns ${fmt(Math.round(half('farmacia')/100)*100)} habitants, institut a partir de ${fmt(Math.round(half('eso')/500)*500)} i cinema a partir de ${fmt(Math.round(half('cinema')/5000)*5000)}. Però el ${pct(u1000.length/947,0)} dels municipis catalans no arriba als 1.000 habitants. Mou el control o busca el teu municipi.`;
+$('#svTitle').textContent='Com varia la presència de serveis amb la mida del municipi';
+$('#svLede').textContent=`El model estima una probabilitat del 50% de tenir farmàcia al voltant de ${fmt(Math.round(half('farmacia')/100)*100)} habitants, un centre amb ESO al voltant de ${fmt(Math.round(half('eso')/500)*500)} i cinema al voltant de ${fmt(Math.round(half('cinema')/5000)*5000)}. El ${pct(u1000.length/947,0)} dels municipis no arriba als 1.000 habitants. Mou el control o busca el teu municipi.`;
 let svX=3, svM=null;
 function drawLad(){
   const svg=d3.select('#svLad'); const Wd=Math.min(svg.node().parentNode.clientWidth,646), Hd=Math.round(Math.max(300,Math.min(400,Wd*.62))), m={l:36,r:Wd<500?8:96,t:14,b:34};
@@ -612,10 +617,10 @@ function updLad(){
   let html;
   if(svM){ const m=svM;
     html=`<div class="hd"><b>${m.n}</b> <span class="m">· ${m.com} · ${fmt(m.p)} habitants</span></div>`+SVS.map(([k,l])=>{ const y1=has(k,m), dk=SV.d[k]&&SV.d[k][m.i];
-      const extra = y1 ? (SV.n[k][m.i]>1?`${fmt(SV.n[k][m.i])} al municipi`:'al municipi') : (k==='hospital' ? `urgències a ${fmt(SV.min[m.i])} min en cotxe` : (dk?`el més proper, a ${fmt(dk,1)} km`:'no n’hi ha'));
+      const extra = y1 ? (SV.n[k][m.i]>1?`${fmt(SV.n[k][m.i])} al municipi`:'al municipi') : (k==='hospital' ? `dispositiu d’urgències a ${fmt(SV.min[m.i])} min segons el model` : (dk?`el més proper, a ${fmt(dk,1)} km`:'no consta al municipi'));
       return `<div class="it"><i style="background:${y1?RED:'transparent'}"></i><span><b>${SVS.findIndex(d=>d[0]===k)+1}. ${l}</b><small>${extra}</small></span></div>`; }).join('');
   } else {
-    html=`<div class="hd">Dels municipis d’uns <b>${$('#svNout').textContent} habitants</b>, quants tenen…</div>`+SVS.map(([k,l])=>{ const v=at(k,svX);
+    html=`<div class="hd">Probabilitat estimada per a un municipi d’uns <b>${$('#svNout').textContent} habitants</b></div>`+SVS.map(([k,l])=>{ const v=at(k,svX);
       return `<div class="it"><i style="background:${rgba(RED,v)}"></i><span><b>${SVS.findIndex(d=>d[0]===k)+1}. ${l}</b><small>${pct(v,0)}</small></span></div>`; }).join('')+
       `<div class="hd" style="margin:.5rem 0 0;font-size:13px;color:var(--muted)">${fmt(smaller.length)} municipis són més petits: el ${pct(d3.sum(smaller,m=>m.a)/TA,0)} del territori i el ${pct(d3.sum(smaller,m=>m.p)/TP)} de la gent.</div>`;
   }
@@ -623,7 +628,7 @@ function updLad(){
 }
 $('#svN').addEventListener('input',e=>{ svX=+e.target.value; svM=null; $('#svQ').value=''; updLad(); });
 $('#svQ').addEventListener('change',e=>{ const m=byName.get(e.target.value.trim().toLowerCase()); if(!m) return; svM=m; svX=Math.log10(Math.max(m.p,10)); $('#svN').value=svX; updLad(); });
-$('#svNote').textContent='Corbes de regressió logística: probabilitat que un municipi tingui el servei segons el seu nombre d’habitants, ajustada amb els 947 municipis. Els números marquen on cada corba passa del 50% (o del 75%). Les ratlletes de sota són els municipis. Centres docents del curs 2025/26; farmàcies i hospitals de la xarxa pública, 2026; biblioteques i cinemes, 2025; estacions de Renfe i FGC (sense metro). Les distàncies són en línia recta des de l’ajuntament.';
+$('#svNote').textContent='Regressió logística de presència segons població, ajustada amb els 947 municipis; no determina un mínim necessari ni mesura capacitat o accessibilitat. Números: 50% o 75%; ratlletes: municipis. Centres docents autoritzats 2025/26 (inclou aules hospitalàries); farmàcies i hospitals SISCAT, 2026; biblioteques i cinemes, 2025; esport, dades 2024; estacions Renfe/FGC, sense metro. Hospitals SISCAT: titularitats públiques i privades d’utilització pública. Distàncies externes en línia recta des del punt municipal de referència (ajuntament o centroide); si el servei consta dins el municipi, s’hi assigna zero.';
 
 /* --- 14b. Temps fins a urgències --- */
 let hoT=30, hoShown=false;
@@ -631,12 +636,12 @@ const HB=[10,20,30,45,60], HC=[R[0],R[1],R[3],R[4],R[5],R[7]];
 const hcls=v=>{ for(let i=0;i<HB.length;i++) if(v<HB[i]) return i; return HB.length; };
 const hoFill=m=>{ const v=SV.min[m.i]; return v>hoT ? HC[hcls(v)] : LAND; };
 const over=t=>MUN.filter(m=>SV.min[m.i]>t);
-{ const o=over(30); $('#hoTitle').textContent=`${fmt(Math.round(d3.sum(o,m=>m.p)/1000)*1000)} persones viuen a més de mitja hora d’unes urgències`; }
+{ const o=over(30); $('#hoTitle').textContent=`${fmt(Math.round(d3.sum(o,m=>m.p)/1000)*1000)} habitants en municipis amb més de mitja hora modelitzada fins a urgències`; }
 const hSvg2=baseMap('#mHosp');
 const hoRead=()=>{ const o=over(hoT), p=d3.sum(o,m=>m.p);
-  return `<b>${fmt(p)} persones</b> (${pct(p/TP)}) viuen a més de ${hoT} minuts. Els seus ${fmt(o.length)} municipis ocupen el <b>${pct(d3.sum(o,m=>m.a)/TA,0)}</b> del territori. <span class="m">Toca un municipi.</span>`; };
+  return `<b>${fmt(p)} habitants</b> (${pct(p/TP)}) viuen en ${fmt(o.length)} municipis amb un temps modelitzat superior a ${hoT} minuts. Ocupen el <b>${pct(d3.sum(o,m=>m.a)/TA,0)}</b> del territori. <span class="m">Toca un municipi.</span>`; };
 const hoL=muniLayer(hSvg2,()=>LAND,m=>{ const h=MUN[SV.hosp[m.i]];
-  $('#rHosp').innerHTML=`<b>${m.n}</b> <span class="m">${m.com}</span><br><span class="num">${fmt(SV.min[m.i])} minuts en cotxe (${fmt(SV.km[m.i])} km) fins a l’hospital ${h===m?'del mateix municipi':pr('de',h.n)}.</span>`; },()=>{ $('#rHosp').innerHTML=hoRead(); });
+  $('#rHosp').innerHTML=`<b>${m.n}</b> <span class="m">${m.com}</span><br><span class="num">${fmt(SV.min[m.i])} minuts modelitzats en cotxe (${fmt(SV.km[m.i])} km) fins al dispositiu ${h===m?'del mateix municipi':pr('de',h.n)}.</span>`; },()=>{ $('#rHosp').innerHTML=hoRead(); });
 meshLayer(hSvg2,'mesh',COMMESH); meshLayer(hSvg2,'outline',OUTLINE);
 const hosDots=hSvg2.append('g').style('pointer-events','none').selectAll('circle').data(SV.hospitals).join('circle').attr('transform',d=>`translate(${proj([d[0],d[1]])})`).attr('r',0).attr('fill',INK).attr('stroke',BG).attr('stroke-width',1.5).style('vector-effect','non-scaling-stroke');
 function hoPaint(){ $('#hoTout').textContent=hoT+'′'; if(hoShown) paint(hoL.ps,hoFill); $('#rHosp').innerHTML=hoRead(); }
@@ -645,20 +650,21 @@ $('#legHosp').innerHTML=HC.map((c,i)=>`<div><i style="background:${c}"></i><span
 hoPaint();
 onView($('#mHosp'),()=>{ hoShown=true; revealFill(hoL.ps,hoFill); hosDots.transition().delay((d,i)=>RM?0:600+i*20).duration(RM?0:400).attr('r',3.2*W/Math.max(300,$('#mHosp').clientWidth)); });
 { const cw={}; MUN.forEach(m=>{ (cw[m.com]=cw[m.com]||[0,0]); cw[m.com][0]+=SV.min[m.i]*m.p; cw[m.com][1]+=m.p; }); const cm=Object.entries(cw).map(([c,[a,p]])=>[c,a/p]).sort((a,b)=>b[1]-a[1]);
-  $('#hoNote').textContent=`De mitjana, ponderant per població: ${fmt(cw['Barcelonès'][0]/cw['Barcelonès'][1],0)} minuts al Barcelonès i ${fmt(cm[0][1],0)} ${de(byC[cm[0][0]])}. Hospitals de la xarxa pública (SISCAT) amb urgències 24 h; no hi ha els privats ni els de fora de Catalunya. Ruta per carretera amb OSRM i dades d’OpenStreetMap, sense trànsit: és un temps optimista. Surt de l’ajuntament o del punt de la carretera principal més proper, a menys de 700 m.`; }
+  $('#hoNote').textContent=`Mitjana de temps municipals, ponderada per població: ${fmt(cw['Barcelonès'][0]/cw['Barcelonès'][1],0)} minuts al Barcelonès i ${fmt(cm[0][1],0)} ${de(byC[cm[0][0]])}. Destinacions: registre hospitalari SISCAT amb menció d’urgències 24 h; inclou CUAP i urgències pediàtriques o especialitzades, no sempre urgències generals d’adults. Exclou centres aliens al SISCAT i de fora de Catalunya. OSRM/OSM sense trànsit: mínim entre un punt municipal i vuit punts de prova a 700 m, ajustats a carretera. No inclou el trajecte fins al punt triat ni mesura el temps de cada domicili.`; }
 
 /* --- 14c. Universitat --- */
-const UNI=Object.fromEntries(SV.uni), UT=d3.sum(SV.uni,d=>d[1]);
+const UNI=Object.fromEntries(SV.uni.filter(d=>byC[d[0]])), UT=d3.sum(Object.values(UNI));
+const uniOutside=d3.sum(SV.uni.filter(d=>!byC[d[0]]),d=>d[1]);
 const UC=C.map(c=>({c, p:c.p/CTP, u:(UNI[c.n]||0)/UT})).filter(d=>d.p>=.012||d.u>=.01).sort((a,b)=>b.u-a.u);
 const rest={c:{n:'Resta de comarques',s:'Resta'}, p:1-d3.sum(UC,d=>d.p), u:1-d3.sum(UC,d=>d.u)};
-{ const bv=(UNI['Barcelonès']+UNI['Vallès Occidental'])/UT; $('#unTitle').textContent=`El ${pct(bv,0)} dels universitaris estudien al Barcelonès o al Vallès Occidental`; }
+{ const bv=(UNI['Barcelonès']+UNI['Vallès Occidental'])/UT; $('#unTitle').textContent=`El ${pct(bv,0)} de la matrícula correspon a centres del Barcelonès o del Vallès Occidental`; }
 let uniSel='Baix Llobregat', uniShown=false;
 function drawUni(){
-  const svg=d3.select('#uni'); const Wd=Math.min(svg.node().parentNode.clientWidth,560), Hd=Math.round(Math.max(360,Math.min(480,Wd*.85))), m={l:Wd<440?84:128,r:Wd<440?84:128,t:28,b:12};
+  const svg=d3.select('#uni'); const Wd=Math.min(svg.node().parentNode.clientWidth,560), Hd=Math.round(Math.max(360,Math.min(480,Wd*.85))), m={l:Wd<440?110:128,r:Wd<440?110:128,t:28,b:12};
   svg.attr('viewBox',`0 0 ${Wd} ${Hd}`).attr('width',Wd).attr('height',Hd); svg.selectAll('*').remove();
   const y=d3.scaleSqrt().domain([0,.55]).range([Hd-m.b,m.t]), x0=m.l, x1=Wd-m.r;
   svg.append('text').attr('class','ax').attr('x',x0).attr('y',12).attr('text-anchor','middle').text('Població');
-  svg.append('text').attr('class','ax').attr('x',x1).attr('y',12).attr('text-anchor','middle').text('Universitaris');
+  svg.append('text').attr('class','ax').attr('x',x1).attr('y',12).attr('text-anchor','middle').text('Matrícula');
   [x0,x1].forEach(xx=>svg.append('line').attr('x1',xx).attr('x2',xx).attr('y1',m.t-6).attr('y2',Hd-m.b).attr('stroke',LINE));
   const data=[...UC,rest];
   const g=svg.selectAll('g.un').data(data).join('g').attr('class','un').style('cursor','pointer').attr('tabindex',0).attr('role','button').attr('aria-label',d=>d.c.n)
@@ -676,12 +682,12 @@ function drawUni(){
 function updUni(){
   d3.selectAll('#uni g.un').attr('opacity',d=>d.c.n===uniSel?1:.35); d3.selectAll('#uni .ul').attr('font-weight',function(){ return this.dataset.n===uniSel?600:null; }).style('fill',function(){ return this.dataset.n===uniSel?INK:null; });
   const d=[...UC,rest].find(v=>v.c.n===uniSel); if(!d) return; const nm=d.c.art!==undefined?cap(withArt(d.c)):d.c.n;
-  $('#rUni').innerHTML=`<b>${nm}</b>: el ${pct(d.p)} de la població i el ${pct(d.u)} dels estudiants universitaris${d.u>d.p?`, ${fmt(d.u/d.p,1)} vegades el seu pes.`:d.u<d.p/5?`: ${fmt(Math.round(d.p/Math.max(d.u,.0001)))} vegades menys del que li tocaria per població.`:'.'}`;
+  $('#rUni').innerHTML=`<b>${nm}</b>: el ${pct(d.p)} de la població i el ${pct(d.u)} de la matrícula${d.u>d.p?`, ${fmt(d.u/d.p,1)} vegades la seva quota de població.`:d.u<d.p/5?`: una quota de matrícula ${fmt(Math.round(d.p/Math.max(d.u,.0001)))} vegades inferior a la quota de població.`:'.'}`;
 }
-$('#unNote').textContent=`Matrícula presencial de grau, màster i doctorat, curs ${SV.uniCurs} (${fmt(UT)} estudiants), per comarca del centre. No inclou la UOC ni les files amb secret estadístic. Es mostren les comarques amb almenys l’1% de la població o dels estudiants.`;
+$('#unNote').textContent=`Matrícula de grau, màster i doctorat en universitats públiques i privades, any acadèmic identificat a la font com ${SV.uniCurs}: ${fmt(UT)} matrícules en centres de Catalunya. Exclou la UOC i ${fmt(uniOutside)} matrícules fora de Catalunya. Se sumen només subtotals, que inclouen els casos protegits per secret estadístic. Es mostren comarques i Aran amb almenys l’1,2% de la població o l’1% de la matrícula; la resta s’agrupa. Eix vertical amb escala d’arrel quadrada.`;
 
 /* --- 14d. Per habitant o per km² --- */
-const PKS=[['farmacia','Farmàcies'],['primaria','Escoles'],['biblioteca_publica','Biblioteques'],['esport_installacio','Instal·lacions esportives'],['estacio_tren','Estacions de tren']];
+const PKS=[['farmacia','Farmàcies'],['primaria','Centres amb primària'],['biblioteca_publica','Biblioteques'],['esport_installacio','Instal·lacions esportives'],['estacio_tren','Estacions de tren']];
 let pkS='farmacia', pkU='hab', pkShown=false;
 const comN=C.map(c=>c.n), comIdx=Object.fromEntries(D.coms.map((n,i)=>[n,i]));
 const CV=D.coms.map((n,ci)=>{ const ms=MUN.filter(m=>m.c===ci); return {n, c:byC[n], ms, p:d3.sum(ms,m=>m.p), a:d3.sum(ms,m=>m.a)}; });
@@ -694,7 +700,7 @@ meshLayer(pkSvg,'outline',OUTLINE);
 let pkBins=[];
 const pkFill=c=>{ const v=pkVal(c,pkS,pkU); let i=0; while(i<pkBins.length&&v>=pkBins[i]) i++; return R[Math.min(7,i+1)]; };
 const pkRead=()=>{ const a=grp(pkS,pkU,true), b=grp(pkS,pkU,false), l=PKS.find(d=>d[0]===pkS)[1].toLowerCase(), u=pkU==='hab'?'per 10.000 habitants':'per 100 km²';
-  const r=a>b?a/b:b/a; return `<b>${cap(l)} ${u}</b>: ${fmt(a,a<10?1:0)} a l’àmbit metropolità i ${fmt(b,b<10?1:0)} a la resta de Catalunya. ${r>=1.15?`<b>${fmt(r,1)} vegades</b> més ${a>b?'a l’àrea metropolitana':'a la resta del país'}.`:'Pràcticament igual.'} <span class="m">Toca una comarca.</span>`; };
+  const r=a>b?a/b:b/a; return `<b>${cap(l)} ${u}</b>: ${fmt(a,a<10?1:0)} a les cinc comarques seleccionades i ${fmt(b,b<10?1:0)} a la resta de Catalunya. ${r>=1.15?`<b>${fmt(r,1)} vegades</b> més ${a>b?'a les cinc comarques seleccionades':'a la resta del país'}.`:'Pràcticament igual.'} <span class="m">Toca una comarca.</span>`; };
 const pkH=hoverable(pkSvg,pkPs,c=>{ const v=pkVal(c,pkS,pkU); $('#rPk').innerHTML=`<b>${cap(withArt(c.c))}</b>: ${fmt(v,v<10?1:0)} ${PKS.find(d=>d[0]===pkS)[1].toLowerCase()} ${pkU==='hab'?'per 10.000 habitants':'per 100 km²'}. <span class="m">${fmt(d3.sum(c.ms,m=>SV.n[pkS][m.i]))} en total.</span>`; },()=>{ $('#rPk').innerHTML=pkRead(); });
 function pkPaint(){
   const vs=CV.map(c=>pkVal(c,pkS,pkU)).sort((a,b)=>a-b); pkBins=[1,2,3,4,5,6].map(q=>d3.quantileSorted(vs,q/7));

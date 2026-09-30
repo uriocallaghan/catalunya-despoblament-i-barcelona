@@ -49,9 +49,9 @@
   </section>
 
   <section>
-    <h2>Cada punt són 500 persones</h2>
-    <p>Els punts es col·loquen a l’atzar dins del terme municipal on viuen aquestes persones. On no hi ha punts, no hi ha prou gent per fer-ne un.</p>
-    <canvas class="map" id="cDots" role="img" aria-label="Mapa de punts: cada punt representa 500 habitants"></canvas>
+    <h2>Cada punt representa aproximadament 500 persones</h2>
+    <p>Els punts es col·loquen a l’atzar dins del terme municipal: no són domicilis. El recompte s’arrodoneix probabilísticament; un espai sense punts no implica absència de població.</p>
+    <canvas class="map" id="cDots" role="img" aria-label="Mapa il·lustratiu de punts: aproximadament 500 habitants per punt"></canvas>
     <p class="note" id="dotsNote"></p>
   </section>
 
@@ -70,7 +70,7 @@
 
   <section>
     <h2>L’horitzó de Catalunya</h2>
-    <p>Cada pic s’aixeca sobre un municipi i és tan alt com la seva població. El país és pla amb una muntanya.</p>
+    <p>Cada pic s’aixeca sobre el centroide del municipi i té una alçada proporcional a la seva població. El país és pla amb una muntanya.</p>
     <svg class="map" id="mSpk" role="img" aria-label="Mapa de pics de població per municipi"></svg>
   </section>
 
@@ -93,7 +93,7 @@
 
   <section>
     <h2 id="altTitle"></h2>
-    <p>Cada cercle és un municipi: a la dreta, més amunt a la muntanya; a dalt, més gent per km². La mida és la població.</p>
+    <p>Cada cercle és un municipi: a la dreta, més altitud del punt central del nucli capital; a dalt, més gent per km² de terme municipal. La mida indica la població.</p>
     <svg class="viz" id="alt" role="img" aria-label="Gràfic de dispersió: altitud i densitat dels municipis" style="max-width:697px"></svg>
     <p class="readout" id="rAlt" aria-live="polite"></p>
     <h3 class="sub" id="hipTitle"></h3>
@@ -119,20 +119,20 @@
     <div class="slider rv" id="yearBox" hidden><span class="yr" id="yearOut">2025</span><input type="range" id="yearIn" min="0" max="6" step="1" value="6" aria-label="Any"></div>
     <svg class="map" id="cart" role="img" aria-label="Cartograma de bombolles de les comarques"></svg>
     <p class="readout" id="rCart" aria-live="polite"></p>
-    <p class="note">Fins al 1991, població de fet (sèrie històrica de l’Idescat). El Moianès i el Lluçanès no existien com a comarques i els seus municipis compten dins les comarques d’on provenen.</p>
+    <p class="note">42 comarques i Aran el 2025; abans del 1991, població de fet de la divisió comarcal de referència de l’Idescat. Moianès i Lluçanès no hi apareixen. Bages, Osona, Vallès Oriental, Segarra i Solsonès han canviat de territori: no se’n compara el creixement ni es pinta la densitat històrica amb l’àrea actual.</p>
   </section>
 
   <section>
     <h2 id="ghostTitle"></h2>
     <p id="ghostLede"></p>
-    <div class="gkey"><span><i style="background:var(--red)"></i>500 persones que hi viuen avui</span><span><i style="border:1.3px solid var(--muted)"></i>500 persones que hi vivien el 1900 i ja no hi són</span></div>
+    <div class="gkey"><span><i style="background:var(--red)"></i>Aproximadament 500 habitants actuals</span><span><i style="border:1.3px solid var(--muted)"></i>Saldo de pèrdua, aproximadament 500 habitants</span></div>
     <div class="ghosts" id="ghosts"></div>
-    <p class="note">1857–1991: població de fet (Idescat). 2025: Cens de població. Per comparar, el 2025 el Moianès se suma al Bages i el Lluçanès a Osona. La línia de sota és l’evolució 1857–2025 de cada comarca.</p>
+    <p class="note">1857–1991: població de fet (Idescat); 2025: cens anual. Comparació de territoris sense els canvis comarcals indicats més amunt. Els punts arrodoneixen el saldo de població, no segueixen les mateixes persones. La línia uneix els anys disponibles; entre el 1991 i el 2025 no hi ha observacions intermèdies en aquesta sèrie.</p>
   </section>
 
   <section>
     <h2>El mateix quilòmetre quadrat, dos municipis diferents</h2>
-    <p>Tria dos municipis. Cada quadrat és 1 km² i cada punt, una persona. Tots els punts tenen la mateixa mida a banda i banda.</p>
+    <p>Tria dos municipis. Cada quadrat il·lustra la densitat mitjana en 1 km²; els punts s’arrodoneixen a persones. No és un quilòmetre concret ni una proposta d’habitabilitat. Tots els punts tenen la mateixa mida a banda i banda.</p>
     <div class="km">
       <div><input class="search" id="kA" list="munlist" aria-label="Primer municipi" autocomplete="off"><canvas id="cvA"></canvas><div class="d" id="dA"></div></div>
       <div><input class="search" id="kB" list="munlist" aria-label="Segon municipi" autocomplete="off"><canvas id="cvB"></canvas><div class="d" id="dB"></div></div>
@@ -142,7 +142,7 @@
 
   <section>
     <h2>Dividim Catalunya en 32.915 quadrats d’1 km². En 23.763 no hi viu ningú.</h2>
-    <p>És la quadrícula estàndard europea que publica l’Idescat. El nombre de cel·les de cada tram és real; la posició dels quadrets és il·lustrativa.</p>
+    <p>És la quadrícula estàndard europea que publica l’Idescat. El nombre de cel·les de cada tram és real; la posició dels quadrets és il·lustrativa. Les cel·les de costa i frontera poden estar només parcialment dins de Catalunya: el percentatge de cel·les no és el percentatge exacte de territori.</p>
     <div class="seg" role="group" aria-label="Què ressaltes">
       <button data-g="all" aria-pressed="true">Totes</button>
       <button data-g="empty" aria-pressed="false">Buides</button>
@@ -166,9 +166,9 @@
 
   <section>
     <h2 id="hoTitle"></h2>
-    <p>Temps en cotxe des de cada municipi fins a l’hospital públic amb urgències les 24 hores més proper. Mou el llindar.</p>
-    <div class="slider rv"><span class="yr" id="hoTout">30′</span><input type="range" id="hoT" min="5" max="90" step="5" value="30" aria-label="Minuts fins a l’hospital"></div>
-    <svg class="map" id="mHosp" role="img" aria-label="Mapa del temps en cotxe fins a l’hospital amb urgències més proper"></svg>
+    <p>Temps modelitzat fins a un dispositiu SISCAT que el registre hospitalari etiqueta amb urgències 24 h. Inclou CUAP i urgències especialitzades. S’assigna un temps de referència a cada municipi, no a cada resident. Mou el llindar.</p>
+    <div class="slider rv"><span class="yr" id="hoTout">30′</span><input type="range" id="hoT" min="5" max="90" step="5" value="30" aria-label="Minuts modelitzats fins al dispositiu d’urgències"></div>
+    <svg class="map" id="mHosp" role="img" aria-label="Mapa del temps modelitzat en cotxe fins a un dispositiu d’urgències"></svg>
     <div class="legend rv" id="legHosp"></div>
     <p class="readout" id="rHosp" aria-live="polite"></p>
     <p class="note" id="hoNote"></p>
@@ -176,15 +176,15 @@
 
   <section>
     <h2 id="unTitle"></h2>
-    <p>A l’esquerra, el pes de cada comarca en població. A la dreta, el pes en estudiants universitaris presencials, segons on és el campus. Toca una línia.</p>
-    <svg class="viz" id="uni" role="img" aria-label="Població i alumnat universitari per comarques" style="max-width:560px"></svg>
+    <p>A l’esquerra, el pes de cada comarca en població. A la dreta, el pes en matrícula d’universitats públiques i privades, segons la comarca del centre. Toca una línia.</p>
+    <svg class="viz" id="uni" role="img" aria-label="Població i matrícula universitària per comarques" style="max-width:560px"></svg>
     <p class="readout" id="rUni" aria-live="polite"></p>
     <p class="note" id="unNote"></p>
   </section>
 
   <section>
-    <h2>Per habitant, a l’interior no hi falten serveis. Per quilòmetre quadrat, sí.</h2>
-    <p>Tria un servei i canvia la manera de comptar. La mateixa xarxa dibuixa dos països diferents.</p>
+    <h2>La xarxa de serveis canvia de perspectiva: per habitant o per superfície</h2>
+    <p>Tria un servei i canvia la manera de comptar. Comparem Barcelonès, Baix Llobregat, Vallès Occidental, Vallès Oriental i Maresme amb la resta de Catalunya. El recompte d’equipaments no mesura per si sol capacitat, horaris o accessibilitat.</p>
     <div class="chips" id="pkS" role="group" aria-label="Servei"></div>
     <div class="seg" role="group" aria-label="Com es compta">
       <button data-pk="hab" aria-pressed="true">Per 10.000 habitants</button>
@@ -197,8 +197,8 @@
 
   <section class="closing">
     <h2>Catalunya no és només on som. També és on hem deixat de ser.</h2>
-    <p>En un segle i mig la població s’ha multiplicat per quatre, però gairebé tot el creixement s’ha abocat a l’entorn de Barcelona i al litoral. Mentrestant, comarques senceres del Pirineu, de l’Ebre i de Ponent tenen avui menys gent que fa cent anys.</p>
-    <p>Aquest desequilibri no és natural. Depèn, en bona part, d’on posem la feina, les escoles, els metges, el tren i l’habitatge. Quan la meitat de la gent s’estreny en menys del 2% del sòl, el preu es paga pels dos costats: pisos impossibles a la ciutat i pobles que es buiden.</p>
+    <p id="closingPop"></p>
+    <p>La feina, els serveis, el transport i l’habitatge poden contribuir a aquest patró, juntament amb el relleu i les economies d’aglomeració. Els gràfics mostren la concentració, però no quantifiquen la contribució causal de cada factor. La meitat de la gent es concentra en municipis que ocupen menys del 2% del territori.</p>
     <p>Mirar el mapa sencer és el primer pas per repartir-lo millor.</p>
     <p class="note"><a href="diners/" style="color:var(--ink)">Llegeix també: Diners de paper, sobre la inflació, la creació de diners i l’habitatge →</a></p>
     <p class="note"><a href="habitatge/" style="color:var(--ink)">La casa: què ha passat amb el preu de l’habitatge →</a></p>
@@ -208,9 +208,9 @@
       <p class="note" style="margin:0">Fonts</p>
       <ul>
         <li>Idescat. <a href="https://www.idescat.cat/indicadors/?id=aec&n=15903">Altitud, superfície i població. Municipis</a>, 2025 (Cens de població anual).</li>
-        <li>Idescat. <a href="https://www.idescat.cat/indicadors/?id=aec&n=15227">Densitat de població. Comarques i Aran</a> i <a href="https://www.idescat.cat/indicadors/?id=aec&n=15902">Nombre de municipis i població</a>, 2025.</li>
-        <li>Idescat. <a href="https://www.idescat.cat/pub/?id=shd&n=1341&t=199100&by=com">Sèries històriques demogràfiques. Evolució de la població de fet</a>, comarques i <a href="https://www.idescat.cat/pub/?id=shd&n=1341&geo=mun&t=199100">municipis</a>, 1857–1991, i <a href="https://www.idescat.cat/pub/?id=pmh&n=446&geo=mun">padró municipal</a>, 2001–2021.</li>
-        <li>Idescat. <a href="https://govern.cat/salapremsa/notes-premsa/833960/l-any-2025-el-614-percent-de-la-poblacio-viu-en-centres-urbans-que-ocupen-l-138-percent-de-la-superficie-de-catalunya">Estadística del grau d’urbanització 2025</a> (quadrícula d’1 km²).</li>
+        <li>Idescat. <a href="https://www.idescat.cat/indicadors/?id=aec&n=15227">Densitat de població. Comarques i Aran</a> i <a href="https://www.idescat.cat/indicadors/?id=aec&n=15902">Nombre de municipis i població</a>, 2025. Adscripció comarcal a 1 de gener de 2025: Aiguafreda encara s’hi compta al Vallès Oriental, abans del <a href="https://www.idescat.cat/novetats/?id=5312">canvi a Osona</a> amb efectes de l’1 d’agost.</li>
+        <li>Idescat. <a href="https://www.idescat.cat/pub/?id=shd&n=1341&t=199100&by=com">Sèries històriques demogràfiques. Evolució de la població de fet</a>, comarques i <a href="https://www.idescat.cat/pub/?id=shd&n=1341&geo=mun&t=199100">municipis</a>, 1857–1991, i <a href="https://www.idescat.cat/pub/?id=pmh&n=446&geo=mun">padró municipal</a>, 1998–2021.</li>
+        <li>Idescat. <a href="https://www.idescat.cat/pub/?id=degurba&amp;n=18126">Estadística del grau d’urbanització 2025</a> (quadrícula d’1 km²).</li>
         <li>Límits municipals: Instituto Geográfico Nacional, via es-atlas (TopoJSON).</li>
         <li>Serveis: Dades obertes de Catalunya (<a href="https://analisi.transparenciacatalunya.cat/d/kvmv-ahh4">centres docents 2025/26</a>, <a href="https://analisi.transparenciacatalunya.cat/d/8gmd-gz7i">equipaments</a>, <a href="https://analisi.transparenciacatalunya.cat/d/nrmq-ytje">establiments sanitaris</a>, <a href="https://analisi.transparenciacatalunya.cat/d/48s6-82h2">equipaments culturals</a>, <a href="https://analisi.transparenciacatalunya.cat/d/5zd6-bk6r">instal·lacions esportives</a>, <a href="https://analisi.transparenciacatalunya.cat/d/5kd9-2wex">alumnat universitari</a>); estacions de Renfe i FGC (GTFS); límits municipals de l’ICGC.</li>
         <li>Temps en cotxe: <a href="https://project-osrm.org/">OSRM</a> amb dades d’OpenStreetMap.</li>

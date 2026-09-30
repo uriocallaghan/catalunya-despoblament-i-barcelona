@@ -1,12 +1,17 @@
 // Població municipal històrica sobre els 947 municipis actuals: Idescat, població de fet 1857–1991, i
 // padró continu (població a 1 de gener) per als anys amb fitxer data/raw/padro-municipis-<any>.csv.
-// Un municipi que encara no existia en una data es fusiona amb el municipi d'on es va segregar: el grup rep la
-// població conjunta repartida per superfície (mateixa densitat). El municipi d'origen es dedueix del veí que perd
-// la població que el nou municipi guanya quan apareix a la sèrie; els casos posteriors al 1991 són explícits.
+// La sèrie històrica d'Idescat està referida als municipis existents el 1991. Una dada absent no prova que el
+// municipi encara no existís. Per dibuixar el cartograma s'imputen aquests buits repartint població per superfície
+// dins de grups: alguns documentats i d'altres inferits per veïnat i variació demogràfica. És una estimació
+// homogènia, no una reconstrucció exacta dels límits històrics ni de la població de cada terme actual.
 import fs from 'fs';
-const EXPLICIT = { // segregacions posteriors a 1991 (no apareixen a la sèrie)
+const EXPLICIT = { // grups documentats, només utilitzats quan falta la dada
   'La Canonja': ['Tarragona'], 'Badia del Vallès': ['Barberà del Vallès', 'Cerdanyola del Vallès'], 'La Palma de Cervelló': ['Cervelló'],
   'Sant Julià de Cerdanyola': ['Guardiola de Berguedà'], 'Riu de Cerdanya': ['Bellver de Cerdanya'], 'Gimenells i el Pla de la Font': ['Lleida'],
+  // Idescat: https://www.idescat.cat/codis/?c=089024&id=50&n=9&t=01-01-1992
+  'Vilanova del Vallès': ['Montornès del Vallès', 'La Roca del Vallès'],
+  // Ajuntament: https://www.vallromanes.cat/actualitat/noticies/88-anys-de-la-independencia-de-vallromanes.html
+  'Vallromanes': ['Montornès del Vallès'],
 };
 const ABSORBED = { '17122': 'Les Llosses' }; // Palmerola, agregat a les Llosses
 export function historic(M, neighbors, years) {
@@ -15,7 +20,7 @@ export function historic(M, neighbors, years) {
   const H = {}; L.slice(hi + 1).filter(l => /^\d/.test(l)).forEach(l => { const r = l.split(';'); H[r[0].slice(0, 5)] = Object.fromEntries(hdr.slice(2).map((y, j) => [+y, /^\d+$/.test(r[j + 2]) ? +r[j + 2] : null])); });
   const byN = new Map(M.map(m => [m.n, m]));
   for (const [k, n] of Object.entries(ABSORBED)) { const t = H[byN.get(n).k]; for (const y in H[k]) if (H[k][y] != null && t[y] != null) t[y] += H[k][y]; }
-  // Padró municipal (ja referit a la divisió territorial actual).
+  // Padró municipal, amb la divisió territorial de cada any publicat.
   const PY = fs.readdirSync(new URL('../data/raw/', import.meta.url)).map(f => f.match(/^padro-municipis-(\d{4})\.csv$/)).filter(Boolean).map(m => +m[1]).sort();
   for (const y of PY) fs.readFileSync(new URL(`../data/raw/padro-municipis-${y}.csv`, import.meta.url), 'utf8').split(/\r?\n/).filter(l => /^\d{6};/.test(l)).forEach(l => {
     const r = l.split(';'), k = r[0].slice(0, 5); (H[k] = H[k] || {})[y] = /^\d+$/.test(r[4]) ? +r[4] : null; });
@@ -44,9 +49,10 @@ export function historic(M, neighbors, years) {
       log.push(`${y}: ${comp.map(a => M[a].n).join(', ')} → ${M[p].n} (${y0}→${y1}: ${val(M[p], y0)}→${val(M[p], y1)}, nou ${gain})`);
     }
     const G = new Map(); M.forEach(m => { const r = find(m.i); if (!G.has(r)) G.set(r, []); G.get(r).push(m); });
-    const v = new Array(M.length);
-    for (const g of G.values()) { const P = g.reduce((s, m) => s + (val(m, y) || 0), 0), A = g.reduce((s, m) => s + m.a, 0); g.forEach(m => { v[m.i] = g.length > 1 ? P * m.a / A : P; }); }
-    out[y] = v; merged[y] = M.filter(m => val(m, y) == null).map(m => m.i);
+    const v = new Array(M.length), estimated = [];
+    for (const g of G.values()) { const P = g.reduce((s, m) => s + (val(m, y) || 0), 0), A = g.reduce((s, m) => s + m.a, 0); g.forEach(m => { v[m.i] = g.length > 1 ? P * m.a / A : P; if (g.length > 1 || val(m, y) == null) estimated.push(m.i); }); }
+    // També són estimats els municipis d'origen: el repartiment altera la seva dada directa.
+    out[y] = v; merged[y] = estimated.sort((a, b) => a - b);
   }
   return { values: out, merged, log };
 }

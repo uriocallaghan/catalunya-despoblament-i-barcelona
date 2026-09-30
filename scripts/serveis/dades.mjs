@@ -2,15 +2,15 @@
 // Si SERVEIS apunta a la carpeta de descàrregues (vegeu descarrega.sh), primer hi actualitza les taules de data/raw.
 // Ús: node scripts/serveis/dades.mjs   (o SERVEIS=<carpeta> node scripts/serveis/dades.mjs)
 import fs from 'node:fs';
+import { matriculaPerComarca } from './matricula.mjs';
 const R = f => new URL('../../data/raw/' + f, import.meta.url);
 if (process.env.SERVEIS) {
   const D = process.env.SERVEIS.replace(/\/?$/, '/');
   fs.copyFileSync(D + 'serveis-municipis.csv', R('serveis-municipis.csv'));
   const P = JSON.parse(fs.readFileSync(D + 'punts-serveis.json', 'utf8'));
   fs.writeFileSync(R('serveis-hospitals-urgencies.csv'), 'lon;lat;codi_municipi\n' + P.hospital_urg24.map(p => p.join(';')).join('\n') + '\n');
-  // Alumnat universitari presencial per comarca del centre, curs més recent (les files amb secret estadístic no sumen).
-  const U = JSON.parse(fs.readFileSync(D + 'univ_alumnat.json', 'utf8')), last = U.reduce((m, r) => r.curs > m ? r.curs : m, '');
-  const c = {}; U.filter(r => r.curs === last && r.tipus_d_universitat !== 'NO PRESENCIAL' && /^\d+$/.test(r.matr_cula)).forEach(r => { c[r.comarca_del_centre] = (c[r.comarca_del_centre] || 0) + +r.matr_cula; });
+  // Matrícula d'universitats públiques i privades per comarca del centre, sense duplicar detall i subtotals.
+  const { curs:last, comarques:c } = matriculaPerComarca(JSON.parse(fs.readFileSync(D + 'univ_alumnat.json', 'utf8')));
   fs.writeFileSync(R('serveis-alumnat-universitari.csv'), `comarca;matricula_${last}\n` + Object.entries(c).sort((a, b) => b[1] - a[1]).map(e => e.join(';')).join('\n') + '\n');
 }
 const csv = f => { const [h, ...rows] = fs.readFileSync(R(f), 'utf8').trim().split('\n').map(l => l.split(';')); return rows.map(r => Object.fromEntries(h.map((k, i) => [k, r[i]]))); };

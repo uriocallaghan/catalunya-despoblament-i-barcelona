@@ -12,7 +12,7 @@ const Y10=YL-10;
 const INF=cagr(ipcY(Y10),ipcY(YL),10), HAB=cagr(price(Y10),price(YL),10), SALG=cagr(sal(Y10),sal(YL),10), RENTG=cagr(rentY.get(Y10),rentY.get(YL),10);
 const k1=v=>v>=1e6?fmt(v/1e6,1)+' M':fmt(Math.round(v/1000))+'.000';
 const eur=v=>Math.abs(v)>=10000?k1(v)+' €':fmt(Math.round(v))+' €';
-$('#upd').textContent=`Dades fins al ${YL}`;
+$('#upd').textContent=`Comparacions anuals fins al ${YL}. Projeccions amb any base ${YL}; euros reals referits a aquest any`;
 
 /* ---------- el teu ingrés ---------- */
 let NET=2000, SAV=50000, RET=.05;
@@ -44,8 +44,8 @@ function drawUnits(){
       <div class="ub"><span style="width:${100*u.b/m}%;background:${u.ipc?MUTED:RED}"></span><em>${YL}: ${u.ipc?'igual':fmt(u.b,u.d)}</em></div>`;
     box.appendChild(el); });
   const m2=U[0];
-  $('#h1').textContent=`Amb ${fmt(NET)} € nets al mes, el 2000 hauries pogut comprar ${fmt(m2.a,1)} m² de pis l’any. Avui, ${fmt(m2.b,1)}.`;
-  $('#lead').textContent=`És el mateix poder de compra: ${fmt(NET)} € d’avui equivalen a ${fmt(NET*ipcY(2000)/ipcY(YL))} € del 2000, perquè els preus s’han multiplicat per ${fmt(ipcY(YL)/ipcY(2000),2)}. Per a la compra del dia a dia no has perdut res. Però en metres de pis has perdut un ${pct(1-m2.b/m2.a,0)} i en or, un ${pct(1-U[1].b/U[1].a,0)}: els actius s’han allunyat del que guanyes. Aquesta pàgina no et dirà com fer-te ric de pressa: et donarà números per decidir. Canvia la xifra i tots els gràfics s’adapten a tu.`;
+  $('#h1').textContent=`Amb ${fmt(NET)} € nets al mes, el 2000 hauries pogut comprar ${fmt(m2.a,1)} m² de pis l’any. El ${YL}, ${fmt(m2.b,1)}.`;
+  $('#lead').textContent=`És el mateix poder de compra: ${fmt(NET)} € del ${YL} equivalen a ${fmt(NET*ipcY(2000)/ipcY(YL))} € del 2000, perquè els preus s’han multiplicat per ${fmt(ipcY(YL)/ipcY(2000),2)}. Respecte de la cistella mitjana de l’IPC no has perdut res. Però en metres de pis has perdut un ${pct(1-m2.b/m2.a,0)} i en or, un ${pct(1-U[1].b/U[1].a,0)}: aquests actius s’han allunyat del que guanyes. Aquesta pàgina no et dirà com fer-te ric de pressa: et donarà números per decidir. Canvia la xifra i tots els gràfics s’adapten a tu.`;
 }
 redraw.push(drawUnits);
 
@@ -69,7 +69,7 @@ function drawFreeze(shown){
 }
 $('#fY').addEventListener('input',e=>{ fy=+e.target.value; $('#fYr').textContent=fy; drawFreeze({freeze:true}); });
 $('#fY').max=YL-1; $('#fYr').textContent=fy;
-$('#freezeLede').textContent=`Un autònom no té conveni que li apugi el sou. Si no apuges les tarifes, la inflació te’l baixa cada any. Als últims deu anys, els preus a Catalunya han pujat de mitjana un ${fmt(INF*100,1)}% l’any. Tria des de quan no has tocat els preus.`;
+$('#freezeLede').textContent=`Un autònom no té conveni que li apugi el sou. Si mantens els mateixos ingressos nominals mentre els preus pugen, perds poder de compra. Del ${Y10} al ${YL}, els preus a Catalunya han pujat a un ritme mitjà del ${fmt(INF*100,1)}% l’any. Tria des de quan no has tocat els preus.`;
 redraw.push(()=>drawFreeze({freeze:true}));
 
 /* =========== 2b. EL TEU COIXÍ =========== */
@@ -88,14 +88,14 @@ function drawCush(shown){
   const L=endLabels(svg,[{y:y(e[1]),c:RED,n:W<500?'al '+rl:`invertits al ${rl}`,v:k1(e[1])},{y:y(e[2]),c:MUTED,n:W<500?'compte':'al compte (0%)',v:k1(e[2])}],W-rp+8,15,shown.cush);
   if(!shown.cush){ [p1,p2,ar].forEach(p=>p.attr('opacity',0)); svg.node()._rv=()=>{ p1.attr('opacity',1); p2.attr('opacity',1); drawOn(p1,1400); drawOn(p2,1400,150); ar.transition().delay(RM?0:1300).duration(600).attr('opacity',1); L.forEach(l=>l.transition().delay(RM?0:1500).attr('opacity',1)); }; }
   const d1=svg.append('circle').attr('r',4).attr('fill',RED).style('display','none'), d2=svg.append('circle').attr('r',4).attr('fill',MUTED).style('display','none');
-  const int1=SAV*RET, runway=NET?SAV/NET:0;
-  const R0=`El primer any, el ${rl} de ${eur(SAV)} són <b>${eur(int1)}</b> d’interessos: ${fmt(int1/NET,1)} mesos del teu sou. I si un dia deixes de facturar, aquests estalvis et donen <b>${fmt(runway,0)} mesos</b> de marge per viure. <span class="m">Toca el gràfic.</span>`;
+  const int1=SAV*RET, expenses=NET*(1-sRate), runway=expenses?SAV/expenses:0;
+  const R0=`Amb la hipòtesi del ${rl}, el primer any ${eur(SAV)} generarien <b>${eur(int1)}</b> de rendiment: ${fmt(int1/NET,1)} mesos del teu sou. Si deixes de facturar i gastes ${fmt(expenses)} € al mes, equivalen a <b>${fmt(runway,1)} mesos</b> de marge, sense inflació ni rendiment i sense destinar-los al pis. <span class="m">Toca el gràfic.</span>`;
   crosshair(svg,x,t,H-b,xv=>{ const p=nearest(pts,xv); d1.style('display',null).attr('cx',x(p[0])).attr('cy',y(p[1])); d2.style('display',null).attr('cx',x(p[0])).attr('cy',y(p[2]));
-    $('#rCush').innerHTML=`<b>${p[0]}</b>, en euros d’avui: invertits, <b>${eur(p[1])}</b>; al compte, ${eur(p[2])}. <span class="m">Diferència: ${eur(p[1]-p[2])}.</span>`; return p[0]; },
+    $('#rCush').innerHTML=`<b>${p[0]}</b>, en euros del ${YL}: amb el rendiment triat, <b>${eur(p[1])}</b>; al compte, ${eur(p[2])}. <span class="m">Diferència: ${eur(p[1]-p[2])}.</span>`; return p[0]; },
     ()=>{ d1.style('display','none'); d2.style('display','none'); $('#rCush').innerHTML=R0; });
   $('#rCush').innerHTML=R0;
-  $('#cushTitle').textContent=SAV?`Els teus ${eur(SAV)} valen, sobretot, ${fmt(runway,0)} mesos de llibertat`:'Sense estalvis, cada mes sense facturar és un problema';
-  $('#cushLede').textContent=SAV?`Un ${rl} l’any sembla molt, però la inflació se n’emporta una part: als últims deu anys ha estat del ${fmt(INF*100,1)}% de mitjana, i per tant guanyes de veritat un ${fmt(RR()*100,1)}% real. D’aquí a deu anys, en euros d’avui, tindries ${eur(e[1])}; al compte corrent, ${eur(e[2])}. Però el valor més gran d’aquests diners no és el que rendeixen: és el temps que et compren per apostar sense por. Un ${rl} continuat només s’aconsegueix amb inversió que té anys dolents (borsa, fons diversificats): la part que puguis necessitar aviat, millor tenir-la a part i segura.`:'';
+  $('#cushTitle').textContent=SAV?`Els teus ${eur(SAV)} equivalen a ${fmt(runway,1)} mesos de despeses`:'Sense estalvis, cada mes sense facturar és un problema';
+  $('#cushLede').textContent=SAV?`Suposem un ${rl} nominal cada any i una inflació del ${fmt(INF*100,1)}%, igual al ritme mitjà del ${Y10} al ${YL}: el rendiment real seria del ${fmt(RR()*100,1)}%. Al cap de deu anys des de la base ${YL}, tindries ${eur(e[1])} en euros d’aquell any; al compte corrent, ${eur(e[2])}. El valor d’aquests diners també és el temps que et compren: les despeses són la part de l’ingrés que no estalvies, segons el control de l’entrada. ${RET?'El rendiment triat és una hipòtesi constant, no un retorn assegurat. La part que puguis necessitar aviat, millor tenir-la disponible.':'Amb rendiment del 0%, la inflació redueix el poder de compra del coixí.'}`:'';
 }
 redraw.push(()=>drawCush({cush:true}));
 
@@ -130,15 +130,16 @@ function drawRace(shown){
   const d1=svg.append('circle').attr('r',4).attr('fill',RED).style('display','none'), d2=svg.append('circle').attr('r',4).attr('fill',INK).style('display','none');
   const yrs=hit?hit.t-YL:null;
   const st0=SAV?`Partint de ${eur(SAV)} i estalviant`:'Estalviant';
-  const R0=hit&&yrs===0?`Els teus ${eur(SAV)} ja cobreixen l’entrada d’un pis de ${m2} m² (${eur(pts[0][2])}). La pregunta aleshores és la hipoteca: la quota ha de cabre en el que guanyes. <span class="m">Toca el gràfic.</span>`:hit?`${st0} ${fmt(Math.round(sRate*NET))} € al mes, arribes a l’entrada d’un pis de ${m2} m² <b>d’aquí a ${fmt(yrs,1)} anys</b>, el ${Math.floor(hit.t)}. <span class="m">Toca el gràfic.</span>`:`${st0} ${fmt(Math.round(sRate*NET))} € al mes, <b>en ${RACE_Y} anys no atrapes l’entrada</b>: el preu corre més que el teu estalvi. <span class="m">Toca el gràfic.</span>`;
+  const R0=hit&&yrs===0?`A l’any base ${YL}, els teus ${eur(SAV)} ja cobreixen l’entrada d’un pis de ${m2} m² (${eur(pts[0][2])}). La pregunta aleshores és la hipoteca: la quota ha de cabre en el que guanyes. <span class="m">Toca el gràfic.</span>`:hit?`${st0} ${fmt(Math.round(sRate*NET))} € al mes, arribes a l’entrada d’un pis de ${m2} m² <b>al cap de ${fmt(yrs,1)} anys des de la base ${YL}</b>, el ${Math.floor(hit.t)}. <span class="m">Toca el gràfic.</span>`:`${st0} ${fmt(Math.round(sRate*NET))} € al mes, <b>en ${RACE_Y} anys des de la base ${YL} no atrapes l’entrada</b> amb aquestes hipòtesis. <span class="m">Toca el gràfic.</span>`;
   crosshair(svg,x,t,H-b,xv=>{ const p=nearest(pts,xv); d1.style('display',null).attr('cx',x(p[0])).attr('cy',y(p[1])); d2.style('display',null).attr('cx',x(p[0])).attr('cy',y(p[2]));
     $('#rRace').innerHTML=`<b>${Math.floor(p[0])}</b>: tens ${eur(p[1])}; l’entrada val ${eur(p[2])}. <span class="m">${p[1]>=p[2]?'Ja hi ets.':`Et falten ${eur(p[2]-p[1])}.`}</span>`; return p[0]; },
     ()=>{ d1.style('display','none'); d2.style('display','none'); $('#rRace').innerHTML=R0; });
   $('#rRace').innerHTML=R0;
-  $('#raceTitle').textContent=hit&&yrs===0?`Ja tens l’entrada d’un pis. El que falta és el sou per a la hipoteca`:hit?`${SAV?`Amb ${eur(SAV)} estalviats i`:'Si'} ${SAV?'estalviant':'estalvies'} el ${pct(sRate,0)}, l’entrada d’un pis arriba el ${Math.floor(hit.t)}`:`Estalviant el ${pct(sRate,0)}, l’entrada d’un pis s’escapa`;
+  $('#raceTitle').textContent=hit&&yrs===0?`El model ja et dona l’entrada. El pas següent és la hipoteca`:hit?`${SAV?`Amb ${eur(SAV)} estalviats i`:'Si'} ${SAV?'estalviant':'estalvies'} el ${pct(sRate,0)}, l’entrada d’un pis arriba el ${Math.floor(hit.t)}`:`Estalviant el ${pct(sRate,0)}, l’entrada no arriba en ${RACE_Y} anys`;
+  $('#planRace').textContent=hit?`Amb les hipòtesis triades, el model ${yrs===0?'ja cobreix l’entrada':`arriba a l’entrada al cap de ${fmt(yrs,1)} anys des de la base ${YL}`}. Reunir-la és només un pas: també cal que la hipoteca càpiga en els ingressos i conservar un coixí.`:`Amb les hipòtesis triades, el model no arriba a l’entrada en ${RACE_Y} anys. Augmentar l’ingrés, estalviar una part més gran o buscar un pis més petit canvia la cursa. Llogar mentre ho prepares et pot donar marge.`;
 }
-$('#raceLede').textContent=`L’entrada és el 30% del preu: el 20% que el banc no finança i un 10% d’impostos i despeses. Els preus són el valor taxat a la província de Barcelona; a la ciutat són més alts. Partim dels estalvis que has escrit a dalt. El que estalvies cada mes creix com ho han fet els sous (+${fmt(SALG*100,1)}% l’any als últims deu anys). Juga amb les tres variables: quant estalvies, on el guardes i què fan els pisos.`;
-seg('sr',v=>{ sRate=+v; drawRace({race:true}); drawLev({lev:true}); drawLives({lives:true}); });
+$('#raceLede').textContent=`El model reserva un 30% del preu: suposem un 20% no finançat i un 10% addicional d’impostos i despeses, que poden variar segons l’operació. Els preus són el valor taxat a la província de Barcelona; a la ciutat són més alts. Situem els estalvis que has escrit a l’any base ${YL}. El que estalvies cada mes creix com ho han fet els sous (+${fmt(SALG*100,1)}% l’any del ${Y10} al ${YL}). Juga amb les tres variables: quant estalvies, on el guardes i què fan els pisos.`;
+seg('sr',v=>{ sRate=+v; drawCush({cush:true}); drawRace({race:true}); drawLev({lev:true}); drawLives({lives:true}); closing(); });
 seg('m2',v=>{ m2=+v; drawRace({race:true}); });
 seg('hg',v=>{ hMode=v; drawRace({race:true}); });
 seg('sg',v=>{ sMode=v; drawRace({race:true}); });
@@ -151,7 +152,7 @@ function drawLev(shown){
   const svg=d3.select('#lev'); const W=pw(svg,697);
   const base=wealth({});
   const L=[
-    {n:'Aconseguir un punt més de rendiment',d:wealth({r:RR()+.01})-base},
+    {n:'Aconseguir un punt més de rendiment real',d:wealth({r:RR()+.01})-base},
     {n:'Estalviar 5 punts més del que guanyes',d:wealth({s:sRate+.05})-base},
     {n:'Guanyar un 25% més des de l’any que ve',d:wealth({inc:NET*12*1.25})-base},
     {n:'Que els ingressos creixin un 5% real cada any',d:wealth({gi:.05})-base},
@@ -168,8 +169,8 @@ function drawLev(shown){
     (svg.node()._q||(svg.node()._q=[])).push(()=>{ r.transition().delay(RM?0:i*120).duration(700).ease(d3.easeCubicOut).attr('width',x(d.d)-x(0)); tx.transition().delay(RM?0:500+i*120).attr('opacity',1); }); });
   svg.node()._rv=()=>(svg.node()._q||[]).forEach(f=>f());
   const r1=L.find(d=>d.n.startsWith('Aconseguir')), iBest=L.find(d=>d.n.startsWith('Guanyar un 25%'));
-  $('#levTitle').textContent= iBest.d>r1.d ? `Guanyar un 25% més pesa ${fmt(iBest.d/r1.d,1)} vegades més que un punt més de rendiment` : `Amb el teu capital, un punt més de rendiment ja pesa tant com cobrar un 25% més`;
-  $('#levLede').textContent=`Partint de ${eur(SAV)} al ${$('#retV').textContent} (un ${fmt(RR()*100,1)}% real) i estalviant el ${pct(sRate,0)} de ${fmt(NET)} € al mes, d’aquí a deu anys tindries uns ${eur(base)} d’avui. Cada barra és el que afegeix una sola millora. Com més capital tens, més pesa el rendiment; però a la teva escala, l’ingrés encara és la palanca gran, i el rendiment et ve sol si no toques els diners.`;
+  $('#levTitle').textContent= iBest.d>r1.d ? `Guanyar un 25% més pesa ${fmt(iBest.d/r1.d,1)} vegades més que un punt més de rendiment real` : `Amb el teu capital, un punt més de rendiment real ja pesa tant com cobrar un 25% més`;
+  $('#levLede').textContent=`Partint de ${eur(SAV)} al ${$('#retV').textContent} (un ${fmt(RR()*100,1)}% real) i estalviant el ${pct(sRate,0)} de ${fmt(NET)} € al mes, al cap de deu anys des de la base ${YL} tindries uns ${eur(base)} en euros d’aquell any, sota aquestes hipòtesis. Cada barra és el que afegeix una sola millora. ${iBest.d>r1.d?'Amb el teu capital, augmentar l’ingrés un 25% pesa més que un punt de rendiment real.':'Amb el teu capital, un punt de rendiment real pesa més o igual que augmentar l’ingrés un 25%.'} El rendiment es reinverteix en el model; a la pràctica pot variar d’un any a l’altre.`;
 }
 redraw.push(()=>drawLev({lev:true}));
 
@@ -184,14 +185,14 @@ function drawDots(shown){
   const H=yy; svg.attr('viewBox',`0 0 ${W} ${H}`).attr('width',W).attr('height',H); svg.selectAll('*').remove();
   layout.forEach((r,j)=>{ svg.append('text').attr('x',0).attr('y',r.y-22).style('font-size','14px').style('font-weight',600).style('fill',INK).text(`${fmt(r.n0)} clients`);
     svg.append('text').attr('class','ax').attr('x',0).attr('y',r.y-7).style('font-size','12px').text(`${r.n} · ${r.s}`);
-    const g=svg.append('g').selectAll('rect').data(d3.range(r.dots)).join('rect').attr('x',i=>(i%cols)*(s+2)).attr('y',i=>r.y+Math.floor(i/cols)*(s+2)).attr('width',s).attr('height',s).attr('rx',1.5).attr('fill',j<2?R[3]:RED).attr('opacity',shown.dots?1:0);
+    const g=svg.append('g').selectAll('rect').data(d3.range(r.dots)).join('rect').attr('x',i=>(i%cols)*(s+2)).attr('y',i=>r.y+Math.floor(i/cols)*(s+2)).attr('width',i=>s*Math.min(1,(r.n0-i*per)/per)).attr('height',s).attr('rx',1.5).attr('fill',j<2?R[3]:RED).attr('opacity',shown.dots?1:0);
     (svg.node()._q||(svg.node()._q=[])).push(()=>g.transition().delay(i=>RM?0:j*200+i*3).duration(200).attr('opacity',1)); });
   svg.node()._rv=()=>(svg.node()._q||[]).forEach(f=>f());
-  $('#dotsKey').textContent=per>1?`Cada quadrat són ${per} clients.`:'Cada quadrat és un client.';
+  $('#dotsKey').textContent=per>1?`Cada quadrat complet són ${per} clients; l’últim de cada grup és proporcional als que queden.`:'Cada quadrat és un client.';
   const hrs=target/keep/rateH;
-  $('#rDots').innerHTML=`Per tenir ${fmt(target)} € nets al mes cobrant per hores a ${fmt(rateH)} €/h, has de facturar <b>${fmt(Math.round(hrs))} hores al mes</b>${hrs>120?', més del que un autònom pot facturar de manera sostinguda (un cop descomptats la feina comercial, l’administració i les vacances)':''}. Amb un producte, el sostre no són les hores, sinó els clients.`;
+  $('#rDots').innerHTML=`Per tenir ${fmt(target)} € nets al mes cobrant per hores a ${fmt(rateH)} €/h, has de facturar <b>${fmt(hrs,1)} hores al mes</b>${hrs>120?': més de 120 hores, abans de reservar temps per a feina comercial, administració i vacances':''}. Amb un producte, el repte passa també per aconseguir clients i mantenir-los.`;
 }
-$('#dotsLede').textContent=`Quants clients necessites perquè un producte et pagui el sou? Depèn gairebé només del preu. Una app de consum barata necessita milers d’usuaris que paguin, i competeix amb tothom que pot fer la mateixa app en un cap de setmana. Una eina que resol un problema car a un nínxol professional en necessita unes desenes. Quan fer apps es torna una commodity, el que no és commodity és saber quin problema resoldre, per a qui, i arribar-hi.`;
+$('#dotsLede').textContent=`Quants clients necessites perquè un producte et pagui el sou? El càlcul depèn del preu, dels ingressos que busques i de la part que et queda neta. Una app barata en necessita molts més que una eina de preu alt per a un nínxol professional. Però menys clients no vol dir que sigui més fàcil vendre: també compten quin problema resols, per a qui i com hi arribes.`;
 $('#keep').addEventListener('input',e=>{ keep=+e.target.value/100; $('#keepV').textContent=pct(keep,0); drawDots({dots:true}); });
 $('#rateH').addEventListener('input',e=>{ rateH=+e.target.value; $('#rateHV').textContent=fmt(rateH)+' €/h'; drawDots({dots:true}); });
 redraw.push(()=>drawDots({dots:true}));
@@ -201,14 +202,14 @@ const B=D.rent[0][0];
 const m3Y=S.yAvg(k=>S.m3.get(k));
 const RANK=[
   {n:'Or',v:gE(YL)/gE(B)},
-  {n:'Diners en circulació (M3)',v:m3Y(YL)/m3Y(B)},
+  {n:'Diners (agregat M3)',v:m3Y(YL)/m3Y(B)},
   {n:'Lloguer a Barcelona',v:rentY.get(YL)/rentY.get(B)},
   {n:'Preus de consum',v:ipcY(YL)/ipcY(B)},
   {n:'Sou mitjà',v:sal(YL)/sal(B),hot:true},
   {n:'Preu de compra d’un pis',v:price(YL)/price(B)},
 ].sort((a,b)=>b.v-a.v);
 $('#rankTitle').textContent=`Des del ${B}, el sou ha pujat menys que gairebé tot`;
-$('#rankLede').textContent=`El ${B} era el cim de la bombolla immobiliària, i per això el preu de compra dels pisos surt per sota. Però el lloguer, els diners en circulació i l’or han anat per davant dels sous. La lliçó per a algú que treballa pel seu compte: el que cobres per hora de feina és el que pitjor s’ha revaloritzat. Tot el que és propietat (un producte, una participació, una audiència, un actiu) juga a l’altre costat.`;
+$('#rankLede').textContent=`El ${B} era en plena bombolla immobiliària, i triar aquesta base condiciona el resultat del preu de compra. En aquest període, el lloguer, l’agregat monetari M3 i l’or han pujat més que el sou mitjà. Aquest sou és el cost salarial dels treballadors assalariats, no les tarifes d’un autònom; M3 inclou dipòsits i altres instruments, a més de l’efectiu. La comparació ajuda a veure com s’han separat aquests indicadors, però no mesura el retorn d’un producte propi.`;
 function drawRank(shown){
   const svg=d3.select('#rank'); const W=pw(svg,697), rh=36, lw=W<500?130:200, H=RANK.length*rh+24;
   svg.attr('viewBox',`0 0 ${W} ${H}`).attr('width',W).attr('height',H); svg.selectAll('*').remove();
@@ -266,7 +267,7 @@ function drawLives(shown){
   });
   svg.node()._rv=()=>(svg.node()._q||[]).forEach(f=>f());
   const st=stats.find(o=>o.s.k===share)||stats[1], all=stats[2], srv=stats[0];
-  $('#rLives').innerHTML=`<b>${st.s.n}</b>: en la meitat de les vides guanyes més de ${eur(st.med)} en deu anys; el 10% més afortunat, més de ${eur(st.top)}. En un ${pct(st.below,0)} de les vides acabes per sota del que guanyaries només amb serveis.`+(st.quit?` <span class="m">En un ${pct(st.quit,0)} de les vides, el coixí de ${eur(SAV)} s’acaba abans que arribi l’èxit i has de tornar a fer només serveis.</span>`:'');
+  $('#rLives').innerHTML=`<b>${st.s.n}</b>: en la meitat de les vides guanyes més de ${eur(st.med)} en deu anys; el 10% més afortunat, més de ${eur(st.top)}. En un ${pct(st.below,0)} de les vides acabes per sota de mantenir els teus ingressos actuals constants (${eur(base)} en deu anys).`+(st.quit?` <span class="m">En un ${pct(st.quit,0)} de les vides, el coixí de ${eur(SAV)} s’esgota i el model torna a només serveis a partir de l’any següent.</span>`:'');
 }
 $('#pWin').addEventListener('input',e=>{ pWin=+e.target.value/100; $('#pWinV').textContent=pct(pWin,0); drawLives({lives:true}); });
 seg('sh',v=>{ share=+v; drawLives({lives:true}); });
@@ -275,9 +276,9 @@ redraw.push(()=>drawLives({lives:true}));
 /* ---------- tancament ---------- */
 function closing(){
   const U=units();
-  $('#close1').textContent=`Amb ${fmt(NET)} € nets al mes, avui compres ${fmt(U[0].b,1)} m² de pis l’any; qui cobrava el mateix el 2000 en comprava ${fmt(U[0].a,1)}. No és culpa teva ni ho arreglaràs estalviant més: els actius s’han allunyat dels sous. L’única manera de tornar-hi a acostar-se és tenir una part del que guanyes en forma de propietat.`;
+  $('#close1').textContent=`Amb ${fmt(NET)} € nets al mes, el ${YL} compres ${fmt(U[0].b,1)} m² de pis l’any; qui tenia el mateix poder adquisitiu el 2000 en comprava ${fmt(U[0].a,1)}. L’habitatge s’ha allunyat dels sous. Estalviar més, augmentar l’ingrés i acumular actius són palanques diferents: el seu pes depèn del capital de partida i de les hipòtesis que has triat.`;
   const ent50=.3*price(YL)*50;
-  $('#close2').textContent=SAV?`Els teus ${eur(SAV)} canvien el problema: ${SAV>=ent50?'ja tens l’entrada d’un pis petit':`tens ${pct(SAV/ent50,0)} de l’entrada d’un pis petit`} i ${fmt(SAV/NET,0)} mesos de marge. No els gastis per anar més de pressa ni els apostis tots en un sol producte: la seva feina és comprar-te temps per a les apostes i créixer tranquil·lament mentre tu augmentes l’ingrés.`:'';
+  $('#close2').textContent=SAV?`Els teus ${eur(SAV)} canvien el problema: amb els preus de l’any base ${YL}, ${SAV>=ent50?'cobreixen l’entrada modelada d’un pis de 50 m²':`cobreixen el ${pct(SAV/ent50,0)} de l’entrada modelada d’un pis de 50 m²`}. Si els conserves com a coixí, equivalen a ${fmt(SAV/(NET*(1-sRate)),1)} mesos de despeses; no pots destinar els mateixos diners al pis i al coixí alhora. Decideix quina part et compra temps i quina pots comprometre a més llarg termini.`:'';
 }
 redraw.push(closing);
 

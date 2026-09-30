@@ -24,9 +24,9 @@ const DUAL=[
 ];
 DUAL.forEach(s=>{ s.eur=s.pts.map(p=>[p[0],p[1]/s.base,p[3]]); s.au=s.pts.map(p=>[p[0],p[1]/s.base/(p[2]/gE(2000)),p[3]]); s.endE=s.eur[s.eur.length-1]; s.endA=s.au[s.au.length-1]; });
 const dBy=Object.fromEntries(DUAL.map(s=>[s.k,s]));
-const qLab=q=>q.length===4?q:`${q.slice(5)}r trimestre del ${q.slice(0,4)}`;
+const qLab=q=>q.length===4?q:`${['1r','2n','3r','4t'][+q.slice(5)-1]} trimestre del ${q.slice(0,4)}`;
 $('#h1').textContent=`Comptat en or, un pis val un ${pct(1-dBy.hab.endA[1],0)} menys que l’any 2000. I el sou, un ${pct(1-dBy.sal.endA[1],0)} menys.`;
-$('#lead').textContent=`En euros, des del 2000 els preus s’han multiplicat per ${fmt(dBy.ipc.endE[1],2)} i l’habitatge per ${fmt(dBy.hab.endE[1],1)}. Però si en lloc d’euros haguéssim fet servir or, gairebé tot seria més barat que llavors, perquè una unça d’or val ${fmt(dBy.or.endE[1],1)} vegades més euros. Canvia el regle i mira què passa.`;
+$('#lead').textContent=`En euros, entre el 2000 i el ${qLab(dBy.ipc.endE[2])}, els preus s’han multiplicat per ${fmt(dBy.ipc.endE[1],2)} i l’habitatge per ${fmt(dBy.hab.endE[1],1)}. Quan dividim els preus en euros pel preu de l’or, gairebé tot resulta més barat que llavors, perquè una unça d’or val ${fmt(dBy.or.endE[1],1)} vegades més euros. El sou acaba el ${dBy.sal.endE[2]}; les altres sèries, el ${qLab(dBy.hab.endE[2])}. Canvia el regle i mira què passa.`;
 let dMode='eur';
 function drawDual(shown){
   const svg=d3.select('#dual'); const [W,H]=sizeOf(svg,697,.66,340,480); const t=18,b=24,rp=W<500?96:124;
@@ -45,8 +45,8 @@ function drawDual(shown){
     L.forEach(t=>t.remove()); L=labs(); L.forEach(t=>t.attr('opacity',0).transition().delay(RM?0:1100).duration(400).attr('opacity',1)); rd(); };
   const dots=DUAL.map(s=>svg.append('circle').attr('r',3.5).attr('fill',s.c).style('display','none'));
   const rd=()=>$('#rDual').innerHTML= dMode==='eur'
-    ? `<span class="m">En euros.</span> Tot puja: l’or, per ${fmt(dBy.or.endE[1],1)}; els diners, per ${fmt(dBy.m3.endE[1],1)}; l’habitatge, per ${fmt(dBy.hab.endE[1],1)}; els preus, per ${fmt(dBy.ipc.endE[1],2)}, i el sou, per ${fmt(dBy.sal.endE[1],2)}. <span class="m">Toca el gràfic.</span>`
-    : `<span class="m">En or.</span> L’or queda pla, i tota la resta baixa: la cistella de la compra costa un ${pct(1-dBy.ipc.endA[1],0)} menys que el 2000; un pis, un ${pct(1-dBy.hab.endA[1],0)} menys. Però el sou també ha caigut un ${pct(1-dBy.sal.endA[1],0)}. <span class="m">Toca el gràfic.</span>`;
+    ? `<span class="m">En euros.</span> Comparant amb el 2000, l’or s’ha multiplicat per ${fmt(dBy.or.endE[1],1)}; els diners, per ${fmt(dBy.m3.endE[1],1)}; l’habitatge, per ${fmt(dBy.hab.endE[1],1)}; els preus, per ${fmt(dBy.ipc.endE[1],2)}, i el sou, per ${fmt(dBy.sal.endE[1],2)}. <span class="m">Toca el gràfic.</span>`
+    : `<span class="m">En or.</span> L’or queda pla, i la resta acaba per sota del 2000: la cistella de la compra costa un ${pct(1-dBy.ipc.endA[1],0)} menys que el 2000; un pis, un ${pct(1-dBy.hab.endA[1],0)} menys. Però el sou també ha caigut un ${pct(1-dBy.sal.endA[1],0)}. <span class="m">Toca el gràfic.</span>`;
   crosshair(svg,x,t,H-b,xv=>{ const k=dMode==='eur'?'eur':'au'; const out=[]; DUAL.forEach((s,i)=>{ const p=nearest(s[k],xv); if(Math.abs(p[0]-xv)>.6){ dots[i].style('display','none'); return; } dots[i].style('display',null).attr('cx',x(p[0])).attr('cy',y(p[1])); out.push(`<span style="color:${s.c===MUTED?INK:s.c}">${s.n.toLowerCase()} ${times(p[1])}</span>`); });
     const yy=Math.floor(xv); $('#rDual').innerHTML=`<b>${yy}</b>, ${dMode==='eur'?'en euros':'en or'}, respecte del 2000: `+out.join(' · '); return xv; },
     ()=>{ dots.forEach(d=>d.style('display','none')); rd(); });
@@ -61,8 +61,8 @@ const realGold=(k0,k)=>100*S.goldEur(k)/S.goldEur(k0)*S.ipc(k0)/S.ipc(k);
 const FIN=START.map(y=>{ const k0=kMake(y,1); return {y,g:realGold(k0,LASTK),c:realCash(k0,LASTK)}; });
 let sy=2000;
 const f2000=FIN.find(d=>d.y===2000);
-$('#boxTitle').textContent=`Si el gener del 2000 haguessis guardat 100 € en or, avui compraries el que llavors valien ${fmt(f2000.g)} €`;
-$('#boxLede').textContent=`Els mateixos 100 € en bitllets, al calaix, compren avui el que llavors en compraven ${fmt(f2000.c)}. Tot és en euros del mes de partida, descomptant la inflació de Catalunya. Però l’any en què comences ho canvia tot: tria’l a sota.`;
+$('#boxTitle').textContent=`Si el gener del 2000 haguessis convertit l’equivalent a 100 € en or, avui compraries el que llavors valien ${fmt(f2000.g)} €`;
+$('#boxLede').textContent=`Les pessetes equivalents a 100 €, al calaix, compren avui el que llavors en compraven ${fmt(f2000.c)}. Tot és en euros del mes de partida, descomptant la inflació de Catalunya. Abans del 2002, les quantitats són euros equivalents: els bitllets eren en pessetes. Però l’any en què comences ho canvia tot: tria’l a sota.`;
 function drawBox(shown){
   const svg=d3.select('#box'); const [W,H]=sizeOf(svg,697,.56,280,400); const t=18,b=24;
   const k0=kMake(sy,1), n=kDiff(k0,LASTK), pts=d3.range(0,n+1).map(i=>{ const k=kAdd(k0,i); return [kT(k),realGold(k0,k),realCash(k0,k),k]; });
@@ -178,9 +178,10 @@ const grAt=y=>GR.find(d=>d[0]===y);
 const GRP=GR.filter(d=>d[1]!=null&&d[0]<1971), grPreMax=GRP.reduce((a,b)=>b[2]>a[2]?b:a), grPreMin=GRP.reduce((a,b)=>b[2]<a[2]?b:a);
 const g80=grAt(1980), g00=grAt(2000), gUY=grAt(UY);
 const lowSince=GR.filter(d=>d[1]!=null&&d[0]<2000&&d[2]<=g00[2]).pop(), isMax=GR.every(d=>d[1]==null||d[2]<=gUY[2]);
-$('#realTitle').textContent=`El 2000 l’or valia menys que en qualsevol moment des del ${lowSince[0]}.`+(isMax?` El ${UY}, més que mai.`:'');
-$('#realLede').textContent=`Aquest és el preu d’una unça en dòlars d’avui, descomptant la inflació dels Estats Units. Durant el segle i mig de patró or es va moure entre ${fmt(grPreMin[2])} $ (${grPreMin[0]}) i ${fmt(grPreMax[2])} $ (${grPreMax[0]}). El 1980 va arribar a ${fmt(g80[2])} $, i el ${g00[0]}, en plena venda d’or dels bancs centrals, havia tornat a baixar a ${fmt(g00[2])} $. El ${gUY[0]}, ${fmt(gUY[2])} $. Començar a comptar el 2000 és començar a prop del fons del pou.`;
+$('#realTitle').textContent=`La mitjana real de l’or del 2000 era més baixa que la de tots els anys entre el ${lowSince[0]+1} i el 1999.`+(isMax?` El ${UY} és el màxim anual d’aquesta sèrie.`:'');
+$('#realLede').textContent=`Aquest és el preu d’una unça en dòlars de ${UY}, descomptant la inflació dels Estats Units. Abans del 1971, combinant paritats legals i mitjanes anuals de mercat, es va moure entre ${fmt(grPreMin[2])} $ (${grPreMin[0]}) i ${fmt(grPreMax[2])} $ (${grPreMax[0]}). El 1980 va arribar a ${fmt(g80[2])} $, i el ${g00[0]}, en aquesta sèrie, havia tornat a baixar a ${fmt(g00[2])} $. El ${gUY[0]}, ${fmt(gUY[2])} $. Començar a comptar el 2000 és començar a prop del fons del pou.`;
 let rMode='real';
+$('[data-rm="real"]').textContent='En dòlars de '+UY;
 function drawReal(shown){
   const svg=d3.select('#real'); const [W,H]=sizeOf(svg,697,.6,300,440); const t=22,b=24;
   const x=d3.scaleLinear().domain([1800,UY]).range([0,W]);
@@ -199,7 +200,7 @@ function drawReal(shown){
   [g80,g00,gUY].forEach(d=>svg.append('text').attr('class','lab').attr('x',x(d[0])+(d===gUY?-4:d===g00?0:-4)).attr('y',y(d[k])+(d===g00?16:-8)).attr('text-anchor',d===g00?'middle':'end').text(d[0]+': '+fmt(d[k])+' $'));
   if(!shown.real){ p1.attr('opacity',0); p2.attr('opacity',0); svg.node()._rv=()=>{ p1.attr('opacity',1); p2.attr('opacity',1); drawOn(p1,1600); drawOn(p2,900,1600); }; }
   const dot=svg.append('circle').attr('r',4).attr('fill',RED).style('display','none');
-  const R0=`<span class="m">Toca el gràfic.</span> ${rMode==='real'?`En dòlars de ${UY}.`:'En dòlars de cada any, escala logarítmica: cada línia horitzontal multiplica.'} Els forats són anys sense paritat oficial.`;
+  const R0=`<span class="m">Toca el gràfic.</span> ${rMode==='real'?`En dòlars de ${UY}.`:'En dòlars de cada any, escala logarítmica: cada línia horitzontal multiplica.'} Els forats exclouen anys amb convertibilitat dels bitllets suspesa o preu variable; no volen dir que no hi hagués paritat legal de les monedes.`;
   crosshair(svg,x,t,H-b,xv=>{ const d=nearest(pts,xv); dot.style('display',null).attr('cx',x(d[0])).attr('cy',y(d[k]));
     $('#rReal').innerHTML=`<b>${d[0]}</b>: una unça, ${fmt(d[1],d[1]<100?2:0)} $ de l’època, que són <b>${fmt(d[2])} $ de ${UY}</b>.`; return d[0]; },
     ()=>{ dot.style('display','none'); $('#rReal').innerHTML=R0; });
@@ -214,7 +215,7 @@ const MON={
   eu:{y0:1999,y1:YL,g:gE,m:M3Y,cur:'€',mn:'M3 de la zona euro',gn:'Or, en euros'},
 };
 Object.values(MON).forEach(o=>{ o.pts=d3.range(o.y0,o.y1+1).map(y=>[y,o.g(y)/o.g(o.y0),o.m(y)/o.m(o.y0)]).filter(p=>!isNaN(p[1])&&!isNaN(p[2])); o.end=o.pts[o.pts.length-1]; o.fair=o.g(o.y0)*o.end[2]; o.ratio=o.pts.map(p=>[p[0],p[1]/p[2]]); o.rmin=o.ratio.reduce((a,b)=>b[1]<a[1]?b:a); o.rmax=o.ratio.reduce((a,b)=>b[1]>a[1]?b:a); });
-$('#monLede').textContent=`Si l’or només reflectís que cada any hi ha més diners, el seu preu hauria de créixer com la massa monetària. Als Estats Units, des del 1971 els diners s’han multiplicat per ${fmt(MON.us.end[2],0)} i l’or per ${fmt(MON.us.end[1],0)}. Si hagués crescut com els diners, avui una unça valdria uns ${fmt(Math.round(MON.us.fair/10)*10)} $, i no ${fmt(gU(UY))} $.`;
+$('#monLede').textContent=`Podem construir un escenari en què l’or creixi en la mateixa proporció que la massa monetària. És una comparació aritmètica, no una estimació del preu just ni una relació causal demostrada. Als Estats Units, des del 1971 els diners s’han multiplicat per ${fmt(MON.us.end[2],0)} i l’or per ${fmt(MON.us.end[1],0)}. Si hagués crescut com els diners, la mitjana d’una unça el ${UY} seria d’uns ${fmt(Math.round(MON.us.fair/10)*10)} $, davant dels ${fmt(gU(UY))} $ observats.`;
 let mReg='us';
 function drawMon(shown){
   const svg=d3.select('#mon'); const [W,H]=sizeOf(svg,697,.58,290,420); const t=18,b=24,rp=W<500?84:116;
@@ -244,7 +245,7 @@ const HY=d3.range(1971,UY+1), realG=y=>gU(y)/USC.get(y);
 const CELLS=[]; HY.forEach(a=>HY.forEach(b=>{ if(b>a){ const tot=realG(b)/realG(a); CELLS.push({a,b,tot,ann:Math.pow(tot,1/(b-a))-1}); } }));
 const lossLong=CELLS.filter(c=>c.tot<1).reduce((m,c)=>c.b-c.a>m.b-m.a?c:m,{a:0,b:0});
 const shareLoss10=(()=>{ const c=CELLS.filter(c=>c.b-c.a===10); return c.filter(x=>x.tot<1).length/c.length; })();
-$('#heatLede').textContent=`Cada quadret és el que hauries guanyat o perdut, descomptant la inflació, comprant or de mitjana un any (a baix) i venent-lo un altre (a la dreta). En vermell, guanys; en gris, pèrdues. De tots els períodes de deu anys des del 1971, en un ${pct(shareLoss10,0)} l’or va perdre poder de compra. El període més llarg amb pèrdues va del ${lossLong.a} al ${lossLong.b}: ${lossLong.b-lossLong.a} anys.`;
+$('#heatLede').textContent=`Cada quadret és el que hauries guanyat o perdut, descomptant la inflació, comprant or al preu mitjà d’un any (eix vertical esquerre) i venent-lo al preu mitjà d’un altre (eix horitzontal inferior). En vermell, guanys; en gris, pèrdues. De tots els períodes de deu anys des del 1971, en un ${pct(shareLoss10,0)} l’or va perdre poder de compra. La comparació entre mitjanes anuals més distant que acaba amb pèrdues va del ${lossLong.a} al ${lossLong.b}: ${lossLong.b-lossLong.a} anys.`;
 function drawHeat(shown){
   const svg=d3.select('#heat'); const W=pw(svg,640), n=HY.length, lw=W<500?26:34, s=(W-lw)/(n-1), H=s*(n-1)+26;
   svg.attr('viewBox',`0 0 ${W} ${H}`).attr('width',W).attr('height',H); svg.selectAll('*').remove();
@@ -270,7 +271,7 @@ let pk=0; const DD=HY.map(y=>{ const r=realG(y); pk=Math.max(pk,r); return [y,r/
 const ddMin=DD.reduce((a,b)=>b[1]<a[1]?b:a);
 const rec=DD.find(d=>d[0]>1980&&realG(d[0])>=realG(1980));
 $('#ddTitle').textContent= rec ? `Qui va comprar or el 1980 va trigar ${rec[0]-1980} anys a recuperar el poder de compra` : `Qui va comprar or el 1980 encara no ha recuperat el poder de compra`;
-$('#ddLede').textContent=`El gràfic mostra quant per sota del seu màxim anterior estava el preu real de l’or cada any. El ${ddMin[0]}, una unça comprava un ${pct(-ddMin[1],0)} menys que el 1980. L’or protegeix de la inflació a molt llarg termini, però pot passar una generació sencera perdent.`;
+$('#ddLede').textContent=`El gràfic mostra quant per sota del seu màxim anterior estava el preu real de l’or cada any. El ${ddMin[0]}, una unça comprava un ${pct(-ddMin[1],0)} menys que el 1980. La recuperació es calcula amb mitjanes anuals, sense costos: no indica el primer dia que es va recuperar aquell nivell. L’or pot passar una generació sencera perdent poder de compra i no en garanteix la protecció futura.`;
 function drawDd(shown){
   const svg=d3.select('#dd'); const [W,H]=sizeOf(svg,697,.42,220,320); const t=14,b=24;
   const x=d3.scaleLinear().domain([1971,UY]).range([0,W]); const y=d3.scaleLinear().domain([-1,0]).range([H-b,t]);
@@ -290,7 +291,7 @@ function drawDd(shown){
 }
 
 /* ---------- tancament ---------- */
-$('#close1').textContent=`Entre el 2000 i el ${YL}, els diners de la zona euro s’han multiplicat per ${fmt(MON.eu.end[2],1)} i l’or en euros per ${fmt(MON.eu.end[1],1)}. Una part de la pujada té sentit: quan es creen diners, l’or, que no es pot imprimir, en reflecteix la pèrdua de valor a llarg termini. Però una part és el moment: el 2000 l’or era a prop del mínim real de les últimes dècades, i avui és al màxim de la història. Si l’or hagués crescut exactament com els diners de la zona euro, una unça valdria uns ${fmt(Math.round(MON.eu.fair/10)*10)} €, no ${fmt(gE(YL))} €.`;
+$('#close1').textContent=`Entre el ${MON.eu.y0} i el ${MON.eu.y1}, els diners de la zona euro s’han multiplicat per ${fmt(MON.eu.end[2],1)} i l’or en euros per ${fmt(MON.eu.end[1],1)}. Aquests augments no demostren quina part de la pujada de l’or es deu a la creació de diners. El moment de partida també importa: el 2000 l’or era a prop del mínim real de les últimes dècades, i el ${UY} va registrar la mitjana anual real més alta d’aquesta sèrie. En l’escenari aritmètic que fa créixer l’or exactament com M3 des del ${MON.eu.y0}, la mitjana d’una unça el ${MON.eu.y1} seria d’uns ${fmt(Math.round(MON.eu.fair/10)*10)} €, davant dels ${fmt(gE(MON.eu.y1))} € observats.`;
 
 Comu.boot([drawDual,drawBox,drawSalOz,drawFlat,drawReal,drawMon,drawHeat,drawDd],
   [['dual'],['box'],['salOz'],['real'],['mon'],['heat',.2],['dd']],

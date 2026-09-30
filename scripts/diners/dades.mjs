@@ -46,9 +46,10 @@ const usCpi = csv('ipc-eua').map(r => [r.any, r.ipc_1967_100]);
 /* ---- Or i canvi ---- */
 const gold = csv('or'), eur = new Map(csv('eurusd').map(r => [r.mes.replace('-', 'M'), r.usd_per_euro]));
 const goldFrom = gold[0].mes;
-// Abans del 1960, preu legal de l'or als EUA ($/unça): 19,39 (Coinage Act 1792), 20,67 (1834–1933, llevat de 1862–1878,
+// Abans del 1960, preu legal de l'or als EUA ($/unça): 19,39 (1792), 20,69 (1834: 232 grans fins / 10 $),
+// 20,67 (1837: 232,2 grans fins / 10 $, llevat de 1862–1878,
 // quan el dòlar de paper no es podia canviar per or) i 35 (Gold Reserve Act, gener del 1934). [des, fins, $/unça]
-const goldPar = [[1800, 1833, 19.39], [1834, 1861, 20.67], [1879, 1932, 20.67], [1934, 1959, 35]];
+const goldPar = [[1800, 1833, 19.39], [1834, 1836, 20.69], [1837, 1861, 20.67], [1879, 1932, 20.67], [1934, 1959, 35]];
 
 /* ---- Diner: BCE i Fed, a final de cada mes, en milers de milions ---- */
 const agg = csv('bce-agregats');

@@ -34,7 +34,7 @@
     </div>
     <svg class="viz" id="dual" role="img" aria-label="Or, diners, habitatge, preus i sou des del 2000, comptats en euros o en or" style="max-width:697px"></svg>
     <p class="readout" id="rDual" aria-live="polite"></p>
-    <p class="note">Mitjana del 2000 = 1, escala logarítmica: cada línia horitzontal duplica o divideix per dos. «En or» vol dir el preu dividit pel preu d’una unça en euros aquell trimestre. Or: Banc Mundial i BCE. Diners: M3 de la zona euro (BCE). Habitatge: valor taxat de l’habitatge lliure a la província de Barcelona (Ministeri d’Habitatge). Preus: IPC de Catalunya (INE). Sou: sou brut mitjà per treballador a Catalunya, mitjana anual (INE).</p>
+    <p class="note">Mitjana del 2000 = 1, escala logarítmica: cada línia horitzontal duplica o divideix per dos. «En or» vol dir el preu dividit pel preu d’una unça en euros aquell trimestre, o aquell any en el sou. Or: Banc Mundial i BCE. Diners: M3 de la zona euro (BCE). Habitatge: valor taxat de l’habitatge lliure a la província de Barcelona (Ministeri d’Habitatge). Preus: IPC de Catalunya (INE). Sou: cost salarial mensual mitjà per treballador a Catalunya, anualitzat com la mitjana dels quatre trimestres × 12 (INE); cobreix indústria, construcció i serveis, inclosa jornada parcial.</p>
   </header>
 
   <section>
@@ -55,7 +55,7 @@
     <p id="salLede"></p>
     <svg class="viz" id="salOz" role="img" aria-label="Sou brut mitjà anual a Catalunya, en unces d’or" style="max-width:697px"></svg>
     <p class="readout" id="rSalOz" aria-live="polite"></p>
-    <p class="note">Sou brut anual: cost salarial total per treballador a Catalunya, Enquesta trimestral de cost laboral (INE). Dividit pel preu mitjà anual d’una unça troy (31,1 grams) en euros.</p>
+    <p class="note">Sou brut anualitzat: mitjana dels quatre costos salarials mensuals trimestrals × 12, Enquesta trimestral de cost laboral (INE). Cobreix indústria, construcció i serveis, inclosa jornada parcial; exclou agricultura, personal domèstic, organismes extraterritorials i funcionaris de classes passives. Dividit pel preu mitjà anual d’una unça troy (31,1 grams) en euros.</p>
   </section>
 
   <section>
@@ -64,29 +64,29 @@
     <div class="slider"><button class="play" id="flatPlay" aria-label="Reprodueix">▶</button><span class="yr" id="flatYr"></span><input type="range" id="flatT" step="1" aria-label="Any"></div>
     <svg class="viz" id="flat" role="img" aria-label="Quilos d’or que valia un pis de 80 metres quadrats cada any" style="max-width:697px"></svg>
     <p class="readout" id="rFlat" aria-live="polite"></p>
-    <p class="note">Valor taxat mitjà de l’habitatge lliure a la província de Barcelona (Ministeri d’Habitatge i Agenda Urbana), mitjana anual, per 80 m². A la ciutat de Barcelona els preus són més alts.</p>
+    <p class="note">Valor taxat mitjà de l’habitatge lliure a la província de Barcelona (Ministeri d’Habitatge i Agenda Urbana), mitjana anual, per 80 m². No és un preu de compravenda observat ni una estimació específica per a la ciutat de Barcelona.</p>
     <p id="ratioP" style="margin-top:2.4rem"></p>
   </section>
 
   <section>
     <h2>Té sentit, o és que el 2000 era un mal moment per comptar?</h2>
-    <p>Que tot sembli més barat en or només vol dir que l’or s’ha encarit respecte de tot. La pregunta és per què. Hi ha raons de fons: l’or no es pot imprimir, i des del 2000 els bancs centrals han creat diners a una escala mai vista. Durant una dècada els tipus d’interès reals van ser negatius, i guardar or, que no dona interessos, no costava res. I des del 2022, després que es congelessin les reserves de Rússia, els bancs centrals compren or com no ho feien des de feia dècades. Però també hi ha el moment triat: mirem-ho amb la sèrie més llarga que hi ha.</p>
+    <p>Que tot sembli més barat en or només vol dir que l’or s’ha encarit respecte de tot. La pregunta és per què. L’or no es pot imprimir, tot i que l’oferta creix amb l’extracció i el reciclatge. Els tipus d’interès reals baixos o negatius poden reduir-ne el cost d’oportunitat, però comprar i guardar or té costos. El BCE també assenyala la demanda dels bancs centrals i el risc geopolític entre els factors de la pujada recent. Aquests gràfics no en mesuren l’efecte separat. També importa el moment triat: mirem-ho amb una sèrie històrica dels EUA des del 1800.</p>
   </section>
 
   <section style="padding-top:2rem">
     <h2 id="realTitle"></h2>
     <p id="realLede"></p>
     <div class="seg" role="group" aria-label="Com es compta">
-      <button data-rm="real" aria-pressed="true">En dòlars d’avui</button>
+      <button data-rm="real" aria-pressed="true">En dòlars de l’últim any complet</button>
       <button data-rm="nom" aria-pressed="false">En dòlars de cada any</button>
     </div>
-    <svg class="viz" id="real" role="img" aria-label="Preu d’una unça d’or en dòlars d’avui des del 1800" style="max-width:697px"></svg>
+    <svg class="viz" id="real" role="img" aria-label="Preu d’una unça d’or des del 1800, nominal o descomptant la inflació dels EUA" style="max-width:697px"></svg>
     <p class="readout" id="rReal" aria-live="polite"></p>
-    <p class="note">Fins al 1959, preu legal de l’or als Estats Units: 19,39 $ l’unça fins al 1833, 20,67 $ del 1834 al 1932 i 35 $ des del 1934. Entre el 1862 i el 1878 els bitllets no es podien canviar per or, i el 1933 el preu no era fix: no s’hi dibuixa res. Des del 1960, preu de mercat (Banc Mundial). Deflactat amb l’IPC dels Estats Units (Banc de la Reserva Federal de Minneapolis).</p>
+    <p class="note">Fins al 1959, preu legal de l’or als Estats Units: 19,39 $ l’unça fins al 1833, 20,69 $ del 1834 al 1836 i 20,67 $ del 1837 al 1932 i 35 $ des del 1934. Entre el 1862 i el 1878 els bitllets no es podien canviar per or, i el 1933 el preu no era fix: no s’hi dibuixa res. Des del 1960, preu de mercat (Banc Mundial). Deflactat amb l’IPC dels Estats Units (Banc de la Reserva Federal de Minneapolis).</p>
   </section>
 
   <section>
-    <h2>A la llarga, l’or segueix els diners. Però no gaire de prop</h2>
+    <h2>L’or i els diners han crescut a ritmes diferents</h2>
     <p id="monLede"></p>
     <div class="seg" role="group" aria-label="On">
       <button data-mreg="us" aria-pressed="true">Estats Units, des del 1971</button>
@@ -117,7 +117,7 @@
   <section class="closing">
     <h2>L’or és un bon regle per veure què fan els diners. No és un regle fix</h2>
     <p id="close1"></p>
-    <p>Comptar en or ensenya una cosa certa: els euros que cobrem són una unitat que s’encongeix, i els que tenen actius, com l’or o els pisos, en surten millor que els que només tenen sou. Però l’or també es mou per la por, pels tipus d’interès i per les compres dels bancs centrals. Mesurat en or, el 2000 tot semblava car i avui tot sembla barat. Cap dels dos extrems no és el preu «de veritat».</p>
+    <p>En els períodes mostrats, els preus han crescut més que el sou mitjà i l’or s’ha encarit més que l’habitatge. Això no implica que qualsevol propietari d’actius hagi guanyat més que qualsevol assalariat: també hi intervenen el moment de compra, els costos i el finançament. Però l’or també es mou per la por, pels tipus d’interès i per les compres dels bancs centrals. Mesurat en or, el 2000 tot semblava car i avui tot sembla barat. Cap dels dos extrems no és el preu «de veritat».</p>
     <div class="sources">
       <p class="note" style="margin:0">Fonts</p>
       <ul>
@@ -127,7 +127,8 @@
         <li>Federal Reserve Bank of Minneapolis. <a href="https://www.minneapolisfed.org/about-us/monetary-policy/inflation-calculator/consumer-price-index-1800-">Consumer Price Index, 1800–</a>.</li>
         <li>INE. <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=24078">Índex de preus de consum per comunitats autònomes</a> i <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=59392">Enquesta trimestral de cost laboral</a>.</li>
         <li>Ministeri d’Habitatge i Agenda Urbana. <a href="https://apps.fomento.gob.es/BoletinOnline2/?nivel=2&orden=35000000">Valor taxat de l’habitatge lliure</a>.</li>
-        <li>Preus legals de l’or: Coinage Act (1792 i 1834) i <a href="https://www.federalreservehistory.org/essays/gold-reserve-act">Gold Reserve Act</a> (1934), Federal Reserve History.</li>
+        <li>BCE: <a href="https://www.ecb.europa.eu/press/other-publications/ire/focus/html/ecb.irebox202506_01~f93400a4aa.en.html">demanda d’or, bancs centrals i risc geopolític</a> (2025).</li>
+        <li>Preus legals de l’or: Coinage Act (1792), <a href="https://www.usmint.gov/learn/history/historical-documents/legislation-to-regulate-gold-coins">llei del 1834</a> (U.S. Mint), <a href="https://www.govinfo.gov/content/pkg/STATUTE-5/pdf/STATUTE-5-Pg136.pdf">llei del 1837</a> (Statutes at Large) i <a href="https://www.federalreservehistory.org/essays/gold-reserve-act">Gold Reserve Act</a> (1934), Federal Reserve History.</li>
       </ul>
     </div>
     <p class="note" style="margin-top:2rem"><a href="../estrategia/" class="back">Deu anys: què faig amb el que guanyo →</a></p>

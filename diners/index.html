@@ -42,7 +42,7 @@
 
   <section>
     <h2 id="usTitle"></h2>
-    <p>L’índex de preus al consum dels Estats Units és la sèrie de preus més llarga que hi ha: arriba fins al 1800. Durant més d’un segle i mig els preus van pujar amb les guerres i van tornar a baixar amb la pau. Mira què passa a partir del 1971.</p>
+    <p>Aquesta sèrie històrica de preus dels Estats Units arriba fins al 1800. Mostra períodes d’inflació i de deflació, i una pujada sostinguda que ja havia començat abans del 1971. La data marca el final de la convertibilitat internacional del dòlar, però el gràfic no n’aïlla l’efecte sobre els preus.</p>
     <div class="seg" role="group" aria-label="Escala">
       <button data-uss="lin" aria-pressed="true">Escala normal</button>
       <button data-uss="log" aria-pressed="false">Logarítmica</button>
@@ -54,7 +54,7 @@
 
   <section>
     <h2>15 d’agost de 1971: el dòlar deixa de ser or</h2>
-    <p>Des del 1944, els acords de Bretton Woods lligaven totes les grans monedes al dòlar, i el dòlar a l’or: qualsevol banc central podia canviar 35 dòlars per una unça a la Reserva Federal. Aquell diumenge al vespre, el president Nixon va anunciar per televisió que suspenia «temporalment» la conversió. Mai més no es va restablir.</p>
+    <p>Des del 1944, els acords de Bretton Woods lligaven totes les grans monedes al dòlar, i el dòlar a l’or: les autoritats monetàries estrangeres podien convertir dòlars en or al Tresor dels EUA a la paritat oficial de 35 dòlars per unça. Des del 1968, l’or de mercat tenia un preu separat d’aquesta paritat. Aquell diumenge al vespre, el president Nixon va anunciar per televisió que suspenia «temporalment» la conversió. Mai més no es va restablir.</p>
     <div class="seg" role="group" aria-label="Moneda">
       <button data-gc="usd" aria-pressed="true">En dòlars</button>
       <button data-gc="eur" aria-pressed="false">En euros</button>
@@ -63,27 +63,27 @@
     <p class="readout" id="rGold" aria-live="polite"></p>
     <h3 class="sub" id="ozTitle"></h3>
     <p id="ozLede"></p>
-    <svg class="viz" id="oz" role="img" aria-label="Quadrats: el valor d’una unça d’or el 1971 comparat amb avui" style="max-width:646px"></svg>
+    <svg class="viz" id="oz" role="img" aria-label="Quadrats: paritat oficial de l’or l’agost del 1971 comparada amb el preu de mercat final" style="max-width:646px"></svg>
     <p class="readout" id="rOz"></p>
     <p class="note"><a href="../or/" class="back">Com seria el preu de tot comptat en or →</a></p>
   </section>
 
   <section>
     <h2 id="cashTitle"></h2>
-    <p>La resta són dipòsits: xifres en un compte. I la major part d’aquests diners no els imprimeix cap govern. Els creen els bancs comercials quan concedeixen un crèdit: quan et donen una hipoteca, no et deixen els estalvis d’un altre client, sinó que t’escriuen el saldo al compte. Ho explica el mateix Banc d’Anglaterra.</p>
-    <svg class="viz" id="waffle" role="img" aria-label="De cada cent euros, quants són bitllets i monedes" style="max-width:360px"></svg>
+    <p>La resta són principalment dipòsits, però també repos, participacions en fons monetaris i títols de deute a curt termini. I la major part d’aquests diners no els imprimeix cap govern. Els creen els bancs comercials quan concedeixen un crèdit: quan et donen una hipoteca, no et deixen els estalvis d’un altre client, sinó que t’escriuen el saldo al compte. Ho explica el mateix Banc d’Anglaterra.</p>
+    <svg class="viz" id="waffle" role="img" aria-label="De cada cent euros de M3 de la zona euro, quants són bitllets i monedes" style="max-width:360px"></svg>
     <div class="gkey"><span><i style="background:var(--red);border-radius:1px"></i>Bitllets i monedes</span><span><i style="background:var(--r1);border-radius:1px"></i>Dipòsits i altres actius monetaris</span></div>
     <h3 class="sub" id="m3Title"></h3>
     <p>M3 és el diner ampli de la zona euro: efectiu, comptes corrents, dipòsits i instruments a curt termini. Toca el gràfic per veure qualsevol mes.</p>
     <svg class="viz" id="m3" role="img" aria-label="Diner en circulació a la zona euro (M3) des del 1980" style="max-width:697px"></svg>
     <p class="readout" id="rM3" aria-live="polite"></p>
-    <p class="note">Agregat monetari M3 de la zona euro, saldo a final de mes (Banc Central Europeu). Abans del 1999, dades reconstruïdes per als països que van adoptar l’euro.</p>
+    <p class="note">Agregat monetari M3 de la zona euro, saldo a final de mes, ajustat estacionalment i per calendari (Banc Central Europeu). Abans del 1999, dades reconstruïdes per als països que van adoptar l’euro.</p>
   </section>
 
   <section>
     <h2 id="cbTitle"></h2>
-    <p>Des del 2008, quan el crèdit bancari es va encallar, els bancs centrals van començar a crear diner a gran escala per comprar deute públic i privat. El balanç d’un banc central és la mida de tot el que ha comprat pagant amb diner que ell mateix crea.</p>
-    <svg class="viz" id="cb" role="img" aria-label="Balanç del Banc Central Europeu i de la Reserva Federal" style="max-width:697px"></svg>
+    <p>La Reserva Federal va iniciar compres d’actius a gran escala el 2008; l’Eurosistema va ampliar les compres el 2015. El gràfic mostra els actius totals dels seus balanços: títols, préstecs, or, divises i altres actius. També canvien amb les revaloracions, de manera que l’augment del balanç no equival íntegrament a diners creats ni a compres de deute.</p>
+    <svg class="viz" id="cb" role="img" aria-label="Actius totals de l’Eurosistema, en euros, i de la Reserva Federal, en dòlars" style="max-width:697px"></svg>
     <div class="gkey"><span><i style="background:var(--red);border-radius:1px"></i>Eurosistema (BCE i bancs centrals nacionals)</span><span><i style="background:var(--ink);border-radius:1px"></i>Reserva Federal</span></div>
     <p class="readout" id="rCb" aria-live="polite"></p>
   </section>
@@ -100,12 +100,12 @@
     <h2 id="salTitle"></h2>
     <p id="salLede"></p>
     <div class="seg" role="group" aria-label="Com es compta">
-      <button data-sal="real" aria-pressed="true">En euros d’avui</button>
+      <button data-sal="real" aria-pressed="true" id="salRealUnit">En euros de l’últim any complet</button>
       <button data-sal="nom" aria-pressed="false">En euros de cada any</button>
     </div>
     <svg class="viz" id="sal" role="img" aria-label="Sou brut mitjà a Catalunya, nominal i descomptant la inflació" style="max-width:646px"></svg>
     <p class="readout" id="rSal" aria-live="polite"></p>
-    <p class="note">Cost salarial total per treballador (Enquesta trimestral de cost laboral, INE): suma dels quatre trimestres, amb les pagues extres, abans d’impostos i cotitzacions del treballador. És la mitjana de tots els assalariats, també els de jornada parcial. La mediana, el sou que separa la meitat que cobra menys de la que cobra més, és força més baixa: la mitjana l’estiren els sous alts. Deflactat amb l’IPC de Catalunya. És una mitjana: la crisi del 2008 va destruir sobretot llocs de treball mal pagats, cosa que va apujar la mitjana d’aquells anys.</p>
+    <p class="note">Cost salarial mensual mitjà per treballador (Enquesta trimestral de cost laboral, INE), anualitzat com la mitjana dels quatre trimestres × 12. Inclou pagues extres, abans d’impostos i cotitzacions del treballador, i jornada parcial. Cobreix indústria, construcció i serveis; exclou agricultura, personal domèstic, organismes extraterritorials i funcionaris de classes passives. No és el salari medià ni la remuneració anual observada de cada treballador. Deflactat amb l’IPC mitjà de Catalunya de l’últim any complet. Els canvis de composició de l’ocupació també poden moure la mitjana.</p>
   </section>
 
   <section>
@@ -126,6 +126,7 @@
     <h3 class="sub" id="emTitle"></h3>
     <p id="emLede"></p>
     <svg class="viz" id="em" role="img" aria-label="Edat mitjana a la qual els joves marxen de casa dels pares, per països" style="max-width:560px"></svg>
+    <p class="note" id="emNote"></p>
     <p class="note">Edat mitjana estimada a la qual els joves deixen la llar dels pares, 2025 (Eurostat).</p>
   </section>
 
@@ -141,10 +142,10 @@
   </section>
 
   <section class="closing">
-    <h2>La inflació és un impost que ningú no vota</h2>
+    <h2>La inflació redueix el poder de compra dels diners</h2>
     <p id="close1"></p>
-    <p>No és un accident. El Banc Central Europeu té com a objectiu que els preus pugin un 2% l’any, perquè considera que una mica d’inflació és més sana que el risc de deflació. Però un 2% anual vol dir que els preus es dupliquen cada 35 anys. Qui té deutes, com els estats, en surt guanyant. Qui té estalvis en un compte o viu d’un sou que s’actualitza tard, hi perd.</p>
-    <p>Tornar a l’or no és la solució: el patró or també tenia deflacions i crisis dures, i va agreujar la Gran Depressió dels anys trenta. Però entendre com es creen els diners ajuda a entendre per què els actius (l’or, els pisos) pugen més de pressa que els sous, i per què treballar ja no garanteix poder tenir una casa.</p>
+    <p>El Banc Central Europeu té un objectiu simètric d’inflació del 2% a mitjà termini, mesurat amb l’IPCH de tota la zona euro. No és un compromís de pujada exacta cada any a Catalunya. Si els preus pugessin un 2% anual constant, es duplicarien en uns 35 anys. Una inflació inesperada pot afavorir qui té deute nominal a tipus fix; amb tipus variables, l’efecte pot ser diferent. Els estalvis perden poder de compra si els interessos nets no compensen la inflació, i els sous, si no s’hi ajusten.</p>
+    <p>Tornar a l’or no és la solució: el patró or també tenia deflacions i crisis dures, i va agreujar la Gran Depressió dels anys trenta. La creació de diners és un dels factors que poden influir en els preus dels actius. L’oferta d’habitatge, la demanda, els tipus d’interès i els ingressos també importen: els gràfics descriuen l’evolució, però no separen el pes de cada causa.</p>
     <div class="sources">
       <p class="note" style="margin:0">Fonts</p>
       <ul>
@@ -158,7 +159,9 @@
         <li>Incasòl. <a href="https://analisi.transparenciacatalunya.cat/d/qww9-bvhh">Preu mitjà del lloguer d’habitatges per municipi</a> (fiances dipositades), Dades obertes de Catalunya.</li>
         <li>Eurostat. <a href="https://ec.europa.eu/eurostat/databrowser/view/yth_demo_030/default/table">Estimated average age of young people leaving the parental household</a> (yth_demo_030).</li>
         <li>Federal Reserve History. <a href="https://www.federalreservehistory.org/essays/gold-convertibility-ends">Nixon Ends Convertibility of U.S. Dollars to Gold</a>.</li>
-        <li>Paritat de la pesseta: 60 pessetes per dòlar des del juliol del 1959 i 70 des del <a href="https://www.boe.es/boe/dias/1967/11/22/pdfs/A16183-16183.pdf">Decret 2731/1967</a> (BOE, 22-11-1967).</li>
+        <li>Paritat de la pesseta: 60 pessetes per dòlar des del juliol del 1959 i 70 des del <a href="https://boe.es/buscar/doc.php?id=BOE-A-1967-20208">Decret 2731/1967</a> (BOE, 20-11-1967).</li>
+        <li>BCE: <a href="https://www.ecb.europa.eu/stats/money_credit_banking/monetary_aggregates/html/index.en.html">definició dels agregats monetaris</a>, <a href="https://www.ecb.europa.eu/press/annual-reports-financial-statements/annual/balance/html/ecb.eurosystembalancesheet2025~31f7e11ddc.en.html">composició del balanç de l’Eurosistema</a> i <a href="https://www.ecb.europa.eu/mopo/strategy/pricestab/html/index.en.html">objectiu d’inflació</a>.</li>
+        <li>INE: <a href="https://www.ine.es/dyngs/INEbase/operacion.htm?c=Estadistica_C&amp;cid=1254736045053&amp;idp=1254735976596&amp;menu=faq">cobertura i definicions de l’ETCL</a>. Eurostat: <a href="https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Glossary:Housing_cost_overburden_rate">definició de sobrecàrrega d’habitatge</a>.</li>
         <li>M. McLeay, A. Radia i R. Thomas, <a href="https://www.bankofengland.co.uk/quarterly-bulletin/2014/q1/money-creation-in-the-modern-economy">«Money creation in the modern economy»</a>, <i>Bank of England Quarterly Bulletin</i>, 2014 Q1.</li>
       </ul>
     </div>

@@ -44,11 +44,11 @@
     <p id="realLede"></p>
     <div class="seg" role="group" aria-label="Com es compta">
       <button data-hm="nom" aria-pressed="true">En euros de cada any</button>
-      <button data-hm="real" aria-pressed="false">En euros d’avui</button>
+      <button data-hm="real" aria-pressed="false">Descomptant la inflació</button>
     </div>
     <svg class="viz" id="hreal" role="img" aria-label="Preu del metre quadrat d’habitatge des del 1995" style="max-width:697px"></svg>
     <p class="readout" id="rHreal" aria-live="polite"></p>
-    <p class="note">Valor taxat de l’habitatge lliure, trimestral (Ministeri d’Habitatge i Agenda Urbana). El valor de taxació va una mica per darrere dels preus de mercat, i a la ciutat de Barcelona és força més alt que a la província. En euros d’avui: deflactat amb l’IPC de Catalunya (INE).</p>
+    <p class="note">Valor taxat de l’habitatge lliure, trimestral (Ministeri d’Habitatge i Agenda Urbana), diferent del preu efectiu de compravenda. La sèrie municipal del Ministeri situa Barcelona ciutat per damunt de la província. En termes reals: deflactat amb l’IPC de Catalunya (INE), amb la mitjana del trimestre de referència que indica el gràfic.</p>
   </section>
 
   <section>
@@ -69,7 +69,7 @@
     </div>
     <svg class="viz" id="own" role="img" aria-label="Plusvàlua acumulada d’un pis de 80 m² comparada amb l’estalvi acumulat d’un sou mitjà" style="max-width:697px"></svg>
     <p class="readout" id="rOwn" aria-live="polite"></p>
-    <p class="note">Plusvàlua: diferència entre el valor taxat d’un pis de 80 m² a la província de Barcelona cada any i el del primer any. Estalvi: suma de la part triada del sou brut mitjà de cada any, sense interessos. Tot en euros de cada any.</p>
+    <p class="note">Revalorització: diferència entre el valor taxat mitjà equivalent a 80 m² a la província de Barcelona cada any i el del primer any, sense seguir el mateix pis ni restar despeses, interessos o impostos. Estalvi: suma de la part triada del sou brut mitjà de cada any, sense interessos. Tot en euros de cada any.</p>
   </section>
 
   <section>
@@ -77,7 +77,7 @@
     <p id="downLede"></p>
     <svg class="viz" id="down" role="img" aria-label="Anys d’estalvi necessaris per reunir l’entrada d’un pis" style="max-width:697px"></svg>
     <p class="readout" id="rDown" aria-live="polite"></p>
-    <p class="note">Entrada del 20% del valor taxat d’un pis de 80 m² més un 10% d’impostos i despeses, dividida per la part del sou brut mitjà que s’estalvia (el control de la secció anterior). No compta interessos ni que els preus continuïn pujant mentre s’estalvia.</p>
+    <p class="note">Hipòtesi: entrada del 20% del valor taxat d’un pis de 80 m² més un 10% aproximat d’impostos i despeses, dividida per la part del sou brut mitjà que s’estalvia (el control de la secció anterior). El finançament i els costos reals poden variar. No compta interessos ni que els preus continuïn pujant mentre s’estalvia.</p>
   </section>
 
   <section>
@@ -89,13 +89,14 @@
   </section>
 
   <section class="closing">
-    <h2>El pis ha deixat de ser només un lloc on viure</h2>
+    <h2>El pis és un lloc on viure i també patrimoni</h2>
     <p id="close1"></p>
-    <p>Per això qui ja tenia un pis el 2000 i qui en necessita un avui viuen en economies diferents. El primer ha vist créixer el seu patrimoni sense fer res; el segon ha de pagar aquest creixement amb anys de feina, o amb un lloguer que puja encara més de pressa.</p>
+    <p>Per això qui ja tenia un pis el 2000 i qui en necessita un avui parteixen de llocs diferents. L’augment del valor taxat beneficia qui ja té habitatge, abans de deutes i despeses; qui vol comprar ha de reunir aquest preu més alt amb anys de feina. I, des del mínim posterior a la crisi, el lloguer dels contractes nous ha pujat encara més de pressa que el valor taxat de compra.</p>
     <div class="sources">
       <p class="note" style="margin:0">Fonts</p>
       <ul>
         <li>Ministeri d’Habitatge i Agenda Urbana. <a href="https://apps.fomento.gob.es/BoletinOnline2/?nivel=2&orden=35000000">Valor taxat de l’habitatge lliure</a>, per comunitats i províncies, des del 1995.</li>
+        <li>Ministeri d’Habitatge i Agenda Urbana. <a href="https://apps.fomento.gob.es/BoletinOnline2/sedal/35103500.XLS">Valor taxat per municipis de més de 25.000 habitants</a>, per comparar Barcelona ciutat amb la província.</li>
         <li>INE. <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=59392">Enquesta trimestral de cost laboral</a> i <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=24078">Índex de preus de consum per comunitats autònomes</a>.</li>
         <li>Incasòl. <a href="https://analisi.transparenciacatalunya.cat/d/qww9-bvhh">Preu mitjà del lloguer d’habitatges per municipi</a> (fiances dipositades), Dades obertes de Catalunya.</li>
       </ul>

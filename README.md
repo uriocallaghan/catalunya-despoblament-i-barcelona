@@ -1,10 +1,10 @@
 # Terra i gent
 
-**On vivim a Catalunya.** Mapes i gràfics interactius sobre el desequilibri territorial i el despoblament, amb els 947 municipis i les 43 comarques.
+**On vivim a Catalunya.** Mapes i gràfics interactius sobre el desequilibri territorial i el despoblament, amb els 947 municipis i les 42 comarques i Aran.
 
 🔗 https://catalunya.uriocallaghan.com
 
-Barcelona té tants habitants com els 843 municipis més petits de Catalunya junts, que ocupen el 90% del territori. La meitat de la població viu en l’1,6% del sòl.
+Barcelona té tants habitants com els 843 municipis més petits de Catalunya junts, que ocupen el 90% del territori. La meitat de la població viu en municipis que ocupen l’1,6% del territori.
 
 ## Estructura
 
@@ -18,7 +18,7 @@ data/cartograma.json       cartogrames 1857–2025 (generat)
 data/raw/                  dades municipals oficials en CSV
 scripts/build-data.mjs     regenera data/catalunya.json
 scripts/cartograma.mjs     cartograma continu per difusió (Gastner i Newman, 2004)
-scripts/historic.mjs       població municipal 1857–1991 sobre els municipis actuals
+scripts/historic.mjs       població municipal 1857–1991 i imputacions sobre els termes actuals
 scripts/serveis/           descàrrega i anàlisi de serveis (escoles, farmàcies, hospitals, tren…)
 data/serveis.json          serveis per municipi, temps a urgències i alumnat (generat)
 scripts/hipsometria.mjs    superfície per franges d’altitud des del Copernicus DEM
@@ -44,7 +44,7 @@ npm install
 npm run build:data
 ```
 
-L’script creua `data/raw/municipis-cens-2025.csv` amb els límits municipals d’es-atlas (IGN), calcula el mapa de punts (1 punt = 500 persones) i el cartograma continu, i escriu `data/catalunya.json`. Els cartogrames (27 anys amb dades, de 1857 a 2025) triguen uns 45 minuts.
+L’script creua `data/raw/municipis-cens-2025.csv` amb els límits municipals d’es-atlas (IGN), calcula el mapa de punts (aproximadament 500 persones per punt) i el cartograma continu, i escriu `data/catalunya.json`. Els cartogrames (27 anys amb dades, de 1857 a 2025) triguen uns 45 minuts.
 
 La distribució del territori per altitud (`data/raw/hipsometria.csv`) es genera a part, perquè descarrega el model d’elevacions (unes 10 rajoles GeoTIFF) a una carpeta temporal que s’esborra en acabar:
 
@@ -80,3 +80,15 @@ Fonts: INE (IPC des del 1961 i Enquesta trimestral de cost laboral), BCE (M3, ef
 - Altituds: Copernicus DEM GLO-90 (ESA).
 - Serveis: Dades obertes de Catalunya (centres docents, equipaments, establiments sanitaris, equipaments culturals, instal·lacions esportives, alumnat universitari), GTFS de Renfe i FGC, límits de l'ICGC. Temps en cotxe amb OSRM (OpenStreetMap).
 - Cartograma: Gastner i Newman, *Diffusion-based method for producing density-equalizing maps*, PNAS 101 (2004).
+
+## Precisió dels indicadors
+
+Les dades originals i els models es distingeixen a les notes de cada gràfic. El cartograma imputa buits històrics per superfície dins de grups documentats o inferits; no reconstrueix exactament totes les genealogies municipals. L’error d’àrea es mesura sobre les geometries finals. Els temps OSRM són indicadors municipals per a dispositius amb menció d’urgències 24 h, incloent CUAP i urgències especialitzades; no són temps individuals. La matrícula universitària suma només subtotals i el gràfic exclou els centres fora de Catalunya.
+
+Proves de regressió de la imputació històrica i del recompte universitari:
+
+```bash
+node --test scripts/historic.test.mjs scripts/serveis/matricula.test.mjs
+```
+
+Si només canvien les marques d’imputació, `node scripts/build-data.mjs --metadata-only` les actualitza sense recalcular les formes. Rebutja l’operació si difereix qualsevol any o població; en aquest cas cal executar el procés complet.

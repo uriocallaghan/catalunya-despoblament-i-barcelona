@@ -5,7 +5,8 @@ const S=Comu.series(D), {R,RED,INK,MUTED,LINE,LAND,BG}=C;
 const YL=+D.sal[D.sal.length-1][0], Y0=+D.sal[0][0], YRS=d3.range(Y0,YL+1);
 const ipcY=S.yAvg(S.ipc);
 const QL=S.habQ[S.habQ.length-1];
-$('#upd').textContent=`Dades fins al ${QL.slice(5)}r trimestre del ${QL.slice(0,4)}`;
+const qName=q=>`${['1r','2n','3r','4t'][+q.slice(5)-1]} trimestre del ${q.slice(0,4)}`;
+$('#upd').textContent=`Dades fins al ${qName(QL)}`;
 const GEO={bcn:{i:2,s:'ct',n:'província de Barcelona'},cat:{i:1,s:'ct',n:'Catalunya'},esp:{i:0,s:'es',n:'Espanya'}};
 const price=(y,g)=>S.habY(y,GEO[g].i), sal=(y,g)=>S.salY.get(y)[GEO[g].s];
 const k1=v=>fmt(Math.round(v/1000))+'.000';
@@ -50,18 +51,18 @@ seg('geo',g=>{ geo=g; paintPlan(); });
 
 /* =========== 2. EL PREU, EN EUROS DE CADA ANY O D'AVUI =========== */
 const qT=q=>+q.slice(0,4)+(+q.slice(5)-.5)/4;
-const ipcQ=S.qAvg(S.ipc), IPCQL=ipcQ(QL)||ipcQ(S.habQ[S.habQ.length-2]);
+const ipcQ=S.qAvg(S.ipc), IPCBASE=ipcQ(QL)?QL:S.habQ[S.habQ.length-2], IPCQL=ipcQ(IPCBASE);
 const HS=[['bcn','Província de Barcelona',RED],['cat','Catalunya',R[3]],['esp','Espanya',INK]].map(([g,n,c])=>({g,n,c,pts:S.habQ.map(q=>{ const v=S.hab.get(q)[GEO[g].i], iq=ipcQ(q); return [qT(q),v,iq?v*IPCQL/iq:null,q]; }).filter(p=>p[2]!=null)}));
 const hb=HS[0], hbPeak=hb.pts.reduce((a,b)=>b[2]>a[2]?b:a), hbL=hb.pts[hb.pts.length-1], hbPeakN=hb.pts.filter(p=>p[0]<2012).reduce((a,b)=>b[1]>a[1]?b:a);
-const qName=q=>`${q.slice(5)}r trimestre del ${q.slice(0,4)}`;
-$('#realTitle').textContent= hbL[2]<hbPeak[2] ? `Descomptant la inflació, el pis encara val un ${pct(1-hbL[2]/hbPeak[2],0)} menys que el 2007` : `Descomptant la inflació, el pis ja val més que en plena bombolla`;
-$('#realLede').textContent=`En euros de cada any, el metre quadrat a la província de Barcelona ${hbL[1]>hbPeakN[1]?`ja ha superat el màxim de la bombolla (${fmt(hbPeakN[1])} €, ${qName(hbPeakN[3])}): ara és a ${fmt(hbL[1])} €`:`és a ${fmt(hbL[1])} €, a prop del màxim de la bombolla (${fmt(hbPeakN[1])} €)`}. Però en euros d’avui, aquell màxim equivaldria a ${fmt(hbPeak[2])} €. El problema no és només que els pisos siguin cars: és que els sous no han crescut.`;
+$('#realTitle').textContent= hbL[2]<hbPeak[2] ? `Descomptant la inflació, el pis encara val un ${pct(1-hbL[2]/hbPeak[2],0)} menys que el ${hbPeak[3].slice(0,4)}` : `Descomptant la inflació, el pis ja val més que en plena bombolla`;
+$('#realLede').textContent=`En euros de cada any, el metre quadrat a la província de Barcelona ${hbL[1]>hbPeakN[1]?`ja ha superat el màxim nominal de la bombolla (${fmt(hbPeakN[1])} €, ${qName(hbPeakN[3])}): ara és a ${fmt(hbL[1])} €`:`és a ${fmt(hbL[1])} €, a prop del màxim nominal de la bombolla (${fmt(hbPeakN[1])} €)`}. En euros mitjans del ${qName(IPCBASE)}, aquell màxim equival a ${fmt(hbPeakN[2])} €; el màxim real, del ${qName(hbPeak[3])}, a ${fmt(hbPeak[2])} €. Els sous sí que han crescut, però menys que l’habitatge: entre el ${Y0} i el ${YL}, el sou mitjà català ha variat un ${pct(sal(YL,'bcn')/sal(Y0,'bcn')/(ipcY(YL)/ipcY(Y0))-1,1)} en poder de compra.`;
 let hMode='nom';
 function drawHReal(shown){
   const svg=d3.select('#hreal'); const [W,H]=sizeOf(svg,697,.58,290,420); const t=18,b=24,rp=W<500?84:120;
   const k=hMode==='nom'?1:2;
-  const x=d3.scaleLinear().domain([1995,qT(QL)]).range([0,W-rp]); const y=d3.scaleLinear().domain([0,4000]).range([H-b,t]);
-  yGrid(svg,y,0,W-rp,[0,1000,2000,3000,4000],v=>v?fmt(v)+(v===4000?' €/m²':''):'0');
+  const ymax=Math.ceil(d3.max(HS,s=>d3.max(s.pts,p=>p[k]))/1000)*1000;
+  const x=d3.scaleLinear().domain([1995,qT(QL)]).range([0,W-rp]); const y=d3.scaleLinear().domain([0,ymax]).range([H-b,t]);
+  yGrid(svg,y,0,W-rp,d3.range(0,ymax+1,1000),v=>v?fmt(v)+(v===ymax?' €/m²':''):'0');
   xAxis(svg,x,H-b,W<500?[2000,2010,2020]:[1995,2000,2005,2010,2015,2020,2025]);
   ann(svg,x,t,H-b,2008.7,'2008\nLehman');
   const ln=d3.line().x(p=>x(p[0])).y(p=>y(p[k]));
@@ -69,7 +70,7 @@ function drawHReal(shown){
   const L=endLabels(svg,HS.map(s=>{ const e=s.pts[s.pts.length-1]; return {y:y(e[k]),c:s.c,n:W<500?{bcn:'Bcn',cat:'Cat.',esp:'Esp.'}[s.g]:s.n.replace('Província de ',''),v:fmt(e[k])}; }),W-rp+8,15,shown.hreal);
   svg.node()._rv=()=>{ paths.forEach((p,i)=>{ p.attr('opacity',1); drawOn(p,1600,i*200); }); L.forEach(l=>l.transition().delay(RM?0:1800).attr('opacity',1)); };
   const dots=HS.map(s=>svg.append('circle').attr('r',3.5).attr('fill',s.c).style('display','none'));
-  const R0=`<span class="m">Toca el gràfic.</span> ${hMode==='nom'?'En euros de cada any.':`En euros ${Comu.de(Comu.MESOS[kParse(S.IPCLAST)[1]-1]).replace(/^de /,'de ')} de ${kParse(S.IPCLAST)[0]}, descomptant l’IPC de Catalunya.`}`;
+  const R0=`<span class="m">Toca el gràfic.</span> ${hMode==='nom'?'En euros de cada any.':`En euros mitjans del ${qName(IPCBASE)}, descomptant l’IPC de Catalunya.`}`;
   crosshair(svg,x,t,H-b,xv=>{ const out=HS.map((s,i)=>{ const p=nearest(s.pts,xv); dots[i].style('display',null).attr('cx',x(p[0])).attr('cy',y(p[k])); return p; });
     $('#rHreal').innerHTML=`<b>${cap(qName(out[0][3]))}</b>: `+HS.map((s,i)=>`${s.n.replace('Província de ','')} <b>${fmt(out[i][k])} €/m²</b>`).join(' · '); return out[0][0]; },
     ()=>{ dots.forEach(d=>d.style('display','none')); $('#rHreal').innerHTML=R0; });
@@ -80,8 +81,8 @@ seg('hm',m=>{ hMode=m; drawHReal({hreal:true}); });
 /* =========== 3. SI EL PIS HAGUÉS PUJAT COM EL SOU =========== */
 const CF=YRS.map(y=>({y,p:price(y,'bcn')*80,s:price(Y0,'bcn')*80*sal(y,'bcn')/sal(Y0,'bcn'),c:price(Y0,'bcn')*80*ipcY(y)/ipcY(Y0)}));
 const cfL=CF[CF.length-1];
-$('#cfTitle').textContent=`Si els pisos haguessin pujat com els sous, avui un de 80 m² costaria ${k1(cfL.s)} €. En costa ${k1(cfL.p)}.`;
-$('#cfLede').textContent=`El ${Y0}, el valor taxat d’un pis de 80 m² a la província de Barcelona era de ${k1(CF[0].p)} €. Si des d’aleshores s’hagués apujat al mateix ritme que el sou mitjà català, avui valdria ${k1(cfL.s)} €; si ho hagués fet com els preus de consum, ${k1(cfL.c)} €. La diferència, ${k1(cfL.p-cfL.s)} €, és el que el mercat de l’habitatge s’ha avançat al treball.`;
+$('#cfTitle').textContent=`Si els pisos haguessin pujat com els sous, el ${YL} un de 80 m² costaria ${k1(cfL.s)} €. El valor taxat era de ${k1(cfL.p)}.`;
+$('#cfLede').textContent=`El ${Y0}, el valor taxat equivalent a 80 m² a la província de Barcelona era de ${k1(CF[0].p)} €. Si des d’aleshores s’hagués apujat al mateix ritme que el sou mitjà català, el ${YL} valdria ${k1(cfL.s)} €; si ho hagués fet com els preus de consum, ${k1(cfL.c)} €. La diferència, ${k1(cfL.p-cfL.s)} €, és el que el valor taxat s’ha avançat al sou en aquesta comparació.`;
 function drawCf(shown){
   const svg=d3.select('#cf'); const [W,H]=sizeOf(svg,697,.56,280,400); const t=18,b=24,rp=W<500?90:132;
   const x=d3.scaleLinear().domain([Y0,YL]).range([0,W-rp]); const y=d3.scaleLinear().domain([0,Math.ceil(d3.max(CF,d=>d.p)/50000)*50000]).range([H-b,t]);
@@ -92,7 +93,7 @@ function drawCf(shown){
   const pc=svg.append('path').attr('class','line').attr('d',ln('c')(CF)).attr('stroke',MUTED).attr('stroke-dasharray','4 3').attr('stroke-width',1.6);
   const ps=svg.append('path').attr('class','line').attr('d',ln('s')(CF)).attr('stroke',INK);
   const pp=svg.append('path').attr('class','line').attr('d',ln('p')(CF)).attr('stroke',RED).attr('stroke-width',2.8);
-  const L=endLabels(svg,[{y:y(cfL.p),c:RED,n:'real',v:k1(cfL.p)},{y:y(cfL.s),c:INK,n:W<500?'sou':'com el sou',v:k1(cfL.s)},{y:y(cfL.c),c:MUTED,n:W<500?'IPC':'com l’IPC',v:k1(cfL.c)}],W-rp+8,15,shown.cf);
+  const L=endLabels(svg,[{y:y(cfL.p),c:RED,n:'observat',v:k1(cfL.p)},{y:y(cfL.s),c:INK,n:W<500?'sou':'com el sou',v:k1(cfL.s)},{y:y(cfL.c),c:MUTED,n:W<500?'IPC':'com l’IPC',v:k1(cfL.c)}],W-rp+8,15,shown.cf);
   if(!shown.cf){ [pc,ps,pp,gap].forEach(p=>p.attr('opacity',0)); svg.node()._rv=()=>{ [pc,ps,pp].forEach((p,i)=>{ p.attr('opacity',1); drawOn(p,1500,i*200); }); gap.transition().delay(RM?0:1500).duration(700).attr('opacity',1); L.forEach(l=>l.transition().delay(RM?0:1700).attr('opacity',1)); }; }
   const d1=svg.append('circle').attr('r',4).attr('fill',RED).style('display','none'), d2=svg.append('circle').attr('r',4).attr('fill',INK).style('display','none');
   const R0='<span class="m">Toca el gràfic.</span>';
@@ -107,8 +108,8 @@ let rate=.2;
 const OWN=()=>{ let sv=0; return YRS.map(y=>{ if(y>Y0) sv+=rate*sal(y,'bcn'); return {y,g:(price(y,'bcn')-price(Y0,'bcn'))*80,sv}; }); };
 const yrsBeat=YRS.slice(1).filter(y=>(price(y,'bcn')-price(y-1,'bcn'))*80>sal(y,'bcn'));
 function ownText(){ const o=OWN(), l=o[o.length-1]; const yrs=l.g/(rate*sal(YL,'bcn'));
-  $('#ownTitle').textContent=`Qui ja tenia pis el ${Y0} ha guanyat ${k1(l.g)} € sense moure’s de casa`;
-  $('#ownLede').textContent=`És el que s’ha revaloritzat un pis de 80 m² a la província de Barcelona des del ${Y0}. Un treballador amb el sou mitjà que hagués estalviat cada any el ${pct(rate,0)} del sou brut hauria acumulat ${k1(l.sv)} €. Per igualar la plusvàlua amb el ritme d’estalvi d’avui necessitaria ${fmt(yrs,0)} anys. ${yrsBeat.length?`I hi va haver ${yrsBeat.length===1?'un any':`${yrsBeat.length} anys`} (${yrsBeat.length>1?yrsBeat.slice(0,-1).join(', ')+' i '+yrsBeat[yrsBeat.length-1]:yrsBeat[0]}) en què el pis es va revaloritzar més que tot el sou brut d’un any.`:''}`; }
+  $('#ownTitle').textContent=`El valor taxat de 80 m² ha pujat ${k1(l.g)} € des del ${Y0}`;
+  $('#ownLede').textContent=`És l’augment nominal al valor taxat mitjà de la província de Barcelona, abans de costos: no el guany net d’un propietari concret. Un treballador amb el sou mitjà que hagués estalviat cada any el ${pct(rate,0)} del sou brut hauria acumulat ${k1(l.sv)} €. Per igualar aquest augment amb el ritme d’estalvi del ${YL} necessitaria ${fmt(yrs,0)} anys. ${yrsBeat.length?`I hi va haver ${yrsBeat.length===1?'un any':`${yrsBeat.length} anys`} (${yrsBeat.length>1?yrsBeat.slice(0,-1).join(', ')+' i '+yrsBeat[yrsBeat.length-1]:yrsBeat[0]}) en què l’augment del valor taxat equivalent a 80 m² va superar tot el sou brut d’un any.`:''}`; }
 function drawOwn(shown){
   const svg=d3.select('#own'); const [W,H]=sizeOf(svg,697,.56,280,400); const t=18,b=24,rp=W<500?84:120;
   const o=OWN(), l=o[o.length-1];
@@ -135,7 +136,7 @@ seg('rate',v=>{ rate=+v; ownText(); drawOwn({own:true}); drawDown({down:true}); 
 const DOWN=()=>['bcn','esp'].map(g=>({g,pts:YRS.map(y=>[y,.3*price(y,g)*80/(rate*sal(y,g))])}));
 function downText(){ const d=DOWN()[0].pts, a=d[0], l=d[d.length-1], m=d.reduce((p,c)=>c[1]>p[1]?c:p);
   $('#downTitle').textContent=`Per reunir l’entrada d’un pis calen ${fmt(l[1],1).replace(',0','')} anys estalviant el ${pct(rate,0)} del sou`;
-  $('#downLede').textContent=`Els bancs financen com a molt el 80% del valor, i comprar costa un 10% més en impostos i despeses. Amb el sou mitjà i estalviant el ${pct(rate,0)} del sou brut, el ${a[0]} calien ${fmt(a[1],1)} anys per reunir aquest 30% d’un pis de 80 m² a la província de Barcelona; el ${m[0]}, ${fmt(m[1],1)}, i el ${l[0]}, ${fmt(l[1],1)}. Tot això abans de començar a pagar la hipoteca.`; }
+  $('#downLede').textContent=`Suposem una hipoteca del 80% del valor i un 10% addicional d’impostos i despeses: poden variar segons l’operació i el comprador. Amb el sou mitjà i estalviant el ${pct(rate,0)} del sou brut, el ${a[0]} calien ${fmt(a[1],1)} anys per reunir aquest 30% d’un pis de 80 m² a la província de Barcelona; el ${m[0]}, ${fmt(m[1],1)}, i el ${l[0]}, ${fmt(l[1],1)}. Tot això abans de començar a pagar la hipoteca.`; }
 function drawDown(shown){
   const svg=d3.select('#down'); const [W,H]=sizeOf(svg,697,.5,260,360); const t=18,b=24,rp=W<500?84:150;
   const DS=DOWN(), cols={bcn:RED,esp:INK}, nm={bcn:W<500?'Barcelona':'Prov. de Barcelona',esp:'Espanya'};
@@ -163,7 +164,7 @@ const RS=[
 ];
 const rBy=Object.fromEntries(RS.map(s=>{ s.end=s.pts[s.pts.length-1]; s.min=s.pts.reduce((a,b)=>b[1]<a[1]?b:a); return [s.k,s]; }));
 $('#rbTitle').textContent=`Des del ${rBy.rent.min[0]}, el lloguer a Barcelona ha pujat un ${pct(rBy.rent.end[1]/rBy.rent.min[1]-1,0)}`;
-$('#rbLede').textContent=`Qui no pot reunir l’entrada, lloga. I el lloguer ha estat el preu que més ha pujat de tots: després de la crisi va tocar fons el ${rBy.rent.min[0]}, i des d’aleshores s’ha enfilat més de pressa que el preu de compra, que els preus de consum i que el sou. Respecte del ${RB}, el lloguer s’ha multiplicat per ${fmt(rBy.rent.end[1],2)} i el sou, per ${fmt(rBy.sal.end[1],2)}.`;
+$('#rbLede').textContent=`Qui no pot reunir l’entrada, sovint lloga. I, des del mínim del ${rBy.rent.min[0]}, el lloguer és el que més ha pujat d’aquests quatre indicadors: en conjunt, més de pressa que el preu de compra, que els preus de consum i que el sou, tot i que hi ha anys de baixada. Respecte del ${RB}, el lloguer s’ha multiplicat per ${fmt(rBy.rent.end[1],2)} i el sou, per ${fmt(rBy.sal.end[1],2)}.`;
 function drawRb(shown){
   const svg=d3.select('#rb'); const [W,H]=sizeOf(svg,697,.56,280,400); const t=18,b=24,rp=W<500?104:150;
   const x=d3.scaleLinear().domain([RB,D.rent[D.rent.length-1][0]]).range([0,W-rp]); const y=d3.scaleLinear().domain([.6,1.6]).range([H-b,t]);
@@ -183,7 +184,7 @@ function drawRb(shown){
 
 /* ---------- tancament ---------- */
 const bL=mb[mb.length-1];
-$('#close1').textContent=`El ${Y0}, un pis de 80 m² a la província de Barcelona costava ${fmt(80/mb0.m,1)} anys de sou brut sencer. El ${YL}, ${fmt(80/bL.m,1)}. En el mateix temps, els preus de consum s’han multiplicat per ${fmt(ipcY(YL)/ipcY(Y0),2)} i el sou per ${fmt(sal(YL,'bcn')/sal(Y0,'bcn'),2)}: la resta de la vida s’ha encarit al ritme del sou, però la casa no. L’habitatge s’ha convertit en un actiu, i els actius pugen quan hi ha diners barats, crèdit i demanda de fora, mentre que els sous depenen de la productivitat i de la negociació.`;
+$('#close1').textContent=`El ${Y0}, un pis de 80 m² a la província de Barcelona costava ${fmt(80/mb0.m,1)} anys de sou brut sencer. El ${YL}, ${fmt(80/bL.m,1)}. En el mateix temps, els preus de consum s’han multiplicat per ${fmt(ipcY(YL)/ipcY(Y0),2)} i el sou per ${fmt(sal(YL,'bcn')/sal(Y0,'bcn'),2)}: els preus de consum han pujat una mica més que el sou, i la casa encara més. L’habitatge és alhora un lloc on viure i un actiu: quan es revalora més de pressa que els sous, reunir els diners per comprar-lo es fa més difícil.`;
 
 ownText();
 Comu.boot([drawPlan,drawHReal,drawCf,drawOwn,drawDown,drawRb],[['hreal'],['cf'],['own'],['down'],['rb']],

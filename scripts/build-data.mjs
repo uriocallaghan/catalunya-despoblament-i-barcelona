@@ -3,6 +3,7 @@
 import fs from 'fs'; import * as tc from 'topojson-client'; import * as ts from 'topojson-server';
 import * as geo from 'd3-geo'; import * as force from 'd3-force';
 import { Worker } from 'worker_threads'; import os from 'os'; import { historic } from './historic.mjs';
+import { ringsOf, polyArea } from './cartograma.mjs';
 const t=JSON.parse(fs.readFileSync(new URL('../node_modules/es-atlas/es/municipalities.json', import.meta.url)));
 const C={}; fs.readFileSync(new URL('../data/raw/municipis-cens-2025.csv', import.meta.url),'utf8').trim().split('\n').slice(1).forEach(l=>{const [c,com,alt,a,p]=l.split(';'); C[c.slice(0,5)]={com,alt:+alt,a:+a,p:+p};});
 const geoms=t.objects.municipalities.geometries.filter(g=>['08','17','25','43'].includes(g.id.slice(0,2)));
@@ -29,8 +30,11 @@ for(const m of M){ let n=Math.floor(m.p/500); if(rnd()<(m.p%500)/500) n++;
     if(geo.geoContains(m.f,proj.invert([x,y]))){ dots.push(Math.round(x*8),Math.round(y*8)); placed++; } }
   while(placed<n){ dots.push(Math.round(m.cx*8+(rnd()-.5)*8),Math.round(m.cy*8+(rnd()-.5)*8)); placed++; } }
 const b64=Buffer.from(new Uint16Array(dots).buffer).toString('base64');
-// name fix: use es-atlas names (Catalan)
-const MUN=M.map(m=>[m.n,m.c=COMS.indexOf(m.com),m.p,m.a,m.alt,+m.cx.toFixed(1),+m.cy.toFixed(1),+m.dx.toFixed(1),+m.dy.toFixed(1),+m.dr.toFixed(2)]);
+// Denominacions oficials canviades després de la versió d'es-atlas. Els noms antics es conserven com a àlies.
+// Font: Idescat, Altitud, superfície i població. Municipis (n=15903), i registre de canvis (codis, id=50, n=9).
+const NOMS={ '17048': "Castell d'Aro, Platja d'Aro i s'Agaró", '17100': 'Masarac i Vilarnadal', '43027': 'La Bisbal de Montsant' };
+const ALIAS=Object.fromEntries(M.filter(m=>NOMS[m.k]).map(m=>[m.n,NOMS[m.k]]));
+const MUN=M.map(m=>[NOMS[m.k]||m.n,m.c=COMS.indexOf(m.com),m.p,m.a,m.alt,+m.cx.toFixed(1),+m.cy.toFixed(1),+m.dx.toFixed(1),+m.dy.toFixed(1),+m.dr.toFixed(2)]);
 topo.objects.m.geometries.forEach(g=>{delete g.properties;});
 // Cartograma continu (vegeu scripts/cartograma.mjs) sobre projecció azimutal d'àrea igual de Lambert.
 const T=tc.transform(topo.transform);
@@ -41,6 +45,14 @@ const A0=topo.arcs.map(a=>{ const q=a.map((p,i)=>eq(T(p.slice(),i))); const o=[q
 // Tots els anys amb dades municipals: censos 1857–1991 (Idescat) i padró (data/raw/padro-municipis-*.csv), més el 2025.
 const YRS=[1857,1860,1877,1887,1900,1910,1920,1930,1936,1940,1945,1950,1955,1960,1965,1970,1975,1981,1986,1991,1998,2001,2006,2011,2016,2021,2025];
 const HIST=historic(M,tc.neighbors(topo.objects.m.geometries),YRS); HIST.log.forEach(l=>console.log('fusió',l));
+// Permet actualitzar només les marques d'imputació quan les poblacions i geometries ja estan generades.
+if(process.argv.includes('--metadata-only')){
+  const out=new URL('../data/cartograma.json',import.meta.url), carto=JSON.parse(fs.readFileSync(out));
+  if(JSON.stringify(carto.years)!==JSON.stringify(YRS)||YRS.some((y,j)=>HIST.values[y].some((v,i)=>Math.round(v)!==carto.pop[j][i])))
+    throw new Error('Les poblacions han canviat: cal regenerar els cartogrames amb npm run build:data.');
+  carto.merged=YRS.map(y=>HIST.merged[y]); fs.writeFileSync(out,JSON.stringify(carto));
+  console.log('Marques d\'imputació actualitzades; poblacions i geometries idèntiques.'); process.exit(0);
+}
 const cen0=M.map(m=>geo.geoPath(eq).centroid(m.f));
 const job=y=>new Promise((res,rej)=>{ const w=new Worker(new URL('./cartograma-worker.mjs', import.meta.url),{workerData:{arcs:A0,geoms:topo.objects.m.geometries,values:HIST.values[y],extra:cen0,year:y}}); w.on('message',m=>{ res(m); w.terminate(); }); w.on('error',rej); });
 const runs=new Array(YRS.length); { let next=0; const lane=async()=>{ while(next<YRS.length){ const k=next++; runs[k]=await job(YRS[k]); } }; await Promise.all(Array.from({length:Math.max(1,os.cpus().length-1)},lane)); }
@@ -58,11 +70,17 @@ const VERS=[A0,...runs.map(r=>r.arcs)], ENC=VERS.map(()=>[]);
 A0.forEach((_,i)=>{ const kp=dp(VERS.map(v=>v[i]),.55); VERS.forEach((v,j)=>ENC[j].push(enc(v[i].filter((_,k)=>kp[k])))); });
 const carto={q:Q,years:YRS,a0:ENC[0],a:ENC.slice(1),cen:runs.map(r=>r.extra.map(p=>[Math.round(p[0]),Math.round(p[1])])),
   pop:YRS.map(y=>HIST.values[y].map(v=>Math.round(v))),merged:YRS.map(y=>HIST.merged[y]),err:runs.map(r=>+r.best.popWeightedErr.toFixed(4)),rounds:runs.map(r=>r.best.round)};
+// Mesurar l'error sobre l'artefacte final: després de simplificar, quantitzar i arrodonir la població publicada.
+carto.err=carto.a.map((encoded,j)=>{
+  const arcs=encoded.map(a=>{ let x=0,y=0; const out=[]; for(let k=0;k<a.length;k+=2){ x+=a[k]; y+=a[k+1]; out.push([x/Q,y/Q]); } return out; });
+  const areas=topo.objects.m.geometries.map(g=>polyArea(ringsOf(g,arcs))), A=areas.reduce((s,v)=>s+v,0), P=carto.pop[j].reduce((s,v)=>s+v,0);
+  return +areas.reduce((s,a,i)=>s+(carto.pop[j][i]>0?carto.pop[j][i]*Math.abs(a/(A*carto.pop[j][i]/P)-1):0),0).toFixed(8)/P;
+});
 fs.writeFileSync(new URL('../data/cartograma.json', import.meta.url),JSON.stringify(carto));
 console.log('cartograma: punts',ENC[0].reduce((s,a)=>s+a.length/2,0),'errors',carto.err.join(' '),'KB',(fs.statSync(new URL('../data/cartograma.json', import.meta.url)).size/1024).toFixed(0));
 // Hipsometria (scripts/hipsometria.mjs, Copernicus DEM GLO-90).
 const hipso=fs.readFileSync(new URL('../data/raw/hipsometria.csv', import.meta.url),'utf8').trim().split('\n').slice(1).map(l=>+l.split(';')[2]);
-const data={W,H,scale:proj.scale(),translate:proj.translate(),coms:COMS,topo,mun:MUN,dots:b64,hipso};
+const data={W,H,scale:proj.scale(),translate:proj.translate(),coms:COMS,topo,mun:MUN,aliases:ALIAS,dots:b64,hipso};
 const OUT=new URL('../data/catalunya.json', import.meta.url); fs.writeFileSync(OUT,JSON.stringify(data));
 console.log('H',H,'dots',dots.length/2,'KB',(fs.statSync(OUT).size/1024).toFixed(0));
 const TA=M.reduce((s,m)=>s+m.a,0);

@@ -66,7 +66,7 @@ const coinVal=(b,k)=>100*ipc(b)/ipc(k);
 function h1(){
   const v=coinVal('2002M01',LAST);
   $('#h1').textContent=`100 € guardats el 2002 avui compren el que llavors en compraven ${fmt(v)}.`;
-  $('#lead').textContent=`És la inflació acumulada a Catalunya des que va arribar l’euro: els preus s’han multiplicat per ${fmt(ipc(LAST)/ipc('2002M01'),2)}. Ningú no t’ha pres el bitllet. Simplement, cada any val una mica menys. Tria des de quan comptes.`;
+  $('#lead').textContent=`És la inflació acumulada a Catalunya des que va arribar l’euro: els preus s’han multiplicat per ${fmt(ipc(LAST)/ipc('2002M01'),2)}. Ningú no t’ha pres el bitllet. Amb l’augment acumulat dels preus, compra menys. Tria des de quan comptes.`;
 }
 function drawCoins(){
   const [W]=sizeOf(cSvg,420,1,0,9999); const n=10, gap=W/n, r=gap*.4;
@@ -123,7 +123,7 @@ function drawUs(){
   const dot=svg.append('circle').attr('r',4).attr('fill',RED).style('display','none');
   if(!shown.us){ p1.attr('opacity',0); p2.attr('opacity',0); svg.node()._rv=()=>{ p1.attr('opacity',1); p2.attr('opacity',1); drawOn(p1,1600); drawOn(p2,900,1600); }; }
   crosshair(svg,x,t,H-b,xv=>{ const d=nearest(US,xv); dot.style('display',null).attr('cx',x(d[0])).attr('cy',y(d[1]));
-    $('#rUs').innerHTML=`<b>${d[0]}</b>: el que costava 1 $ el ${d[0]} avui en costa <b>${fmt(USL[1]/d[1],USL[1]/d[1]<10?2:1)} $</b>. <span class="m">Índex ${fmt(d[1],1)}.</span>`; return d[0]; },
+    $('#rUs').innerHTML=`<b>${d[0]}</b>: el que costava 1 $ el ${d[0]}, el ${USL[0]} en costa <b>${fmt(USL[1]/d[1],USL[1]/d[1]<10?2:1)} $</b>. <span class="m">Índex ${fmt(d[1],1)}.</span>`; return d[0]; },
     ()=>{ dot.style('display','none'); $('#rUs').innerHTML=US0; });
   $('#rUs').innerHTML=US0;
 }
@@ -133,7 +133,7 @@ $$('[data-uss]').forEach(b=>b.addEventListener('click',()=>{ usScale=b.dataset.u
 const G=mser(D.gold), EX=mser(D.eurusd), GL=G.last;
 const goldEur=k=>{ const e=EX.at(k); return e?G.at(k)/e:null; };
 let gCur='usd';
-const G0=()=>`<span class="m">Toca el gràfic.</span> Una unça d’or valia 35 $ el 1971. ${cap(elMes(kParse(GL)[1]))} de ${kParse(GL)[0]}, <b>${fmt(G.at(GL))} $</b>: ${fmt(G.at(GL)/35,0)} vegades més.`;
+const G0=()=>`<span class="m">Toca el gràfic.</span> ${cap(kLabel(GL))}: <b>${fmt(gCur==='usd'?G.at(GL):goldEur(GL))} ${gCur==='usd'?'$':'€'}</b> l’unça.`+(gCur==='usd'?` ${fmt(G.at(GL)/35,0)} vegades la paritat oficial de 35 $ vigent l’agost del 1971. El preu de mercat d’aquell mes era ${fmt(G.at('1971M08'))} $.`:``);
 function drawGold(){
   const svg=d3.select('#gold'); const [W,H]=sizeOf(svg,697,.58,290,420); const t=22,b=24;
   const pts = gCur==='usd' ? G.pts() : G.pts().filter(p=>p[2]>='1999M01').map(p=>[p[0],goldEur(p[2]),p[2]]).filter(p=>p[1]!=null);
@@ -145,12 +145,12 @@ function drawGold(){
   else { ann(svg,x,t,H-b,2008.7,'2008\nLehman'); ann(svg,x,t+30,H-b,2020.2,'2020\nCovid'); }
   const area=svg.append('path').attr('d',d3.area().x(p=>x(p[0])).y0(H-b).y1(p=>y(p[1]))(pts)).attr('fill',R[0]);
   const path=svg.append('path').attr('class','line').attr('d',d3.line().x(p=>x(p[0])).y(p=>y(p[1]))(pts)).attr('stroke',RED).attr('stroke-width',2.2);
-  if(gCur==='usd'){ const f=pts.find(p=>p[2]==='1971M08'); svg.append('text').attr('class','lab').attr('x',x(1960.3)).attr('y',y(35)-22).text('35 $ l’unça, fix'); }
+  if(gCur==='usd'){ const f=pts.find(p=>p[2]==='1971M08'); svg.append('text').attr('class','lab').attr('x',x(1960.3)).attr('y',y(35)-22).text('35 $: paritat oficial'); }
   const dot=svg.append('circle').attr('r',4).attr('fill',RED).style('display','none');
   if(!shown.gold){ path.attr('opacity',0); area.attr('opacity',0); svg.node()._rv=()=>{ path.attr('opacity',1); drawOn(path,2200); area.transition().delay(1400).duration(900).attr('opacity',1); }; }
   const u=gCur==='usd'?' $':' €';
   crosshair(svg,x,t,H-b,xv=>{ const p=nearest(pts,xv); dot.style('display',null).attr('cx',x(p[0])).attr('cy',y(p[1]));
-    $('#rGold').innerHTML=`<b>${cap(kLabel(p[2]))}</b>: una unça d’or, <b>${fmt(p[1])}${u}</b>.`+(gCur==='usd'?` <span class="m">${fmt(p[1]/35,1)} vegades els 35 $ de Bretton Woods.</span>`:` <span class="m">${fmt(p[1]/goldEur('1999M01'),1)} vegades el que valia el gener de 1999.</span>`); return p[0]; },
+    $('#rGold').innerHTML=`<b>${cap(kLabel(p[2]))}</b>: una unça d’or, <b>${fmt(p[1])}${u}</b>.`+(gCur==='usd'?` <span class="m">${fmt(p[1]/35,1)} vegades la paritat oficial de 35 $ de Bretton Woods.</span>`:` <span class="m">${fmt(p[1]/goldEur('1999M01'),1)} vegades el que valia el gener de 1999.</span>`); return p[0]; },
     ()=>{ dot.style('display','none'); $('#rGold').innerHTML=G0(); });
   $('#rGold').innerHTML=G0();
 }
@@ -158,8 +158,8 @@ $$('[data-gc]').forEach(b=>b.addEventListener('click',()=>{ gCur=b.dataset.gc; $
 
 /* --- 3b. Una unça en pessetes --- */
 const OZ71=35*70/PTA, OZN=goldEur(GL), OZK=OZN/OZ71, OZREAL=OZK/(ipc(GL)/ipc('1971M08'));
-$('#ozTitle').textContent=`El 1971, una unça d’or valia 2.450 pessetes. Avui, ${fmt(OZN)} €.`;
-$('#ozLede').textContent=`La pesseta estava lligada al dòlar des del 1959 (60 pessetes per dòlar; 70 des del 1967), i per tant a l’or: 35 $ × 70 = 2.450 pessetes, ${fmt(OZ71,2)} €. Cada quadrat és el preu d’una unça el 1971. Avui en calen ${fmt(Math.round(OZK))}.`;
+$('#ozTitle').textContent=`L’agost del 1971, la paritat oficial de l’or equivalia a ${fmt(35*70)} pessetes. ${cap(kLabel(GL))}: ${fmt(OZN)} € al mercat.`;
+$('#ozLede').textContent=`La paritat era de 70 pessetes per dòlar des del 1967: 35 $ × 70 = ${fmt(35*70)} pessetes, ${fmt(OZ71,2)} € equivalents. Això no era el preu d’una compra privada: el mercat de l’or ja cotitzava per sobre de la paritat oficial. Cada quadrat representa aquella paritat; per arribar al preu de mercat de ${kLabel(GL)} en calen ${fmt(Math.round(OZK))}.`;
 function drawOz(){
   const svg=d3.select('#oz'); const W=pw(svg,646); const n=Math.round(OZK);
   const cols=W<500?16:24, s=W/cols, rows=Math.ceil(n/cols), H=rows*s;
@@ -167,12 +167,12 @@ function drawOz(){
   const r=svg.selectAll('rect').data(d3.range(n)).join('rect').attr('x',i=>(i%cols)*s+1).attr('y',i=>Math.floor(i/cols)*s+1).attr('width',s-2).attr('height',s-2).attr('rx',1.5)
     .attr('fill',i=>i===0?R[7]:R[3]).attr('opacity',shown.oz?1:0);
   svg.node()._rv=()=>r.transition().delay(i=>RM?0:i*9).duration(300).attr('opacity',1);
-  $('#rOz').innerHTML=`<b>${fmt(OZK,0)} vegades més en pessetes i euros.</b> Descomptant la inflació d’aquests anys (×${fmt(ipc(GL)/ipc('1971M08'),1)}), l’or val ${fmt(OZREAL,1)} vegades més en termes reals. Mesurats en or, la pesseta i l’euro han perdut el ${pct(1-1/OZK,1)} del seu valor.`;
+  $('#rOz').innerHTML=`<b>${fmt(OZK,0)} vegades la paritat oficial de l’agost del 1971, en euros equivalents.</b> Descomptant la inflació d’aquests anys (×${fmt(ipc(GL)/ipc('1971M08'),1)}), el preu de mercat actual és ${fmt(OZREAL,1)} vegades aquella paritat en termes reals. La comparació combina una paritat legal inicial amb un preu de mercat final.`;
 }
 
 /* =========== 4. DE CADA 100 EUROS =========== */
 const M3=D.m3, M3L=M3[M3.length-1], CASH=M3L[2]/M3L[1];
-$('#cashTitle').textContent=`De cada 100 euros que existeixen, només ${fmt(Math.round(CASH*100))} són bitllets i monedes`;
+$('#cashTitle').textContent=`De cada 100 euros de M3 de la zona euro, només ${fmt(Math.round(CASH*100))} són bitllets i monedes`;
 function drawWaffle(){
   const svg=d3.select('#waffle'); const W=pw(svg,360), s=W/10;
   svg.attr('viewBox',`0 0 ${W} ${W}`).attr('width',W).attr('height',W); svg.selectAll('*').remove();
@@ -197,7 +197,7 @@ function drawM3(){
   a1.attr('clip-path','url(#m3c)'); a2.attr('clip-path','url(#m3c)');
   svg.node()._rv=()=>clip.transition().duration(RM?0:2000).ease(d3.easeCubicInOut).attr('width',W);
   const lx=x(2003); svg.append('text').attr('class','lab').attr('x',W-4).attr('y',y(M3L[2])-6).attr('text-anchor','end').style('fill',RED).text('efectiu');
-  svg.append('text').attr('class','lab').attr('x',x(2012)).attr('y',y(7000)).text('dipòsits');
+  svg.append('text').attr('class','lab').attr('x',x(2012)).attr('y',y(7000)).text(W<500?'dipòsits i altres':'dipòsits i altres instruments');
   const M30=`<span class="m">Toca el gràfic.</span> ${cap(kLabel(M3L[0].replace('-','M')))}: <b>${fmt(M3L[1]/1000,1)} bilions d’euros</b>, dels quals ${fmt(M3L[2]/1000,1)} en efectiu.`;
   const dot=svg.append('circle').attr('r',4).attr('fill',INK).style('display','none');
   crosshair(svg,x,t,H-b,xv=>{ const p=nearest(pts,xv); dot.style('display',null).attr('cx',x(p[0])).attr('cy',y(p[1]));
@@ -209,11 +209,11 @@ function drawM3(){
 /* =========== 5. BANCS CENTRALS =========== */
 const EB=D.ecbBal.map(d=>[+d[0].slice(0,4)+(+d[0].slice(5)-.5)/12,d[1],d[0]]), FB=D.fedBal.map(d=>[+d[0].slice(0,4)+(+d[0].slice(5)-.5)/12,d[1],d[0]]);
 const ebAt=k=>EB.find(d=>d[2]===k), ebMax=EB.reduce((a,b)=>b[1]>a[1]?b:a), fbMax=FB.reduce((a,b)=>b[1]>a[1]?b:a);
-$('#cbTitle').textContent=`El balanç del BCE es va multiplicar per ${fmt(ebMax[1]/ebAt('2007-06')[1],1)} entre el 2007 i el 2022`;
+$('#cbTitle').textContent=`El balanç de l’Eurosistema es va multiplicar per ${fmt(ebMax[1]/ebAt('2007-06')[1],1)} entre el 2007 i el 2022`;
 function drawCb(){
   const svg=d3.select('#cb'); const [W,H]=sizeOf(svg,697,.58,290,420); const t=22,b=24;
   const x=d3.scaleLinear().domain([1999,EB[EB.length-1][0]]).range([0,W]); const y=d3.scaleLinear().domain([0,10000]).range([H-b,t]);
-  yGrid(svg,y,0,W,[0,2500,5000,7500,10000],v=>v?fmt(v/1000,1)+(v===10000?' bilions':''):'0');
+  yGrid(svg,y,0,W,[0,2500,5000,7500,10000],v=>v?fmt(v/1000,1)+(v===10000?' bilions € / $':''):'0');
   xAxis(svg,x,H-b,W<500?[2000,2010,2020]:[2000,2005,2010,2015,2020,2025]);
   ann(svg,x,t,H-b,2008.7,'2008\nLehman'); ann(svg,x,t+(W<500?30:0),H-b,2015.2,W<500?'2015\nQE':'2015\nQE del BCE'); ann(svg,x,t,H-b,2020.2,'2020\nCovid');
   const ln=d3.line().x(d=>x(d[0])).y(d=>y(d[1]));
@@ -244,7 +244,7 @@ const CAN=[
   {k:'sal',n:'Sou',c:INK,f:y=>salY.get(y)},
 ].map(s=>{ const b=s.f(2000); s.pts=YRS.map(y=>[y,s.f(y)/b]).filter(p=>!isNaN(p[1])); s.end=s.pts[s.pts.length-1]; return s; });
 const cBy=Object.fromEntries(CAN.map(s=>[s.k,s]));
-$('#canLede').textContent=`Quan es crea diner, arriba primer a qui és a prop de l’origen: bancs, estats i qui ja té actius per oferir com a garantia. Els preus d’aquests actius pugen abans; els sous, al final de la cua. L’economista Richard Cantillon ja ho va descriure al segle XVIII. Des del 2000, l’or en euros s’ha multiplicat per ${fmt(cBy.or.end[1],1)}, el diner per ${fmt(cBy.m3.end[1],1)} i el preu de l’habitatge per ${fmt(cBy.hab.end[1],1)}. El sou, per ${fmt(cBy.sal.end[1],2)}.`;
+$('#canLede').textContent=`La idea de Richard Cantillon és que els efectes del diner nou depenen de qui el rep primer. És una hipòtesi sobre la transmissió i la distribució, però aquestes línies no demostren que els actius pugin abans que els sous ni atribueixen els canvis a una sola causa. Entre el 2000 i el 2025, l’or en euros s’ha multiplicat per ${fmt(cBy.or.end[1],1)}, el diner per ${fmt(cBy.m3.end[1],1)} i el preu de l’habitatge per ${fmt(cBy.hab.end[1],1)}. El sou, per ${fmt(cBy.sal.end[1],2)}.`;
 let canSel=null;
 function drawCan(){
   const svg=d3.select('#can'); const [W,H]=sizeOf(svg,697,.62,320,460); const t=18,b=24,rp=W<500?88:112;
@@ -270,8 +270,9 @@ function drawCan(){
 const SAL=D.sal.map(r=>({y:r[0],n:r[1],r:r[1]*ipcYear(2025)/ipcYear(r[0])}));
 const S0=SAL[0], SL=SAL[SAL.length-1], SMAX=SAL.reduce((a,b)=>b.r>a.r?b:a);
 let salMode='real';
-$('#salTitle').textContent= SL.r<S0.r ? `El sou mitjà a Catalunya compra avui menys que l’any ${S0.y}` : `El sou mitjà a Catalunya compra avui gairebé el mateix que l’any ${S0.y}`;
-$('#salLede').textContent=`En euros de cada any, el sou brut mitjà ha passat de ${fmt(S0.n)} € el ${S0.y} a ${fmt(SL.n)} € el ${SL.y}. Sembla molt. Però en euros d’avui, el sou del ${S0.y} equivalia a ${fmt(Math.round(S0.r/10)*10)} €. Vint-i-cinc anys després, el poder de compra és un ${pct(1-SL.r/S0.r,1)} més baix. El millor any va ser el ${SMAX.y}.`;
+$('#salRealUnit').textContent='En euros de '+SL.y;
+$('#salTitle').textContent= SL.r<S0.r ? `El sou mitjà a Catalunya comprava el ${SL.y} menys que l’any ${S0.y}` : `El sou mitjà a Catalunya comprava el ${SL.y} gairebé el mateix que l’any ${S0.y}`;
+$('#salLede').textContent=`En euros de cada any, el sou brut mitjà ha passat de ${fmt(S0.n)} € el ${S0.y} a ${fmt(SL.n)} € el ${SL.y}. Sembla molt. Però en euros de ${SL.y}, el sou del ${S0.y} equivalia a ${fmt(Math.round(S0.r/10)*10)} €. ${SL.y-S0.y} anys després, el poder de compra és un ${pct(1-SL.r/S0.r,1)} més baix. El millor any va ser el ${SMAX.y}.`;
 function drawSal(){
   const svg=d3.select('#sal'); const [W,H]=sizeOf(svg,646,.6,280,400); const t=18,b=24;
   const x=d3.scaleLinear().domain([2000,2025]).range([10,W-10]); const y=d3.scaleLinear().domain([0,36000]).range([H-b,t]);
@@ -283,12 +284,12 @@ function drawSal(){
   const cs=svg.selectAll('circle.s').data(SAL).join('circle').attr('class','s').attr('cx',d=>x(d.y)).attr('cy',d=>y(d[k])).attr('r',shown.sal?3.2:0).attr('fill',RED);
   svg.append('text').attr('class','lab').attr('x',x(2025)).attr('y',y(SL[k])-12).attr('text-anchor','end').text(fmt(SL[k])+' €');
   svg.append('text').attr('class','lab').attr('x',x(2000)).attr('y',y(S0[k])-12).text(fmt(S0[k])+' €');
-  svg.append('text').attr('class','ax').attr('x',x(2012)).attr('y',y(SAL[12][k==='r'?'n':'r'])+(k==='r'?16:-8)).attr('text-anchor','middle').text(k==='r'?'en euros de cada any':'en euros d’avui');
+  svg.append('text').attr('class','ax').attr('x',x(2012)).attr('y',y(SAL[12][k==='r'?'n':'r'])+(k==='r'?16:-8)).attr('text-anchor','middle').text(k==='r'?'en euros de cada any':'en euros de '+SL.y);
   if(!shown.sal){ p.attr('opacity',0); svg.node()._rv=()=>{ p.attr('opacity',1); drawOn(p,1500); cs.transition().delay((d,i)=>RM?0:i*55).duration(300).attr('r',3.2); }; }
   const dot=svg.append('circle').attr('r',5.5).attr('fill','none').attr('stroke',INK).attr('stroke-width',1.5).style('display','none');
   const S00='<span class="m">Toca el gràfic.</span>';
   crosshair(svg,x,t,H-b,xv=>{ const d=SAL.find(d=>d.y===Math.round(xv)); if(!d) return null; dot.style('display',null).attr('cx',x(d.y)).attr('cy',y(d[k]));
-    $('#rSal').innerHTML=`<b>${d.y}</b>: ${fmt(d.n)} € bruts l’any, que avui equivalen a <b>${fmt(Math.round(d.r))} €</b>. <span class="m">${d.r>SL.r?`${fmt(Math.round(d.r-SL.r))} € més de poder de compra que el ${SL.y}.`:d.y===SL.y?'':`${fmt(Math.round(SL.r-d.r))} € menys que el ${SL.y}.`}</span>`; return d.y; },
+    $('#rSal').innerHTML=`<b>${d.y}</b>: ${fmt(d.n)} € bruts l’any, que equivalen, en euros de ${SL.y}, a <b>${fmt(Math.round(d.r))} €</b>. <span class="m">${d.r>SL.r?`${fmt(Math.round(d.r-SL.r))} € més de poder de compra que el ${SL.y}.`:d.y===SL.y?'':`${fmt(Math.round(SL.r-d.r))} € menys que el ${SL.y}.`}</span>`; return d.y; },
     ()=>{ dot.style('display','none'); $('#rSal').innerHTML=S00; });
   $('#rSal').innerHTML=S00;
 }
@@ -297,8 +298,8 @@ $$('[data-sal]').forEach(b=>b.addEventListener('click',()=>{ salMode=b.dataset.s
 /* =========== 8. ANYS DE SOU PER UN PIS =========== */
 const BR=YRS.map(y=>{ const p=habY(y), s=salY.get(y); return p&&s?{y,p:p*80,s,n:p*80/s}:null; }).filter(Boolean);
 const B0=BR[0], BL=BR[BR.length-1], BMAX=BR.reduce((a,b)=>b.n>a.n?b:a);
-$('#brTitle').textContent=`Un pis de 80 m² a la província de Barcelona costa ${fmt(BL.n,1)} anys de sou brut sencer`;
-$('#brLede').textContent=`El ${B0.y} en calien ${fmt(B0.n,1)}. En plena bombolla, el ${BMAX.y}, ${fmt(BMAX.n,1)}. La crisi els va fer baixar i des del 2014 tornen a pujar: el valor taxat d’aquests 80 m² ha passat de ${fmt(Math.round(B0.p/1000))}.000 € a ${fmt(Math.round(BL.p/1000))}.000 €. I a la ciutat de Barcelona els preus són molt més alts que la mitjana de la província.`;
+$('#brTitle').textContent=`Un pis de 80 m² a la província de Barcelona equival a ${fmt(BL.n,1)} anys de sou brut sencer el ${BL.y}`;
+$('#brLede').textContent=`El ${B0.y} en calien ${fmt(B0.n,1)}. En plena bombolla, el ${BMAX.y}, ${fmt(BMAX.n,1)}. La ràtio va baixar després de la bombolla i ha augmentat entre el 2014 i el ${BL.y}, amb baixades intermèdies. El valor taxat d’aquests 80 m² ha passat de ${fmt(Math.round(B0.p/1000))}.000 € el ${B0.y} a ${fmt(Math.round(BL.p/1000))}.000 € el ${BL.y}. És una comparació de valor taxat i sou brut, no una mesura de l’esforç hipotecari real d’una llar.`;
 function drawBricks(){
   const svg=d3.select('#bricks'); const [W,H]=sizeOf(svg,697,.55,280,400); const t=24,b=24;
   const x=d3.scaleBand().domain(BR.map(d=>d.y)).range([0,W]).padding(.18); const y=d3.scaleLinear().domain([0,11]).range([H-b,t]);
@@ -322,9 +323,9 @@ function drawBricks(){
 /* =========== 9. LLOGUER =========== */
 const RENT=D.rent.map(r=>({y:r[0],r:r[1],c:r[2],s:salY.get(r[0])})).filter(d=>d.s).map(d=>({...d,sh:d.r*12/d.s}));
 const RL=RENT[RENT.length-1], RMIN=RENT.reduce((a,b)=>b.sh<a.sh?b:a), RMAXS=RENT.reduce((a,b)=>b.sh>a.sh?b:a);
-$('#rentTitle').textContent=`El lloguer mitjà de Barcelona es menja el ${pct(RL.sh,0)} del sou brut mitjà`;
-$('#rentLede').textContent=`El ${RL.y}, un contracte nou de lloguer a Barcelona costava de mitjana ${fmt(Math.round(RL.r))} € al mes. El sou brut mitjà a Catalunya és de ${fmt(Math.round(RL.s/12))} € al mes, abans d’impostos i cotitzacions. Sobre el sou net, la proporció seria encara més alta. El ${RMIN.y}, el lloguer en suposava el ${pct(RMIN.sh,0)}. La Unió Europea considera sobrecàrrega destinar a l’habitatge més del 40% de la renda disponible.`;
-$('#rentNote').textContent=`Lloguer: mitjana dels contractes nous amb fiança dipositada a l’Incasòl a la ciutat de Barcelona. Des del 2024 Barcelona és zona de mercat tensionat, amb preus regulats; el nombre de contractes registrats ha baixat de ${fmt(RENT.reduce((a,b)=>b.c>a.c?b:a).c)} (${RENT.reduce((a,b)=>b.c>a.c?b:a).y}) a ${fmt(RL.c)} (${RL.y}). Sou: cost salarial total per treballador a Catalunya (INE), dividit per 12.`;
+$('#rentTitle').textContent=`El lloguer mitjà d’un contracte nou de Barcelona equival al ${pct(RL.sh,0)} del sou brut mitjà català el ${RL.y}`;
+$('#rentLede').textContent=`El ${RL.y}, un contracte nou de lloguer a Barcelona costava de mitjana ${fmt(Math.round(RL.r))} € al mes. El sou brut mitjà a Catalunya és de ${fmt(Math.round(RL.s/12))} € al mes, abans d’impostos i cotitzacions. Sobre el sou net, la proporció seria encara més alta. El ${RMIN.y}, el lloguer en suposava el ${pct(RMIN.sh,0)}. Eurostat defineix la sobrecàrrega com més del 40% de la renda disponible d’una llar destinat a tota la despesa d’habitatge, neta d’ajudes. Aquest gràfic compara lloguer i sou brut d’una persona: no calcula aquell indicador.`;
+$('#rentNote').textContent=`Lloguer: mitjana dels contractes nous amb fiança dipositada a l’Incasòl a la ciutat de Barcelona. Des del 2024 Barcelona és zona de mercat tensionat, amb preus regulats; el nombre de contractes registrats ha baixat de ${fmt(RENT.reduce((a,b)=>b.c>a.c?b:a).c)} (${RENT.reduce((a,b)=>b.c>a.c?b:a).y}) a ${fmt(RL.c)} (${RL.y}). La variació de contractes registrats no mesura el parc total de lloguer ni identifica l’efecte de la regulació. Sou: cost salarial mensual mitjà per treballador a Catalunya, anualitzat (INE), dividit per 12.`;
 function drawRent(){
   const svg=d3.select('#rent'); const [W,H]=sizeOf(svg,697,.5,260,360); const t=22,b=24;
   const x=d3.scaleBand().domain(RENT.map(d=>d.y)).range([0,W]).padding(.2); const y=d3.scaleLinear().domain([0,1]).range([H-b,t]);
@@ -349,7 +350,8 @@ const EMN={FI:'Finlàndia',DK:'Dinamarca',SE:'Suècia',NL:'Països Baixos',FR:'F
 const EM=Object.entries(D.eman).map(([g,a])=>({g,n:EMN[g]||g,v:a[a.length-1][1],y:a[a.length-1][0],a})).sort((a,b)=>a.v-b.v);
 const emES=D.eman.ES, emMin=emES.reduce((a,b)=>b[1]<a[1]?b:a);
 $('#emTitle').textContent=`I a Espanya els joves marxen de casa dels pares, de mitjana, als ${fmt(emES[emES.length-1][1],1).replace(',0','')} anys`;
-$('#emLede').textContent=`Són ${fmt(emES[emES.length-1][1]-D.eman.EU27_2020[D.eman.EU27_2020.length-1][1],1)} anys més tard que la mitjana europea i ${fmt(emES[emES.length-1][1]-EM[0].v,1)} més tard que a ${EM[0].n}. El ${emMin[0]} era als ${fmt(emMin[1],1)}.`;
+$('#emLede').textContent=`Segons l’API d’Eurostat per al ${emES[emES.length-1][0]}, són ${fmt(emES[emES.length-1][1]-D.eman.EU27_2020[D.eman.EU27_2020.length-1][1],1)} anys més tard que la mitjana europea i ${fmt(emES[emES.length-1][1]-EM[0].v,1)} més tard que a ${EM[0].n}. El ${emMin[0]} era als ${fmt(emMin[1],1)}.`;
+$('#emNote').innerHTML='Indicador aproximat basat en la convivència amb els pares a l’enquesta EU-LFS; no és un seguiment de l’edat de sortida de cada cohort. Es conserva la versió de l’API: per a Finlàndia el 2025, la <a href="https://ec.europa.eu/eurostat/web/products-eurostat-news/w/ddn-20260915-1">nota de premsa del 15 de setembre de 2026</a> dona una dècima més. La discrepància entre fonts oficials queda pendent de reconciliació.';
 function drawEm(){
   const svg=d3.select('#em'); const W=pw(svg,560), rh=26, t=10, H=t+EM.length*rh+24, lw=W<420?108:128;
   svg.attr('viewBox',`0 0 ${W} ${H}`).attr('width',W).attr('height',H); svg.selectAll('*').remove();

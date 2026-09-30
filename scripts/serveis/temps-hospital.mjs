@@ -1,6 +1,8 @@
-// Temps en cotxe fins a l'hospital públic amb urgències 24 h més proper (OSRM, perfil driving, circulació lliure).
+// Temps modelitzat fins a un dispositiu SISCAT que el registre hospitalari etiqueta amb urgències 24 h.
+// Inclou CUAP i urgències especialitzades; no és una selecció d'urgències hospitalàries generals d'adults.
 // L'origen és l'ajuntament. Per evitar que el punt s'enganxi a una pista forestal, també es proven 8 punts a 700 m
-// i es pren el temps mínim, que correspon a sortir per la carretera principal del nucli.
+// i es pren el temps mínim. No es verifica quina és la carretera principal ni el trajecte fins al punt triat;
+// OSRM ajusta els punts a la xarxa viària. No són temps observats per a tots els domicilis del municipi.
 // Ús: SERVEIS=<carpeta amb serveis-municipis.csv i punts-serveis.json> node scripts/serveis/temps-hospital.mjs
 import fs from 'node:fs';
 const D = process.env.SERVEIS.replace(/\/?$/, '/');

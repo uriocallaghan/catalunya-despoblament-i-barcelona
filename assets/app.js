@@ -25,14 +25,32 @@ const dcls=d=>{ for(let i=0;i<BINS.length;i++) if(d<BINS[i]) return i; return 7;
 const dcol=d=>R[dcls(d)];
 const muniHTML=m=>`<b>${m.n}</b> <span class="m">${m.com}</span><br><span class="num">${fmt(m.p)} habitants en ${fmt(m.a,2)} km²: ${fmt(m.d,m.d<10?2:(m.d<100?1:0))} per km²</span>`;
 function baseMap(sel){ return d3.select(sel).attr('viewBox',`0 0 ${W} ${H}`).attr('preserveAspectRatio','xMidYMid meet'); }
-function muniLayer(svg, fill, onHover){
+// Ressaltat en passar per sobre: desapareix en sortir del gràfic amb el ratolí o en tocar fora.
+const CLEARS=[];
+document.addEventListener('pointerdown',e=>CLEARS.forEach(([n,f])=>{ if(!n.contains(e.target)) f(); }));
+function hoverable(svg, ps, onHover, onClear){
+  let last=null;
+  const act=function(e,m){ if(last===this) return; if(last) d3.select(last).classed('hl',false); last=this; d3.select(this).classed('hl',true).raise(); onHover && onHover(m); };
+  const clear=()=>{ if(!last) return; d3.select(last).classed('hl',false); last=null; onClear && onClear(); };
+  ps.on('pointerenter',act).on('click',act);
+  svg.on('pointerleave.hv',e=>{ if(e.pointerType==='mouse') clear(); });
+  CLEARS.push([svg.node(),clear]);
+  return {act,clear};
+}
+function muniLayer(svg, fill, onHover, onClear){
   const g=svg.append('g');
   const ps=g.selectAll('path').data(MUN).join('path').attr('class','mp').attr('d',m=>PD[m.i]).attr('fill',fill);
-  let last=null;
-  const act=function(e,m){ if(last) d3.select(last).classed('hl',false); last=this; d3.select(this).classed('hl',true).raise(); onHover && onHover(m); };
-  ps.on('pointerenter',act).on('click',act);
-  return {g, ps, select:(m)=>{ const el=ps.filter(d=>d===m).node(); if(el) act.call(el,null,m); }};
+  const h=hoverable(svg,ps,onHover,onClear);
+  return {g, ps, clear:h.clear, select:(m)=>{ const el=ps.filter(d=>d===m).node(); if(el) h.act.call(el,null,m); }};
 }
+// Els elements vermells apareixen quan entren a la pantalla.
+function onView(el, fn, th){
+  if(RM || !('IntersectionObserver' in window)){ fn(); return; }
+  const io=new IntersectionObserver(es=>{ if(es.some(e=>e.isIntersecting)){ io.disconnect(); fn(); } },{threshold:th||.3});
+  io.observe(el);
+}
+// Pinta els municipis des del gris fins al seu color, amb un retard aleatori per a cadascun.
+function revealFill(ps, fill){ ps.style('transition-delay',()=>RM?'0ms':Math.round(Math.random()*1100)+'ms').attr('fill',fill); setTimeout(()=>ps.style('transition-delay',null),2200); }
 const meshLayer=(svg,cls,d)=>svg.append('path').attr('class',cls).attr('d',d);
 
 /* =========== 1. HERO =========== */
@@ -45,10 +63,13 @@ $('#heroSmallBtn').textContent=`Els ${fmt(SMALL.size)} municipis`;
 let heroMode='both';
 const heroFill=m=> m===BCN ? (heroMode!=='small'?R[6]:LAND) : SMALL.has(m) ? (heroMode!=='bcn'?R[2]:LAND) : LAND;
 const hSvg=baseMap('#mHero');
-const hL=muniLayer(hSvg,()=>LAND,m=>{ $('#rHero').innerHTML=muniHTML(m)+(m===BCN?'':SMALL.has(m)?'<br><span class="m">Forma part dels '+fmt(SMALL.size)+' municipis que, junts, sumen tanta gent com Barcelona.</span>':'<br><span class="m">És un dels '+fmt(947-SMALL.size-1)+' municipis restants.</span>'); });
+const hL=muniLayer(hSvg,()=>LAND,m=>{ $('#rHero').innerHTML=muniHTML(m)+(m===BCN?'':SMALL.has(m)?'<br><span class="m">Forma part dels '+fmt(SMALL.size)+' municipis que, junts, sumen tanta gent com Barcelona.</span>':'<br><span class="m">És un dels '+fmt(947-SMALL.size-1)+' municipis restants.</span>'); },()=>heroRead());
 meshLayer(hSvg,'mesh',COMMESH); meshLayer(hSvg,'outline',OUTLINE);
 function heroPaint(stagger){
   hL.ps.style('transition-delay',m=> stagger&&!RM ? (m===BCN?'1900ms':(SMALL.has(m)?Math.round(Math.random()*1500)+'ms':'0ms')) : '0ms').attr('fill',heroFill);
+  heroRead();
+}
+function heroRead(){
   $('#rHero').innerHTML = heroMode==='bcn' ? `<b>Barcelona</b>: ${fmt(BCN.p)} habitants en ${fmt(BCN.a,2)} km².` :
     heroMode==='small' ? `<b>${fmt(SMALL.size)} municipis</b>: ${fmt(smallPop)} habitants en ${fmt(smallArea)} km².` :
     `<b>Vermell fosc</b>: Barcelona. <b>Vermell clar</b>: els ${fmt(SMALL.size)} municipis que, junts, tenen la mateixa gent. <span class="m">Toca un municipi.</span>`;
@@ -59,7 +80,9 @@ $$('[data-hero]').forEach(b=>b.addEventListener('click',()=>{ heroMode=b.dataset
 const low=MUN.filter(m=>m.d<10);
 $('#densLede').textContent=`${fmt(low.length)} municipis tenen menys de 10 habitants per km². Ocupen el ${pct(d3.sum(low,m=>m.a)/TA)} de Catalunya i hi viu el ${pct(d3.sum(low,m=>m.p)/TP)} de la població. A l’altre extrem, l’Hospitalet de Llobregat passa de 23.000.`;
 const dSvg=baseMap('#mDens');
-const dL=muniLayer(dSvg,m=>dcol(m.d),m=>{ $('#rDens').innerHTML=muniHTML(m)+`<br><span class="m">És el municipi número ${fmt(rankD.get(m))} de 947 per densitat.</span>`; });
+const DENS0='Passa per sobre d’un municipi o toca’l.';
+const dL=muniLayer(dSvg,()=>LAND,m=>{ $('#rDens').innerHTML=muniHTML(m)+`<br><span class="m">És el municipi número ${fmt(rankD.get(m))} de 947 per densitat.</span>`; },()=>{ $('#rDens').textContent=DENS0; });
+onView($('#mDens'),()=>revealFill(dL.ps,m=>dcol(m.d)));
 meshLayer(dSvg,'mesh',COMMESH); meshLayer(dSvg,'outline',OUTLINE);
 const rankD=new Map([...MUN].sort((a,b)=>b.d-a.d).map((m,i)=>[m,i+1]));
 const labs=['0','10','25','50','100','250','1.000','5.000'];
@@ -70,6 +93,8 @@ $('#q').addEventListener('change',e=>{ const m=byName.get(e.target.value.trim().
 /* =========== 3. PUNTS =========== */
 const DOTS=(()=>{ const b=atob(D.dots); const u=new Uint8Array(b.length); for(let i=0;i<b.length;i++) u[i]=b.charCodeAt(i); return new Uint16Array(u.buffer); })();
 $('#dotsNote').textContent=`${fmt(DOTS.length/2)} punts. Els municipis de menys de 500 habitants reben un punt amb una probabilitat proporcional a la seva població.`;
+const DORD=(()=>{ const n=DOTS.length/2, o=new Uint32Array(n), rr=d3.randomLcg(7); for(let i=0;i<n;i++) o[i]=i; for(let i=n-1;i>0;i--){ const j=Math.floor(rr()*(i+1)); const t=o[i]; o[i]=o[j]; o[j]=t; } return o; })();
+let dotsP=0;
 function drawDots(){
   const cv=$('#cDots'); const cw=cv.clientWidth; if(!cw) return; const ch=cw*H/W; const dpr=devicePixelRatio||1;
   cv.width=Math.round(cw*dpr); cv.height=Math.round(ch*dpr); cv.style.height=ch+'px';
@@ -78,53 +103,70 @@ function drawDots(){
   const land=new Path2D(); feats.forEach(f=>land.addPath(new Path2D(PD[f.id])));
   ctx.fill(land); ctx.strokeStyle='#fff'; ctx.lineWidth=.9/s; ctx.stroke(new Path2D(COMMESH));
   ctx.fillStyle=rgba(RED,.6); const r=(cw<500?.95:1.25)/s;
-  for(let i=0;i<DOTS.length;i+=2){ ctx.beginPath(); ctx.arc(DOTS[i]/8, DOTS[i+1]/8, r, 0, 6.2832); ctx.fill(); }
+  const n=Math.round(DORD.length*dotsP);
+  for(let k=0;k<n;k++){ const i=DORD[k]*2; ctx.beginPath(); ctx.arc(DOTS[i]/8, DOTS[i+1]/8, r, 0, 6.2832); ctx.fill(); }
 }
+onView($('#cDots'),()=>{ const t0=performance.now(), dur=RM?0:1800; const st=now=>{ const k=dur?Math.min(1,(now-t0)/dur):1; dotsP=d3.easeCubicOut(k); drawDots(); if(k<1) requestAnimationFrame(st); }; requestAnimationFrame(st); });
 
-/* =========== 4. BOMBOLLES =========== */
-const bSvg=baseMap('#mDor');
-let dorMode='map';
-const bL=muniLayer(bSvg,m=>dcol(m.d),m=>{ $('#rDor').innerHTML=muniHTML(m); });
-const bMesh=meshLayer(bSvg,'mesh',COMMESH);
-const circ=bSvg.append('g').selectAll('circle').data([...MUN].sort((a,b)=>b.dr-a.dr)).join('circle')
-  .attr('cx',m=>m.cx).attr('cy',m=>m.cy).attr('r',0).attr('fill',m=>dcol(m.d)).attr('stroke',BG).attr('stroke-width',.6).style('cursor','pointer')
-  .on('pointerenter click',(e,m)=>{ $('#rDor').innerHTML=muniHTML(m); circ.attr('stroke',d=>d===m?INK:BG).attr('stroke-width',d=>d===m?2:.6); });
-const BIGL=[...MUN].sort((a,b)=>b.p-a.p).slice(0,24);
-const blab=bSvg.append('g').selectAll('text').data(BIGL).join('text').attr('class','blab').attr('x',m=>m.dx).attr('y',m=>m.dy).attr('dy','.35em')
-  .attr('font-size',m=>Math.max(10,Math.min(30,m.dr/3.2))).attr('fill',m=>dcls(m.d)>=5?BG:INK).attr('opacity',0)
-  .text(m=>labName(m));
+/* =========== 4. CARTOGRAMA CONTINU =========== */
+// Arcs de la topologia en dues posicions (projecció d'àrea igual i cartograma), generats per scripts/cartograma.mjs.
+const CA=D.carto;
+const dec=a=>{ const o=new Float32Array(a.length); let x=0,y=0; for(let i=0;i<a.length;i+=2){ x+=a[i]; y+=a[i+1]; o[i]=x/10; o[i+1]=y/10; } return o; };
+const K0=CA.a0.map(dec), K1=CA.a1.map(dec), KT=K0.map(a=>new Float32Array(a));
+const GEO=OBJ.geometries.map(g=> g.type==='Polygon' ? [g.arcs] : g.type==='MultiPolygon' ? g.arcs : []);
+const own=K0.map(()=>[]); GEO.forEach((polys,i)=>polys.forEach(p=>p.forEach(r=>r.forEach(a=>own[a<0?~a:a].push(i)))));
+const arcPts=(a,rev)=>{ const k=KT[a], n=k.length/2; let s=''; for(let j=0;j<n;j++){ const q=rev?n-1-j:j; s+=(j?'L':'')+k[2*q].toFixed(1)+','+k[2*q+1].toFixed(1); } return s; };
+const ringD=r=>'M'+r.map((a,j)=>{ const s=a<0?arcPts(~a,true):arcPts(a,false); return j? s.slice(s.indexOf('L')+1) : s; }).join('L')+'Z';
+const geoD=i=>GEO[i].map(p=>p.map(ringD).join('')).join('');
+const arcsD=list=>list.map(a=>'M'+arcPts(a,false)).join('');
+const COMARC=own.map((o,a)=>o.length===2&&MUN[o[0]].c!==MUN[o[1]].c?a:-1).filter(a=>a>=0), OUTARC=own.map((o,a)=>o.length===1?a:-1).filter(a=>a>=0);
+let dorT=0, dorMode='map', dorTimer=null, dorShown=false;
+const bSvg=baseMap('#mDor').attr('viewBox',`0 0 ${W} ${W}`);
+const bG=bSvg.append('g');
+const bPs=bG.selectAll('path').data(MUN).join('path').attr('class','mp').attr('fill-rule','evenodd').attr('fill',LAND);
+const bMesh=bSvg.append('path').attr('class','mesh'), bOut=bSvg.append('path').attr('class','outline');
+const BIGL=[...MUN].sort((a,b)=>b.p-a.p).slice(0,12);
+const blab=bSvg.append('g').selectAll('text').data(BIGL).join('text').attr('class','blab').attr('x',m=>CA.cen[m.i][0]).attr('y',m=>CA.cen[m.i][1]).attr('dy','.35em')
+  .attr('fill',m=>dcls(m.d)>=5?BG:INK).attr('opacity',0).text(m=>labName(m));
 function labName(m){ return ({"L'Hospitalet de Llobregat":"L’Hospitalet","Santa Coloma de Gramenet":"Sta. Coloma","Sant Cugat del Vallès":"Sant Cugat","Cornellà de Llobregat":"Cornellà","Sant Boi de Llobregat":"Sant Boi"}[m.n]||m.n); }
+function dorDraw(){
+  const t=dorT; for(let a=0;a<K0.length;a++){ const k0=K0[a],k1=K1[a],kt=KT[a]; for(let j=0;j<k0.length;j++) kt[j]=k0[j]+(k1[j]-k0[j])*t; }
+  bPs.attr('d',m=>geoD(m.i)); bMesh.attr('d',arcsD(COMARC)); bOut.attr('d',arcsD(OUTARC));
+}
+const small500=MUN.filter(m=>m.p<=500);
+const DOR0={ map:'<span class="m">Toca un municipi o passa al cartograma.</span>',
+  cart:`Barcelona sola ocupa el ${pct(BCN.p/TP,0)} del mapa. Els ${fmt(small500.length)} municipis de 500 habitants o menys, que al mapa real són el ${pct(d3.sum(small500,m=>m.a)/TA,0)} del territori, hi queden en un ${pct(d3.sum(small500,m=>m.p)/TP)}. <span class="m">Toca un municipi.</span>` };
+const bH=hoverable(bSvg,bPs,m=>{ $('#rDor').innerHTML=muniHTML(m)+`<br><span class="m">Al mapa real ocupa el ${pct(m.a/TA)} de Catalunya; al cartograma, el ${pct(m.p/TP)}.</span>`; },()=>{ $('#rDor').innerHTML=DOR0[dorMode]; });
 function dorPaint(){
-  const t=d3.transition().duration(RM?0:1300).ease(d3.easeCubicInOut);
-  const bub=dorMode==='bub';
-  bL.ps.transition(t).attr('fill',m=>bub?LAND:dcol(m.d)).style('opacity',bub?.55:1);
-  bMesh.transition(t).style('opacity',bub?0:1);
-  circ.transition(t).delay(m=>RM?0:(bub?Math.min(500,m.cy*.5):0)).attr('cx',m=>bub?m.dx:m.cx).attr('cy',m=>bub?m.dy:m.cy).attr('r',m=>bub?m.dr:0);
-  const sc=($('#mDor').clientWidth||400)/W;
-  const lfs=m=>Math.min(34,m.dr/2.6,1.8*m.dr/(labName(m).length*.55));
-  blab.attr('font-size',lfs);
-  blab.transition(t).attr('opacity',m=> bub && lfs(m)>=9.5/sc ? 1 : 0);
-  bL.g.style('pointer-events',bub?'none':null);
-  $('#rDor').innerHTML = bub ? `Barcelona sola és una bombolla més gran que tot el Pirineu junt. <span class="m">Toca una bombolla.</span>` : `<span class="m">Toca un municipi o canvia a bombolles.</span>`;
+  const cartOn=dorMode==='cart', from=dorT, to=cartOn?1:0, dur=RM?0:2200*Math.abs(to-from);
+  if(dorTimer) dorTimer.stop();
+  const sc=($('#mDor').clientWidth||400)/W, side=m=>Math.sqrt(m.p/TP*W*W), lfs=m=>Math.min(24/Math.max(sc,.5),Math.max(10/sc,side(m)*.8/(labName(m).length*.56)));
+  // Etiquetes: només si caben dins el municipi i no en trepitgen una altra de més gran.
+  const boxes=[], vis=new Set(); BIGL.forEach(m=>{ const f=lfs(m), w=labName(m).length*f*.56, [x,y]=CA.cen[m.i], b=[x-w/2,y-f*.6,x+w/2,y+f*.6];
+    if(side(m)*.95<=w || boxes.some(o=>b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1])) return; boxes.push(b); vis.add(m); });
+  blab.attr('font-size',lfs).transition().duration(RM?0:500).delay(cartOn&&!RM?dur*.85:0).attr('opacity',m=>cartOn&&vis.has(m)?1:0);
+  if(!dur){ dorT=to; dorDraw(); } else dorTimer=d3.timer(el=>{ const k=Math.min(1,el/dur); dorT=from+(to-from)*d3.easeCubicInOut(k); dorDraw(); if(k>=1) dorTimer.stop(); });
+  bH.clear(); $('#rDor').innerHTML=DOR0[dorMode];
 }
 $$('[data-dor]').forEach(b=>b.addEventListener('click',()=>{ dorMode=b.dataset.dor; $$('[data-dor]').forEach(x=>x.setAttribute('aria-pressed',x===b)); dorPaint(); }));
+dorDraw(); $('#rDor').innerHTML=DOR0.map;
+onView($('#mDor'),()=>revealFill(bPs,m=>dcol(m.d)));
+$('#cartNote').textContent=`Mètode: cartograma de difusió de Gastner i Newman (PNAS, 2004) sobre una projecció azimutal d’àrea igual de Lambert, calculat en una malla de 512 × 512 cel·les i refinat en ${CA.err.rounds} iteracions. Error d’àrea mitjà, ponderat per població: ${pct(CA.err.w,1)}. Els municipis amb molt pocs habitants queden reduïts a línies primes. El color és la densitat real, com al mapa de dalt.`;
 
 /* =========== 5. PICS =========== */
 const sSvg=d3.select('#mSpk').attr('viewBox',`0 -150 ${W} ${H+150}`);
 sSvg.append('g').selectAll('path').data(MUN).join('path').attr('d',m=>PD[m.i]).attr('fill',LAND).attr('stroke','#fff').attr('stroke-width',.3).style('vector-effect','non-scaling-stroke');
 meshLayer(sSvg,'mesh',COMMESH);
-let spkMode='lin';
 const maxP=d3.max(MUN,m=>m.p);
 const spikes=sSvg.append('g').selectAll('path').data([...MUN].sort((a,b)=>a.cy-b.cy)).join('path')
   .attr('fill',rgba(RED,.18)).attr('stroke',RED).attr('stroke-width',.9).style('vector-effect','non-scaling-stroke').attr('stroke-linejoin','round');
 const spkPath=(m,h)=>{ const w=7; return `M${(m.cx-w/2).toFixed(1)},${m.cy.toFixed(1)}L${m.cx.toFixed(1)},${(m.cy-h).toFixed(1)}L${(m.cx+w/2).toFixed(1)},${m.cy.toFixed(1)}`; };
-const spkH=m=> spkMode==='lin' ? (m.p/maxP)*(BCN.cy+120) : (Math.log10(Math.max(m.p,10))-1)/(Math.log10(maxP)-1)*H*.22;
+const spkH=m=>(m.p/maxP)*(BCN.cy+120);
 let spkShown=false;
 function spkPaint(anim){ spikes.attr('opacity',m=>spkShown&&spkH(m)<2?.35:1); spikes.transition().duration(RM||!anim?0:1200).ease(d3.easeCubicOut).attr('d',m=>spkPath(m,spkShown?spkH(m):0));
   const sc=($('#mSpk').clientWidth||400)/W; d3.select('#bcnLab').style('font-size',(13/sc)+'px').style('stroke-width',(3/sc)+'px').transition().duration(RM||!anim?0:1200).attr('y',BCN.cy-spkH(BCN)-6/sc).attr('opacity',spkShown?1:0); }
 spikes.attr('d',m=>spkPath(m,0));
 sSvg.append('text').attr('class','lab').attr('x',BCN.cx).attr('text-anchor','middle').attr('y',BCN.cy).attr('opacity',0).attr('font-size',22).text('Barcelona').attr('id','bcnLab');
-$$('[data-spk]').forEach(b=>b.addEventListener('click',()=>{ spkMode=b.dataset.spk; $$('[data-spk]').forEach(x=>x.setAttribute('aria-pressed',x===b)); spkPaint(true); }));
 
 /* =========== 6. TRAMS =========== */
 const TR=[500,2000,5000,10000,50000]; const TRL=['fins a 500','501–2.000','2.001–5.000','5.001–10.000','10.001–50.000','més de 50.000'];
@@ -134,7 +176,10 @@ const tram=TRL.map((l,i)=>{ const ms=MUN.filter(m=>tcls(m.p)===i); return {l,n:m
 $('#tramTitle').textContent=`Un de cada tres ajuntaments governa un poble de 500 habitants o menys`;
 let tramF=null;
 const tSvg=baseMap('#mTram');
-const tL=muniLayer(tSvg,m=>TC[tcls(m.p)],m=>{ $('#rTram').innerHTML=muniHTML(m); });
+let tramShown=false;
+const tL=muniLayer(tSvg,()=>LAND,m=>{ $('#rTram').innerHTML=muniHTML(m); },()=>tramRead());
+const tramFill=m=> tramF===null ? TC[tcls(m.p)] : (tcls(m.p)===tramF ? RED : LAND);
+onView($('#mTram'),()=>{ tramShown=true; revealFill(tL.ps,tramFill); });
 meshLayer(tSvg,'mesh',COMMESH); meshLayer(tSvg,'outline',OUTLINE);
 function triHTML(){
   const rows=[['Municipis','n',947],['Territori','a',TA],['Població','p',TP]];
@@ -142,9 +187,12 @@ function triHTML(){
 }
 function tramPaint(){
   $('#tri').innerHTML=triHTML();
-  tL.ps.attr('fill',m=> tramF===null ? TC[tcls(m.p)] : (tcls(m.p)===tramF ? RED : LAND));
+  if(tramShown) tL.ps.attr('fill',tramFill);
   $('#tramChips').innerHTML=TRL.map((l,i)=>`<button class="chip" data-t="${i}" aria-pressed="${tramF===i}"><i style="background:${TC[i]}"></i>${l}</button>`).join('');
   $$('[data-t]').forEach(b=>b.addEventListener('click',()=>{ const t=+b.dataset.t; tramF=tramF===t?null:t; tramPaint(); }));
+  tramRead();
+}
+function tramRead(){
   const t=tramF===null?tram[0]:tram[tramF];
   $('#rTram').innerHTML = `<b>${fmt(t.n)} municipis ${tramF===null?'de 500 habitants o menys':'de '+t.l+' habitants'}</b>: el ${pct(t.n/947)} dels ajuntaments, el ${pct(t.a/TA)} del territori i el ${pct(t.p/TP)} de la població.`;
 }
@@ -153,8 +201,9 @@ function tramPaint(){
 const LZ=(()=>{ const s=[...MUN].sort((a,b)=>b.d-a.d); let ca=0,cp=0; const pts=[[0,0,0]]; s.forEach((m,i)=>{ ca+=m.a; cp+=m.p; pts.push([ca/TA,cp/TP,i+1]); }); return pts; })();
 const lzAt=q=>{ for(const p of LZ) if(p[1]>=q) return p; return LZ[LZ.length-1]; };
 { const h=lzAt(.5); $('#lorTitle').textContent=`La meitat de la gent viu en el ${pct(h[0])} del territori`; }
+let lorShown=false;
 function drawLor(){
-  const svg=d3.select('#lor'); const Wd=Math.min(svg.node().parentNode.clientWidth,560), Hd=Wd; const m={l:34,r:8,t:10,b:30};
+  const svg=d3.select('#lor'); const Wd=Math.min(svg.node().parentNode.clientWidth,476), Hd=Wd; const m={l:34,r:8,t:10,b:30};
   svg.attr('viewBox',`0 0 ${Wd} ${Hd}`).attr('width',Wd).attr('height',Hd); svg.selectAll('*').remove();
   const x=d3.scaleLinear().domain([0,1]).range([m.l,Wd-m.r]), y=d3.scaleLinear().domain([0,1]).range([Hd-m.b,m.t]);
   [0,.25,.5,.75,1].forEach(v=>{ svg.append('line').attr('x1',x(0)).attr('x2',x(1)).attr('y1',y(v)).attr('y2',y(v)).attr('stroke',LINE);
@@ -163,9 +212,11 @@ function drawLor(){
   svg.append('text').attr('class','ax').attr('x',x(1)).attr('y',Hd-m.b-6).attr('text-anchor','end').text('territori →');
   svg.append('text').attr('class','ax').attr('x',x(0)+6).attr('y',y(1)+12).text('↑ població');
   svg.append('line').attr('x1',x(0)).attr('y1',y(0)).attr('x2',x(1)).attr('y2',y(1)).attr('stroke',MUTED).attr('stroke-dasharray','3 4');
-  svg.append('path').datum(LZ).attr('fill',rgba(RED,.1)).attr('d',d3.area().x(p=>x(p[0])).y0(p=>y(p[0])).y1(p=>y(p[1])));
-  svg.append('path').datum(LZ).attr('fill','none').attr('stroke',RED).attr('stroke-width',2.2).attr('d',d3.line().x(p=>x(p[0])).y(p=>y(p[1])));
-  const g=svg.append('g').attr('id','lzMark');
+  const ar=svg.append('path').datum(LZ).attr('fill',rgba(RED,.1)).attr('d',d3.area().x(p=>x(p[0])).y0(p=>y(p[0])).y1(p=>y(p[1]))).attr('opacity',lorShown?1:0);
+  const ln=svg.append('path').datum(LZ).attr('fill','none').attr('stroke',RED).attr('stroke-width',2.2).attr('d',d3.line().x(p=>x(p[0])).y(p=>y(p[1])));
+  const g=svg.append('g').attr('id','lzMark').attr('opacity',lorShown?1:0);
+  if(!lorShown){ const L=ln.node().getTotalLength(); ln.attr('stroke-dasharray',L).attr('stroke-dashoffset',L);
+    svg.node()._rv=()=>{ ln.transition().duration(1600).ease(d3.easeCubicInOut).attr('stroke-dashoffset',0).on('end',()=>ln.attr('stroke-dasharray',null)); ar.transition().delay(900).duration(900).attr('opacity',1); g.transition().delay(1400).duration(500).attr('opacity',1); }; }
   g.append('line').attr('class','lx').attr('stroke',INK).attr('stroke-width',1);
   g.append('line').attr('class','ly').attr('stroke',INK).attr('stroke-width',1);
   g.append('circle').attr('r',5).attr('fill',INK);
@@ -186,7 +237,7 @@ const ALTB=[[0,100,'< 100 m'],[100,500,'100–500 m'],[500,1000,'500–1.000 m']
 const altS=ALTB.map(([a,b,l])=>{ const ms=MUN.filter(m=>m.alt>=a&&m.alt<b); return {l,n:ms.length,a:d3.sum(ms,m=>m.a),p:d3.sum(ms,m=>m.p)}; });
 $('#altTitle').textContent=`El ${pct(altS[0].p/TP,0)} de la gent viu per sota dels 100 metres`;
 function drawAlt(){
-  const svg=d3.select('#alt'); const Wd=Math.min(svg.node().parentNode.clientWidth,820), Hd=Math.round(Math.max(320,Math.min(520,Wd*.66))); const m={l:44,r:10,t:40,b:34};
+  const svg=d3.select('#alt'); const Wd=Math.min(svg.node().parentNode.clientWidth,697), Hd=Math.round(Math.max(320,Math.min(520,Wd*.66))); const m={l:44,r:10,t:40,b:34};
   svg.attr('viewBox',`0 0 ${Wd} ${Hd}`).attr('width',Wd).attr('height',Hd); svg.selectAll('*').remove();
   const x=d3.scaleLinear().domain([0,1600]).range([m.l,Wd-m.r]), y=d3.scaleLog().domain([.5,40000]).range([Hd-m.b,m.t]);
   const r=d3.scaleSqrt().domain([0,maxP]).range([1.4,Wd<500?16:26]);
@@ -194,16 +245,47 @@ function drawAlt(){
     svg.append('text').attr('class','ax').attr('x',m.l-6).attr('y',y(v)).attr('dy','.32em').attr('text-anchor','end').text(fmt(v)); });
   [0,400,800,1200,1600].forEach(v=>svg.append('text').attr('class','ax').attr('x',x(v)).attr('y',Hd-12).attr('text-anchor',v===0?'start':(v===1600?'end':'middle')).text(fmt(v)+' m'));
   svg.append('text').attr('class','ax').attr('x',0).attr('y',12).text('Habitants per km² (escala logarítmica)');
-  svg.append('g').selectAll('circle').data([...MUN].sort((a,b)=>b.p-a.p)).join('circle')
-    .attr('cx',d=>x(Math.min(d.alt,1600))).attr('cy',d=>y(Math.max(d.d,.5))).attr('r',d=>r(d.p))
-    .attr('fill',rgba(RED,.22)).attr('stroke',RED).attr('stroke-width',.7).style('cursor','pointer')
-    .on('pointerenter click',function(e,d){ d3.select('#alt').selectAll('circle').attr('fill',rgba(RED,.22)).attr('stroke',RED).attr('stroke-width',.7); d3.select(this).attr('fill',RED).attr('stroke',INK).attr('stroke-width',1.4).raise(); $('#rAlt').innerHTML=muniHTML(d)+`<br><span class="m">Altitud: ${fmt(d.alt)} m</span>`; });
+  const cs=svg.append('g').selectAll('circle').data([...MUN].sort((a,b)=>b.p-a.p)).join('circle')
+    .attr('cx',d=>x(Math.min(d.alt,1600))).attr('cy',d=>y(Math.max(d.d,.5))).attr('r',d=>altShown?r(d.p):0)
+    .attr('fill',rgba(RED,.22)).attr('stroke',RED).attr('stroke-width',.7).style('cursor','pointer');
+  hoverable(svg,cs,d=>{ $('#rAlt').innerHTML=muniHTML(d)+`<br><span class="m">Altitud del nucli: ${fmt(d.alt)} m</span>`; },()=>{ $('#rAlt').innerHTML=ALT0; });
+  svg.node()._rv=()=>cs.transition().duration(900).delay(d=>x(Math.min(d.alt,1600))/Wd*1100).ease(d3.easeBackOut).attr('r',d=>r(d.p));
 }
-$('#rAlt').innerHTML='<span class="m">Toca un cercle.</span>';
-$('#altBars').innerHTML=`<div class="row"><span></span><div style="display:flex;justify-content:space-between;font-size:12px"><span>Territori</span><span>Població</span></div></div>`+
-  altS.map(s=>`<div class="row"><span>${s.l}</span><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div class="bar" style="justify-content:flex-end"><div style="width:${(s.a/TA*100).toFixed(1)}%;background:${R[2]}"></div></div><div class="bar"><div style="width:${(s.p/TP*100).toFixed(1)}%;background:${R[5]}"></div></div></div></div>`).join('')+
-  `<p class="note">${altS.map(s=>`${s.l}: ${pct(s.a/TA,0)} del territori, ${pct(s.p/TP)} de la gent`).join('; ')}.</p>`;
+let altShown=false; const ALT0='<span class="m">Toca un cercle.</span>';
+$('#rAlt').innerHTML=ALT0;
 
+/* =========== 8b. HIPSOMETRIA =========== */
+// Territori: Copernicus DEM GLO-90 per franges de 100 m (scripts/hipsometria.mjs). Població: altitud del nucli de cada municipi.
+const HIP=D.hipso, HTA=d3.sum(HIP), HB=HIP.length;
+const hipPop=new Array(HB).fill(0); MUN.forEach(m=>{ hipPop[Math.min(HB-1,Math.floor(m.alt/100))]+=m.p; });
+const hipTop=HIP.reduce((k,a,i)=>a>0?i:k,0);
+const hipMed=(()=>{ let c=0; for(let i=0;i<HB;i++){ c+=HIP[i]; if(c>=HTA/2) return (i+(HTA/2-(c-HIP[i]))/HIP[i])*100; } })();
+const hip1000=d3.sum(HIP.slice(10))/HTA, popLow=hipPop[0]/TP;
+$('#hipTitle').textContent=`Però només el ${pct(HIP[0]/HTA,0)} del territori és per sota dels 100 metres`;
+$('#hipLede').textContent=`La meitat del sòl de Catalunya és per sobre dels ${fmt(Math.round(hipMed/10)*10)} metres i el ${pct(hip1000,0)} passa dels 1.000. A l’esquerra, quanta terra hi ha a cada altitud; a la dreta, quanta gent hi viu.`;
+$('#hipNote').textContent=`Territori: model digital d’elevacions Copernicus GLO-90 (ESA), ${fmt(HTA)} km² en píxels de 90 m dins del límit de Catalunya. Població: cada municipi, a l’altitud del seu nucli (Idescat). Franges de 100 metres.`;
+let hipShown=false;
+function drawHip(){
+  const svg=d3.select('#hip'); const Wd=Math.min(svg.node().parentNode.clientWidth,646), rows=hipTop+1, rh=Wd<500?9:11, top=26, Hd=top+rows*rh+8;
+  svg.attr('viewBox',`0 0 ${Wd} ${Hd}`).attr('width',Wd).attr('height',Hd); svg.selectAll('*').remove();
+  const mid=Wd/2, gap=Wd<500?30:42, maxV=Math.max(d3.max(HIP)/HTA,d3.max(hipPop)/TP);
+  const x=d3.scaleLinear().domain([0,maxV]).range([0,mid-gap]);
+  const yy=i=>top+(hipTop-i)*rh;
+  svg.append('text').attr('class','ax').attr('x',mid-gap).attr('y',12).attr('text-anchor','end').text('Territori');
+  svg.append('text').attr('class','ax').attr('x',mid+gap).attr('y',12).text('Població');
+  const bars=[];
+  for(let i=0;i<=hipTop;i++){
+    const a=HIP[i]/HTA, p=hipPop[i]/TP;
+    bars.push(svg.append('rect').attr('x',mid-gap).attr('y',yy(i)).attr('height',rh-1.5).attr('width',0).attr('fill',R[2]).datum({w:x(a),left:true,i}));
+    bars.push(svg.append('rect').attr('x',mid+gap).attr('y',yy(i)).attr('height',rh-1.5).attr('width',0).attr('fill',R[5]).datum({w:x(p),left:false,i}));
+    if(i%5===0) svg.append('text').attr('class','ax').attr('x',mid).attr('y',yy(i)+rh/2).attr('dy','.32em').attr('text-anchor','middle').text(i?fmt(i*100)+' m':'0 m');
+  }
+  const lab=(i,v,left)=>svg.append('text').attr('class','lab').attr('x',left?mid-gap-x(v)-6:mid+gap+x(v)+6).attr('y',yy(i)+rh/2).attr('dy','.34em').attr('text-anchor',left?'end':'start').text(pct(v,0)).attr('opacity',hipShown?1:0).attr('class','lab hl0');
+  lab(0,HIP[0]/HTA,true); lab(0,popLow,false);
+  const set=(sel,anim)=>sel.forEach((b,k)=>{ const d=b.datum(); (anim?b.transition().delay(d.i*28).duration(700).ease(d3.easeCubicOut):b).attr('width',d.w).attr('x',d.left?mid-gap-d.w:mid+gap); });
+  if(hipShown) set(bars,false);
+  svg.node()._rv=()=>{ set(bars,true); svg.selectAll('.hl0').transition().delay(900).duration(500).attr('opacity',1); };
+}
 /* =========== COMARQUES DATA =========== */
 const YEARS=[1857,1860,1877,1887,1900,1910,1920,1930,1936,1940,1945,1950,1955,1960,1965,1970,1975,1981,1986,1991,2025];
 const RAW=[
@@ -261,15 +343,18 @@ const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 /* =========== 9. BALANÇA =========== */
 let balSel='Barcelonès';
 $('#balTitle').textContent=`El ${pct(146/32108)} del territori acull el ${pct(2398280/8124126)} de la gent`;
+let balShown=false;
 function drawBal(){
-  const svg=d3.select('#bal'); const Wd=Math.min(svg.node().parentNode.clientWidth,760); const Hd=Math.round(Math.max(470,Math.min(700,Wd*1.2)));
+  const svg=d3.select('#bal'); const Wd=Math.min(svg.node().parentNode.clientWidth,646); const Hd=Math.round(Math.max(470,Math.min(700,Wd*1.2)));
   svg.attr('viewBox',`0 0 ${Wd} ${Hd}`).attr('width',Wd).attr('height',Hd); svg.selectAll('*').remove();
   const top=26,bw=10,gap=1,xR=Wd-bw,mx=Wd/2; const data=[...C].sort((a,b)=>b.d-a.d); const avail=Hd-top-gap*(data.length-1);
   let yl=top,yr=top; data.forEach(d=>{ d.l0=yl; d.l1=yl+avail*d.a/CTA; yl=d.l1+gap; d.r0=yr; d.r1=yr+avail*d.p/CTP; yr=d.r1+gap; });
   svg.append('text').attr('class','ax').attr('x',0).attr('y',13).text('Superfície');
   svg.append('text').attr('class','ax').attr('x',Wd).attr('y',13).attr('text-anchor','end').text('Població');
   const g=svg.selectAll('g.rb').data(data).join('g').attr('class','rb').style('cursor','pointer').attr('tabindex',0).attr('role','button').attr('aria-label',d=>d.n)
-    .on('click',(e,d)=>{balSel=d.n;updBal();}).on('keydown',(e,d)=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();balSel=d.n;updBal();} });
+    .on('click',(e,d)=>{balSel=d.n;updBal();}).on('keydown',(e,d)=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();balSel=d.n;updBal();} })
+    .style('opacity',balShown?1:0);
+  svg.node()._rv=()=>g.transition().delay((d,i)=>i*35).duration(700).style('opacity',1);
   g.append('path').attr('d',d=>{ const r1=Math.max(d.r1,d.r0+.3), l1=Math.max(d.l1,d.l0+.3); return `M${bw},${d.l0}C${mx},${d.l0} ${mx},${d.r0} ${xR},${d.r0}L${xR},${r1}C${mx},${r1} ${mx},${l1} ${bw},${l1}Z`; }).attr('fill',d=>dcol(d.d));
   g.append('rect').attr('x',0).attr('y',d=>d.l0).attr('width',bw).attr('height',d=>Math.max(.6,d.l1-d.l0)).attr('fill',d=>dcol(d.d));
   g.append('rect').attr('x',xR).attr('y',d=>d.r0).attr('width',bw).attr('height',d=>Math.max(.6,d.r1-d.r0)).attr('fill',d=>dcol(d.d));
@@ -284,7 +369,7 @@ function updBal(){
 
 /* =========== 10. CARTOGRAMA COMARCAL =========== */
 const YOPTS=[1857,1900,1930,1950,1970,1991,2025];
-const cart={mode:'area',yi:6,sel:null,W:0,H:0,cache:{}};
+const cart={mode:'area',yi:6,sel:null,W:0,H:0,cache:{},shown:false};
 const popAt=(c,y)=> y===2025?c.p:(c.h?c.h[YEARS.indexOf(y)]:0);
 const cYear=()=>cart.mode==='area'?null:YOPTS[cart.yi];
 function cproj(c){ const lon0=.12,lon1=3.36,lat0=40.5,lat1=42.9,k=Math.cos(41.7*Math.PI/180); const gw=(lon1-lon0)*k,gh=lat1-lat0,pad=cart.W*.07; const s=Math.min((cart.W-2*pad)/gw,(cart.H-2*pad)/gh); const ox=(cart.W-gw*s)/2,oy=(cart.H-gh*s)/2; return [ox+(c.lon-lon0)*k*s, oy+(lat1-c.lat)*s]; }
@@ -299,7 +384,7 @@ function cLayout(){
 const cDens=(c,y)=>{ if(y===null||y===2025) return c.d; const v=popAt(c,y); return v?v/c.a:c.d; };
 const fsFor=(c,r)=>Math.min(15,(2*r*.88)/(c.s.length*.52));
 function drawCart(){
-  const svg=d3.select('#cart'); const Wd=Math.min(svg.node().parentNode.clientWidth,760); let instant=false;
+  const svg=d3.select('#cart'); const Wd=Math.min(svg.node().parentNode.clientWidth,646); let instant=false;
   if(Wd!==cart.W){ cart.W=Wd; cart.H=Math.round(Math.max(320,Wd*.98)); cart.cache={}; instant=true; }
   svg.attr('viewBox',`0 0 ${cart.W} ${cart.H}`);
   const L=cLayout(), y=cYear();
@@ -310,10 +395,10 @@ function drawCart(){
   ge.append('text').attr('class','blab').attr('dy','.36em').attr('x',d=>L[d.n].x).attr('y',d=>L[d.n].y).attr('opacity',0);
   g=ge.merge(g);
   const t=svg.transition().duration(instant||RM?0:1150).ease(d3.easeCubicInOut);
-  g.select('circle').transition(t).attr('cx',d=>L[d.n].x).attr('cy',d=>L[d.n].y).attr('r',d=>L[d.n].r).attr('fill',d=>dcol(cDens(d,y)))
+  g.select('circle').transition(t).attr('cx',d=>L[d.n].x).attr('cy',d=>L[d.n].y).attr('r',d=>cart.shown?L[d.n].r:0).attr('fill',d=>dcol(cDens(d,y)))
     .attr('stroke',d=>d.n===cart.sel?INK:BG).attr('stroke-width',d=>d.n===cart.sel?2.2:.8);
   g.select('text').text(d=>d.s).attr('fill',d=>dcls(cDens(d,y))>=4?BG:INK).transition(t).attr('x',d=>L[d.n].x).attr('y',d=>L[d.n].y)
-    .attr('font-size',d=>Math.max(6,fsFor(d,L[d.n].r))).attr('opacity',d=>fsFor(d,L[d.n].r)>=8.5?1:0);
+    .attr('font-size',d=>Math.max(6,fsFor(d,L[d.n].r))).attr('opacity',d=>cart.shown&&fsFor(d,L[d.n].r)>=8.5?1:0);
 }
 function cRead(){
   const y=cYear(), c=cart.sel?byC[cart.sel]:null; let s;
@@ -326,52 +411,41 @@ $$('[data-cart]').forEach(b=>b.addEventListener('click',()=>{ cart.mode=b.datase
 $('#yearIn').addEventListener('input',e=>{ cart.yi=+e.target.value; $('#yearOut').textContent=YOPTS[cart.yi]; cRead(); drawCart(); });
 
 /* =========== 11. FANTASMES =========== */
+// Comarques amb menys habitants avui que el 1900. Cada punt són 500 persones del 1900: les que ja no hi són queden buides.
 const GH=C.filter(c=>c.h).map(c=>{ let now=c.p; if(c.n==='Bages') now+=byC['Moianès'].p; if(c.n==='Osona') now+=byC['Lluçanès'].p;
-  const series=[...c.h,now]; let pk=0,pi=0; series.forEach((v,i)=>{ if(v>pk){pk=v;pi=i;} }); return {c,series,now,peak:pk,peakYear:YEARS[pi],ratio:now/pk,y1900:c.h[4]}; });
-$('#ghostTitle').textContent=`${GH.filter(g=>g.now<g.y1900).length} comarques tenen avui menys habitants que l’any 1900`;
-$('#ghostLede').textContent=`Mentrestant, Catalunya ha passat d’${fmt(1.966382,2)} a ${fmt(8.124126,2)} milions de persones. La barra grisa és el màxim històric de cada comarca; la vermella, la població d’avui. Toca una comarca.`;
-let showAll=false, openRow=null;
-function drawRows(){
-  const list=(showAll?GH:GH.filter(g=>g.ratio<.995)).slice().sort((a,b)=>a.ratio-b.ratio); const box=$('#rows'); box.innerHTML='';
-  list.forEach(g=>{ const b=document.createElement('button'); b.className='row2'; b.setAttribute('aria-expanded','false');
-    b.innerHTML=`<span class="n">${g.c.n}<small>${g.ratio>=.995?'al seu màxim, avui':'màxim el '+g.peakYear+': '+fmt(g.peak)}</small></span><span class="ghost"><span class="f" style="width:0"></span></span><span class="p">${fmt(g.ratio*100)}%</span>`;
-    b.addEventListener('click',()=>toggleDet(b,g)); box.appendChild(b);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{ b.querySelector('.f').style.width=(g.ratio*100).toFixed(1)+'%'; }));
-    if(openRow===g.c.n) toggleDet(b,g,true); });
-}
-function toggleDet(btn,g,force){
-  const nx=btn.nextElementSibling; if(nx&&nx.classList.contains('detail')){ nx.remove(); btn.setAttribute('aria-expanded','false'); if(!force){ openRow=null; return; } }
-  $$('#rows .detail').forEach(d=>{ d.previousElementSibling.setAttribute('aria-expanded','false'); d.remove(); });
-  const det=document.createElement('div'); det.className='detail'; btn.after(det); btn.setAttribute('aria-expanded','true'); openRow=g.c.n;
-  const Wd=det.clientWidth||320, Hd=120, m={l:2,r:2,t:22,b:18};
-  const x=d3.scaleLinear().domain([1857,2025]).range([m.l,Wd-m.r]), y=d3.scaleLinear().domain([0,g.peak*1.12]).range([Hd-m.b,m.t]);
-  const pts=YEARS.map((yr,i)=>[yr,g.series[i]]);
-  const svg=d3.select(det).append('svg').attr('width',Wd).attr('height',Hd).attr('viewBox',`0 0 ${Wd} ${Hd}`);
-  svg.append('path').datum(pts.slice(0,20)).attr('fill',rgba(RED,.12)).attr('d',d3.area().x(p=>x(p[0])).y0(y(0)).y1(p=>y(p[1])));
-  svg.append('path').datum(pts.slice(0,20)).attr('fill','none').attr('stroke',RED).attr('stroke-width',2).attr('d',d3.line().x(p=>x(p[0])).y(p=>y(p[1])));
-  svg.append('path').datum(pts.slice(19)).attr('fill','none').attr('stroke',RED).attr('stroke-width',2).attr('stroke-dasharray','3 4').attr('d',d3.line().x(p=>x(p[0])).y(p=>y(p[1])));
-  svg.append('line').attr('x1',m.l).attr('x2',Wd-m.r).attr('y1',y(0)).attr('y2',y(0)).attr('stroke',LINE);
-  [1857,1900,1950,1991,2025].forEach(yr=>svg.append('text').attr('class','ax').attr('x',x(yr)).attr('y',Hd-3).attr('text-anchor',yr===1857?'start':(yr===2025?'end':'middle')).text(yr));
-  const dot=(yr,v,l,end)=>{ svg.append('circle').attr('cx',x(yr)).attr('cy',y(v)).attr('r',3.5).attr('fill',INK); svg.append('text').attr('class','lab').attr('x',x(yr)+(end?-6:6)).attr('y',y(v)-8).attr('text-anchor',end?'end':'start').text(l); };
-  dot(2025,g.now,'2025: '+fmt(g.now),true); if(g.peakYear!==2025) dot(g.peakYear,g.peak,g.peakYear+': '+fmt(g.peak),x(g.peakYear)>Wd*.62);
-  const p=document.createElement('p'); const lost=g.peak-g.now;
-  p.textContent = g.ratio<.995 ? `${cap(withArt(g.c))} tenia ${fmt(g.peak)} habitants el ${g.peakYear}. Avui en té ${fmt(g.now)}: n’ha perdut el ${fmt(lost/g.peak*100)}%.` : `${cap(withArt(g.c))} és avui al seu màxim històric, amb ${fmt(g.now)} habitants.`;
-  det.appendChild(p);
-}
-$('#moreBtn').addEventListener('click',()=>{ showAll=!showAll; $('#moreBtn').setAttribute('aria-pressed',showAll); $('#moreBtn').textContent=showAll?'Només les que han perdut gent':'Mostra també les que creixen'; drawRows(); });
+  return {c,series:[...c.h,now],now,y1900:c.h[4]}; }).filter(g=>g.now<g.y1900).sort((a,b)=>a.now/a.y1900-b.now/b.y1900);
+$('#ghostTitle').textContent=`${GH.length} comarques tenen avui menys habitants que l’any 1900`;
+$('#ghostLede').textContent=`Mentrestant, Catalunya ha passat d’${fmt(1.966382,2)} a ${fmt(8.124126,2)} milions de persones, i el Barcelonès, de ${fmt(570253)} a ${fmt(2398280)}.`;
+const GPER=500, GCOLS=10, GD=11;
+$('#ghosts').innerHTML=GH.map((g,k)=>{
+  const n=Math.round(g.y1900/GPER), keep=n-Math.max(1,Math.round((g.y1900-g.now)/GPER)), rows=Math.ceil(n/GCOLS), w=GCOLS*GD, h=rows*GD;
+  const dots=d3.range(n).map(i=>`<circle cx="${(i%GCOLS)*GD+GD/2}" cy="${Math.floor(i/GCOLS)*GD+GD/2}" r="4" fill="${RED}" stroke="${RED}" stroke-width="1.2"${i>=keep?' class="lost"':''}/>`).join('');
+  const sw=w, sh=34, xs=d3.scaleLinear().domain([1857,2025]).range([2,sw-2]), ys=d3.scaleLinear().domain([0,d3.max(g.series)]).range([sh-3,3]);
+  const line=d3.line().x((v,i)=>xs(YEARS[i])).y(v=>ys(v)).curve(d3.curveMonotoneX)(g.series);
+  return `<div class="gc"><h3>${g.c.n}</h3><div class="pc" data-v="${(g.now/g.y1900-1)*100}">0%</div><div class="yrs">${fmt(g.y1900)} el 1900 · ${fmt(g.now)} avui</div>
+    <svg class="w" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">${dots}</svg>
+    <svg width="${sw}" height="${sh+12}" viewBox="0 0 ${sw} ${sh+12}" aria-hidden="true"><line x1="${xs(1900)}" x2="${xs(1900)}" y1="0" y2="${sh}" stroke="${LINE}"/><path d="${line}" fill="none" stroke="${MUTED}" stroke-width="1.2"/><circle cx="${xs(1900)}" cy="${ys(g.y1900)}" r="2.4" fill="${MUTED}"/><circle cx="${xs(2025)}" cy="${ys(g.now)}" r="3" fill="${RED}"/><text class="ax" x="${xs(1900)}" y="${sh+11}" text-anchor="middle">1900</text><text class="ax" x="${sw-2}" y="${sh+11}" text-anchor="end">2025</text></svg></div>`;
+}).join('');
+$$('#ghosts .gc').forEach(el=>onView(el,()=>{
+  const lost=Array.from(el.querySelectorAll('circle.lost')).reverse(), pc=el.querySelector('.pc'), v=+pc.dataset.v, dur=RM?0:Math.max(900,lost.length*45);
+  lost.forEach((c,i)=>setTimeout(()=>{ c.setAttribute('fill','transparent'); c.setAttribute('stroke',MUTED); },RM?0:400+i*45));
+  const t0=performance.now()+ (RM?0:400); const st=now=>{ const k=dur?Math.max(0,Math.min(1,(now-t0)/dur)):1; pc.textContent=(k?'−':'')+fmt(Math.abs(v)*k)+'%'; if(k<1) requestAnimationFrame(st); }; requestAnimationFrame(st);
+},.6));
 
 /* =========== 12. KM² =========== */
 function mulberry(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 const hash=s=>{ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; };
-let kmA=byName.get("l'hospitalet de llobregat"), kmB=byName.get('gisclareny');
+let kmA=BCN, kmB=byName.get('gisclareny'), kmP=0;
 $('#kA').value=kmA.n; $('#kB').value=kmB.n;
 function paintKm(cv,m){
   const S=cv.clientWidth; if(!S) return; const dpr=devicePixelRatio||1; cv.width=Math.round(S*dpr); cv.height=Math.round(S*dpr);
   const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,S,S);
-  const N=Math.max(1,Math.round(m.d)); const rr=mulberry(hash(m.n)); ctx.fillStyle=RED;
-  if(N>2500){ const s=Math.max(1,S/Math.sqrt(N)*.55); for(let i=0;i<N;i++) ctx.fillRect(rr()*S,rr()*S,s,s); }
-  else { const r=Math.max(1.5,Math.min(5,.3*S/Math.sqrt(N))); for(let i=0;i<N;i++){ ctx.beginPath(); ctx.arc(r+rr()*(S-2*r),r+rr()*(S-2*r),r,0,6.2832); ctx.fill(); } }
+  // Mateixa mida de punt per a tots els municipis: la comparació és de densitat, no de mida.
+  const N=Math.max(1,Math.round(m.d)), n=Math.round(N*kmP); const rr=mulberry(hash(m.n)); ctx.fillStyle=RED;
+  const r=Math.max(.6,S/340);
+  for(let i=0;i<n;i++){ const x=r+rr()*(S-2*r), y=r+rr()*(S-2*r); ctx.beginPath(); ctx.arc(x,y,r,0,6.2832); ctx.fill(); }
 }
+onView($('#cvA'),()=>{ const t0=performance.now(), dur=RM?0:1600; const st=now=>{ const k=dur?Math.min(1,(now-t0)/dur):1; kmP=d3.easeCubicOut(k); paintKm($('#cvA'),kmA); paintKm($('#cvB'),kmB); if(k<1) requestAnimationFrame(st); }; requestAnimationFrame(st); });
 function pr(p,n){ const rules=[["El ","del ","al "],["Els ","dels ","als "],["La ","de la ","a la "],["Les ","de les ","a les "],["L'","de l'","a l'"]];
   for(const [a,d,t] of rules) if(n.startsWith(a)) return (p==='de'?d:t)+n.slice(a.length);
   return p==='de' ? (/^[AEIOUÀÈÉÍÒÓÚH]/.test(n)?"d'"+n:'de '+n) : 'a '+n; }
@@ -427,12 +501,19 @@ $('#sortBtn').addEventListener('click',()=>{ gTo=gTo?0:1; $('#sortBtn').textCont
 $('#rGrid').textContent=GTXT.all;
 
 /* ---------- boot ---------- */
-function layoutAll(){ if(dorMode==='bub') dorPaint(); if(spkShown) spkPaint(false); drawDots(); drawLor(); drawAlt(); drawBal(); cart.W=0; drawCart(); drawKm(); drawGrid(); }
+function layoutAll(){ if(spkShown) spkPaint(false); drawDots(); drawLor(); drawAlt(); drawHip(); drawBal(); cart.W=0; drawCart(); drawKm(); drawGrid(); }
 function boot(){
   requestAnimationFrame(()=>requestAnimationFrame(()=>heroPaint(true)));
-  dorPaint(); tramPaint(); cRead(); drawRows(); layoutAll();
-  const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting && !spkShown){ spkShown=true; spkPaint(true); io.disconnect(); } }),{threshold:.35});
-  io.observe($('#mSpk'));
+  tramPaint(); cRead(); layoutAll();
+  onView($('#mSpk'),()=>{ spkShown=true; spkPaint(true); },.35);
+  onView($('#lor'),()=>{ lorShown=true; const f=$('#lor')._rv; f&&f(); });
+  onView($('#alt'),()=>{ altShown=true; const f=$('#alt')._rv; f&&f(); },.2);
+  onView($('#hip'),()=>{ hipShown=true; const f=$('#hip')._rv; f&&f(); },.2);
+  onView($('#bal'),()=>{ balShown=true; const f=$('#bal')._rv; f&&f(); },.15);
+  onView($('#cart'),()=>{ cart.shown=true; drawCart(); },.25);
+  $$('.rv').forEach(el=>onView(el,()=>el.classList.add('in'),.15));
+  // Scroll suau (Lenis), només amb roda o trackpad; al mòbil el scroll és el natiu.
+  if(!RM && window.Lenis){ const lenis=new Lenis({lerp:.1, wheelMultiplier:.9}); const raf=t=>{ lenis.raf(t); requestAnimationFrame(raf); }; requestAnimationFrame(raf); }
 }
 let lw=innerWidth, rt; addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(Math.abs(innerWidth-lw)<2) return; lw=innerWidth; layoutAll(); },180); });
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(boot); else boot();

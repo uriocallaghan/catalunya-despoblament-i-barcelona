@@ -19,6 +19,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&display=swap" rel="stylesheet">
 <script src="assets/vendor/d3.v7.8.5.min.js"></script>
 <script src="assets/vendor/topojson-client.v3.1.0.min.js"></script>
+<script src="assets/vendor/lenis.v1.3.26.min.js"></script>
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -43,7 +44,7 @@
     <input class="search" id="q" list="munlist" placeholder="Busca un municipi" autocomplete="off" aria-label="Busca un municipi">
     <datalist id="munlist"></datalist>
     <svg class="map" id="mDens" role="img" aria-label="Mapa de densitat de població per municipi"></svg>
-    <div class="legend" id="legDens"></div>
+    <div class="legend rv" id="legDens"></div>
     <p class="readout" id="rDens" aria-live="polite">Passa per sobre d’un municipi o toca’l.</p>
   </section>
 
@@ -55,31 +56,28 @@
   </section>
 
   <section>
-    <h2>El mateix mapa, si cada municipi pesés per la seva gent</h2>
-    <p>Cada bombolla és un municipi, amb una mida proporcional als seus habitants i col·locada tan a prop com pot del seu lloc real.</p>
+    <h2>El mapa, si cada municipi ocupés tant com la seva gent</h2>
+    <p>Un cartograma continu: deformem Catalunya perquè la superfície de cada municipi sigui proporcional als seus habitants, sense trencar els límits entre veïns.</p>
     <div class="seg" role="group" aria-label="Forma del mapa">
       <button data-dor="map" aria-pressed="true">Mapa</button>
-      <button data-dor="bub" aria-pressed="false">Bombolles</button>
+      <button data-dor="cart" aria-pressed="false">Cartograma</button>
     </div>
-    <svg class="map" id="mDor" role="img" aria-label="Mapa de bombolles proporcionals a la població de cada municipi"></svg>
+    <svg class="map" id="mDor" role="img" aria-label="Mapa de Catalunya i cartograma continu de la població per municipi"></svg>
     <p class="readout" id="rDor" aria-live="polite"></p>
+    <p class="note" id="cartNote"></p>
   </section>
 
   <section>
     <h2>L’horitzó de Catalunya</h2>
-    <p>Cada pic s’aixeca sobre un municipi i és tan alt com la seva població. A escala lineal, el país és pla amb una muntanya. A escala logarítmica apareixen els pobles.</p>
-    <div class="seg" role="group" aria-label="Escala dels pics">
-      <button data-spk="lin" aria-pressed="true">Escala lineal</button>
-      <button data-spk="log" aria-pressed="false">Escala logarítmica</button>
-    </div>
+    <p>Cada pic s’aixeca sobre un municipi i és tan alt com la seva població. El país és pla amb una muntanya.</p>
     <svg class="map" id="mSpk" role="img" aria-label="Mapa de pics de població per municipi"></svg>
   </section>
 
   <section>
     <h2 id="tramTitle"></h2>
     <p>Els municipis agrupats per nombre d’habitants. Toca un tram per veure’l al mapa i comparar quants ajuntaments són, quanta terra ocupen i quanta gent hi viu.</p>
-    <div class="chips" id="tramChips" role="group" aria-label="Trams de població"></div>
-    <div class="tri" id="tri"></div>
+    <div class="chips rv" id="tramChips" role="group" aria-label="Trams de població"></div>
+    <div class="tri rv" id="tri"></div>
     <svg class="map" id="mTram" role="img" aria-label="Mapa dels municipis per tram de població"></svg>
     <p class="readout" id="rTram" aria-live="polite"></p>
   </section>
@@ -97,7 +95,10 @@
     <p>Cada cercle és un municipi: a la dreta, més amunt a la muntanya; a dalt, més gent per km². La mida és la població.</p>
     <svg class="viz" id="alt" role="img" aria-label="Gràfic de dispersió: altitud i densitat dels municipis" style="max-width:820px"></svg>
     <p class="readout" id="rAlt" aria-live="polite"></p>
-    <div class="tri" id="altBars"></div>
+    <h3 class="sub" id="hipTitle"></h3>
+    <p id="hipLede"></p>
+    <svg class="viz" id="hip" role="img" aria-label="Superfície del territori i població per franges d’altitud de 100 metres"></svg>
+    <p class="note" id="hipNote"></p>
   </section>
 
   <section>
@@ -114,7 +115,7 @@
       <button data-cart="area" aria-pressed="true">Superfície</button>
       <button data-cart="pop" aria-pressed="false">Població</button>
     </div>
-    <div class="slider" id="yearBox" hidden><span class="yr" id="yearOut">2025</span><input type="range" id="yearIn" min="0" max="6" step="1" value="6" aria-label="Any"></div>
+    <div class="slider rv" id="yearBox" hidden><span class="yr" id="yearOut">2025</span><input type="range" id="yearIn" min="0" max="6" step="1" value="6" aria-label="Any"></div>
     <svg class="map" id="cart" role="img" aria-label="Cartograma de bombolles de les comarques"></svg>
     <p class="readout" id="rCart" aria-live="polite"></p>
     <p class="note">Fins al 1991, població de fet (sèrie històrica de l’Idescat). El Moianès i el Lluçanès no existien com a comarques i els seus municipis compten dins les comarques d’on provenen.</p>
@@ -123,14 +124,14 @@
   <section>
     <h2 id="ghostTitle"></h2>
     <p id="ghostLede"></p>
-    <div class="rows" id="rows"></div>
-    <div class="seg" role="group" aria-label="Quines comarques"><button id="moreBtn" aria-pressed="false">Mostra també les que creixen</button></div>
-    <p class="note">1857–1991: població de fet (Idescat). 2025: Cens de població. Per comparar, el 2025 el Moianès se suma al Bages i el Lluçanès a Osona.</p>
+    <div class="gkey"><span><i style="background:var(--red)"></i>500 persones que hi viuen avui</span><span><i style="border:1.3px solid var(--muted)"></i>500 persones que hi vivien el 1900 i ja no hi són</span></div>
+    <div class="ghosts" id="ghosts"></div>
+    <p class="note">1857–1991: població de fet (Idescat). 2025: Cens de població. Per comparar, el 2025 el Moianès se suma al Bages i el Lluçanès a Osona. La línia de sota és l’evolució 1857–2025 de cada comarca.</p>
   </section>
 
   <section>
-    <h2>El mateix quilòmetre quadrat, dos països diferents</h2>
-    <p>Tria dos municipis. Cada quadrat és 1 km² i cada punt, una persona.</p>
+    <h2>El mateix quilòmetre quadrat, dos municipis diferents</h2>
+    <p>Tria dos municipis. Cada quadrat és 1 km² i cada punt, una persona. Tots els punts tenen la mateixa mida a banda i banda.</p>
     <div class="km">
       <div><input class="search" id="kA" list="munlist" aria-label="Primer municipi" autocomplete="off"><canvas id="cvA"></canvas><div class="d" id="dA"></div></div>
       <div><input class="search" id="kB" list="munlist" aria-label="Segon municipi" autocomplete="off"><canvas id="cvB"></canvas><div class="d" id="dB"></div></div>
@@ -146,9 +147,9 @@
       <button data-g="empty" aria-pressed="false">Buides</button>
       <button data-g="most" aria-pressed="false">98,5%</button>
       <button data-g="half" aria-pressed="false">50%</button>
-    </div><button class="btn" id="sortBtn">Ajunta-les</button>
-    <canvas id="grid" role="img" aria-label="Graella de 32.915 quadrats d’1 km²"></canvas>
-    <div class="gl" id="gridLeg"></div>
+    </div><button class="btn rv" id="sortBtn">Ajunta-les</button>
+    <canvas class="rv" id="grid" role="img" aria-label="Graella de 32.915 quadrats d’1 km²"></canvas>
+    <div class="gl rv" id="gridLeg"></div>
     <p class="readout" id="rGrid" aria-live="polite"></p>
   </section>
 
@@ -165,6 +166,8 @@
         <li>Idescat. <a href="https://www.idescat.cat/pub/?id=shd&n=1341&t=199100&by=com">Sèries històriques demogràfiques. Evolució de la població de fet</a>, 1857–1991.</li>
         <li>Idescat. <a href="https://govern.cat/salapremsa/notes-premsa/833960/l-any-2025-el-614-percent-de-la-poblacio-viu-en-centres-urbans-que-ocupen-l-138-percent-de-la-superficie-de-catalunya">Estadística del grau d’urbanització 2025</a> (quadrícula d’1 km²).</li>
         <li>Límits municipals: Instituto Geográfico Nacional, via es-atlas (TopoJSON).</li>
+        <li>Altituds del territori: <a href="https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM">Copernicus DEM GLO-90</a>, Agència Espacial Europea.</li>
+        <li>Cartograma: M. T. Gastner i M. E. J. Newman, «Diffusion-based method for producing density-equalizing maps», <i>PNAS</i> 101 (2004).</li>
       </ul>
     </div>
   </section>

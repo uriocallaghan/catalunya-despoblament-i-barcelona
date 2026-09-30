@@ -10,6 +10,9 @@ Projecte: **Terra i gent**, web estàtica de visualització de dades sobre el de
 
 ## Codi
 - `assets/app.js` carrega `data/catalunya.json` amb `fetch` i dibuixa totes les seccions amb D3 v7 (vendoritzat a `assets/vendor/`).
+- Maquetació centrada. Els elements vermells apareixen en entrar a la pantalla (`onView` a app.js, classe `.rv` al CSS). El ressaltat en passar per sobre s'esborra en sortir del gràfic o en tocar fora (`hoverable`). Scroll suau amb Lenis (vendoritzat).
+- Cartograma continu: `scripts/cartograma.mjs` (difusió de Gastner-Newman, malla 512, projecció azimutal d'àrea igual). `npm run build:data` triga uns 5 minuts per això.
+- `data/raw/hipsometria.csv` (superfície per franges de 100 m) es genera amb `npm run build:hipso`, que descarrega el Copernicus DEM GLO-90 en una carpeta temporal i l'esborra.
 - Colors a `:root` de `assets/style.css`: fons #F1F1EE, escala de vermells `--r0`…`--r7`, accent `--red` #E4401C. Només mode clar.
 - Tipografia: Geist (Google Fonts), tracking negatiu.
 - `data/catalunya.json` és generat: no editar a mà. Modificar `data/raw/` o `scripts/build-data.mjs` i executar `npm run build:data`.

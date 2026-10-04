@@ -3,21 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Per què s’ha encarit tant l’habitatge a Catalunya: més gent on hi ha la feina, diners abundants, sous que es queden enrere, lloguers que es mengen el sou, estalvis que es fonen i joves que no poden marxar de casa. Gràfics interactius amb dades oficials.">
-<meta property="og:title" content="El nus: tots els fils que han encarit l’habitatge">
-<meta property="og:description" content="El preu de l’habitatge no s’explica amb una sola causa. Gràfics interactius que estiren cada fil del nus, amb dades oficials.">
+<meta name="description" content="Per què s’ha encarit l’habitatge: més gent que habitatges nous, una construcció que no s’ha refet, tipus d’interès que van amagar el preu, el pis com a inversió, un parc social mínim i una generació que lloga. Gràfics interactius amb dades oficials.">
+<meta property="og:title" content="El nus: per què s’ha encarit l’habitatge">
+<meta property="og:description" content="Catalunya suma molta més gent que habitatges nous. Gràfics interactius sobre les causes de l’encariment de l’habitatge, amb dades del Ministeri, el Banc d’Espanya, l’OCDE i Eurostat.">
 <meta property="og:url" content="https://catalunya.uriocallaghan.com/nus/">
 <meta property="og:type" content="article">
 <meta name="twitter:card" content="summary">
 <meta name="theme-color" content="#F1F1EE">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="canonical" href="https://catalunya.uriocallaghan.com/nus/">
-<title>El nus: tots els fils que han encarit l’habitatge</title>
+<title>El nus: per què s’ha encarit l’habitatge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&display=swap" rel="stylesheet">
 <script src="../assets/vendor/d3.v7.8.5.min.js"></script>
-<script src="../assets/vendor/topojson-client.v3.1.0.min.js"></script>
 <script src="../assets/vendor/lenis.v1.3.26.min.js"></script>
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="stylesheet" href="../assets/diners.css">
@@ -28,124 +27,127 @@
   <div class="top"><span id="upd"></span></div>
 
   <header>
-    <p class="kick">El nus</p>
     <h1 id="h1"></h1>
     <p class="lead" id="lead"></p>
-    <div class="seg" role="group" aria-label="Des de quan">
-      <button data-base="2000" aria-pressed="true">Des del 2000</button>
-      <button data-base="2007" aria-pressed="false">Des del 2007, amb el lloguer</button>
-    </div>
-    <svg class="viz" id="threads" role="img" aria-label="Fils del nus: preu de l’habitatge, lloguer, diners en circulació, balanç del BCE, població metropolitana, preus i sou, indexats a un mateix any" style="max-width:820px"></svg>
-    <div class="chips" id="thChips"></div>
-    <p class="readout" id="rThreads" aria-live="polite"></p>
-    <p class="note">Cada línia val 1 l’any de partida i mostra per quant s’ha multiplicat. Escala logarítmica: la mateixa distància vertical és la mateixa multiplicació. Mitjanes anuals; la població només té dades als anys de padró.</p>
+    <div class="seg" role="group" aria-label="Període" id="perSeg"></div>
+    <svg class="viz" id="per" role="img" aria-label="Habitants nous a Catalunya per cada deu habitatges acabats, per períodes entre padrons" style="max-width:520px"></svg>
+    <div class="gkey"><span><i style="background:var(--red);border-radius:1px"></i>Habitatge acabat</span><span><i style="background:var(--ink)"></i>Habitant nou</span></div>
+    <p class="readout" id="rPer" aria-live="polite"></p>
+    <p class="note">Habitants: padró municipal (Idescat) a 1 de gener, i cens del 2025. Habitatges acabats: habitatge lliure acabat (estimació del Ministeri d’Habitatge i Agenda Urbana) més habitatge protegit amb qualificació definitiva, sumats des de l’any següent al primer padró fins a l’any del segon. No compta pisos rehabilitats, canvis d’ús ni habitatges que deixen d’estar buits.</p>
   </header>
 
-  <nav class="fils" id="fils" aria-label="Els fils del nus"></nav>
-
-  <section id="f1">
-    <p class="kick">Fil 1 · La gent</p>
-    <h2 id="popTitle"></h2>
-    <p id="popLede"></p>
-    <div class="slider"><button class="play" id="popPlay" aria-label="Reprodueix">▶</button><span class="yr" id="popYr"></span><input type="range" id="popT" min="1998" max="2025" step="1" value="2025" aria-label="Any"></div>
-    <svg class="map" id="mPop" role="img" aria-label="Mapa del canvi de població de cada municipi des del 1998"></svg>
-    <div class="legend rv" id="legPop"></div>
-    <p class="readout" id="rPop" aria-live="polite"></p>
-    <div class="duo rv" id="popDuo"></div>
-    <p class="note">Padró municipal (Idescat) als anys 1998, 2001, 2006, 2011, 2016 i 2021, i cens del 2025, sobre els termes municipals actuals; entre aquests anys el mapa interpola. Els municipis creats després del 1998 tenen la població d’aquell any repartida per superfície. Àmbit metropolità: Alt Penedès, Baix Llobregat, Barcelonès, Garraf, Maresme i els dos Vallès.</p>
+  <section>
+    <h2 id="buildTitle"></h2>
+    <p id="buildLede"></p>
+    <div class="slider"><button class="play" id="buildPlay" aria-label="Reprodueix">▶</button><span class="yr" id="buildYr"></span><input type="range" id="buildT" step="1" aria-label="Any"></div>
+    <svg class="viz" id="build" role="img" aria-label="Habitatges acabats a Catalunya cada any: cada quadrat, mil habitatges" style="max-width:420px"></svg>
+    <div class="gkey"><span><i style="background:var(--red);border-radius:1px"></i>Habitatge lliure</span><span><i style="background:var(--r6);border-radius:1px"></i>Habitatge protegit</span></div>
+    <p class="readout" id="rBuild" aria-live="polite"></p>
+    <p class="note" id="buildNote"></p>
   </section>
 
-  <section id="f2">
-    <p class="kick">Fil 2 · Els diners</p>
-    <h2 id="moneyTitle"></h2>
-    <p id="moneyLede"></p>
-    <svg class="viz" id="money" role="img" aria-label="Cada any, creixement dels diners en circulació a la zona euro i del preu de l’habitatge a la província de Barcelona" style="max-width:697px"></svg>
-    <p class="readout" id="rMoney" aria-live="polite"></p>
-    <p class="note">Horitzontal: variació de la mitjana anual de l’agregat monetari M3 de la zona euro (Banc Central Europeu). Vertical: variació del valor taxat mitjà de l’habitatge lliure a la província de Barcelona (Ministeri d’Habitatge i Agenda Urbana). Que dues sèries es moguin juntes no demostra que l’una causi l’altra: el crèdit, els tipus d’interès i les expectatives hi intervenen alhora.</p>
+  <section>
+    <h2 id="hhTitle"></h2>
+    <p id="hhLede"></p>
+    <svg class="viz" id="hh" role="img" aria-label="Llars noves i habitatges acabats a Espanya per períodes" style="max-width:697px"></svg>
+    <div class="gkey"><span><i style="background:var(--ink);border-radius:1px"></i>Llars noves</span><span><i style="background:var(--red);border-radius:1px"></i>Habitatges acabats</span></div>
+    <p class="readout" id="rHh" aria-live="polite"></p>
+    <p class="note">Llars: Enquesta de població activa (INE, base 2021), mitjana anual, recollida pel Banc d’Espanya; la diferència entre el primer i l’últim any de cada període. Habitatges: lliures acabats i protegits amb qualificació definitiva (Ministeri d’Habitatge i Agenda Urbana). No hi ha sèrie anual oficial de llars per a Catalunya en aquesta font. Durant la bombolla es van acabar més habitatges que llars noves: molts van quedar buits o de segona residència.</p>
   </section>
 
-  <section id="f3">
-    <p class="kick">Fil 3 · El sou</p>
-    <h2 id="genTitle"></h2>
-    <p id="genLede"></p>
-    <div class="seg" role="group" aria-label="On">
-      <button data-gg="bcn" aria-pressed="true">Província de Barcelona</button>
-      <button data-gg="cat" aria-pressed="false">Catalunya</button>
-      <button data-gg="esp" aria-pressed="false">Espanya</button>
+  <section>
+    <h2 id="credTitle"></h2>
+    <p id="credLede"></p>
+    <svg class="viz" id="cred" role="img" aria-label="Preu de l’habitatge en anys de renda d’una llar i crèdit hipotecari en percentatge del PIB, Espanya" style="max-width:697px"></svg>
+    <p class="readout" id="rCred" aria-live="polite"></p>
+    <p class="note">Banc d’Espanya, Síntesi d’indicadors (quadre 1.5): preu d’un habitatge mitjà dividit per la renda bruta de la llar mediana, i saldo del crèdit a les llars per comprar habitatge en percentatge del PIB. Mitjanes anuals. Espanya.</p>
+  </section>
+
+  <section>
+    <h2 id="rateTitle"></h2>
+    <p id="rateLede"></p>
+    <div class="seg" role="group" aria-label="Què es mesura">
+      <button data-rm="esf" aria-pressed="true">La quota</button>
+      <button data-rm="pr" aria-pressed="false">El preu en anys de renda</button>
     </div>
-    <svg class="viz" id="gen" role="img" aria-label="Per a cada generació, anys de sou brut sencer que costava un pis de 80 m² quan feia 30 anys" style="max-width:780px"></svg>
-    <div class="gkey"><span><i style="background:var(--red);border-radius:1px"></i>Un any de sou brut sencer</span></div>
-    <p class="readout" id="rGen" aria-live="polite"></p>
-    <p class="note">Any en què cada generació fa 30 anys. Pis: 80 m² al valor taxat mitjà (Ministeri d’Habitatge i Agenda Urbana). Sou: cost salarial total per treballador (INE), de Catalunya per a Catalunya i la província de Barcelona, i d’Espanya per a Espanya. No és el sou d’una persona de 30 anys, sinó el mitjà de tots els treballadors.</p>
+    <svg class="viz" id="rate" role="img" aria-label="Esforç teòric del primer any d’hipoteca i preu en anys de renda, Espanya, des del 1987" style="max-width:697px"></svg>
+    <p class="readout" id="rRate" aria-live="polite"></p>
+    <p class="note">Esforç teòric: part de la renda bruta de la llar mediana que s’emporta el primer any d’hipoteca d’un habitatge mitjà, sense deduccions fiscals (Banc d’Espanya). Inclou el tipus d’interès i el termini de cada moment. Tipus: préstecs nous per comprar habitatge (Banc d’Espanya). Espanya, mitjanes anuals.</p>
   </section>
 
-  <section id="f4">
-    <p class="kick">Fil 4 · El lloguer</p>
-    <h2 id="calTitle"></h2>
-    <p id="calLede"></p>
-    <div class="slider"><button class="play" id="calPlay" aria-label="Reprodueix">▶</button><span class="yr" id="calYr"></span><input type="range" id="calT" step="1" aria-label="Any"></div>
-    <div class="cal" id="cal" role="img" aria-label="Els dotze mesos de l’any: en vermell, els que es treballen per pagar el lloguer"></div>
-    <p class="readout" id="rCal" aria-live="polite"></p>
-    <svg class="viz" id="eff" role="img" aria-label="Part del sou brut que s’emporta el lloguer, any a any" style="max-width:697px"></svg>
-    <p class="note">Lloguer: renda mitjana dels contractes nous amb fiança dipositada a l’Incasòl a Barcelona ciutat, multiplicada per dotze. Sou: cost salarial total per treballador a Catalunya (INE), en brut. El 30% és el llindar habitual a partir del qual es considera que una llar fa un esforç excessiu per a l’habitatge. Comparat amb el sou net, la proporció seria encara més alta.</p>
+  <section>
+    <h2 id="yieldTitle"></h2>
+    <p id="yieldLede"></p>
+    <svg class="viz" id="yield" role="img" aria-label="Rendibilitat bruta del lloguer i tipus dels dipòsits bancaris, Espanya" style="max-width:697px"></svg>
+    <p class="readout" id="rYield" aria-live="polite"></p>
+    <p class="note">Rendibilitat bruta del lloguer: lloguer anual dividit pel preu de l’habitatge, abans de despeses, impostos i períodes sense llogater (Banc d’Espanya). Dipòsits: tipus dels dipòsits nous de les llars a més d’un any i fins a dos (Banc d’Espanya). No inclou la revaloració del pis, que en aquests anys ha estat positiva. Espanya, mitjanes anuals.</p>
   </section>
 
-  <section id="f5">
-    <p class="kick">Fil 5 · Els estalvis</p>
-    <h2 id="saveTitle"></h2>
-    <p id="saveLede"></p>
-    <div class="slider"><span class="yr" id="saveYr"></span><input type="range" id="saveT" step="1" aria-label="Any en què es guarden els 100 €"></div>
-    <svg class="viz" id="save" role="img" aria-label="Què valen avui 100 € guardats en efectiu i 100 € posats en metres quadrats de pis" style="max-width:560px"></svg>
-    <p class="readout" id="rSave" aria-live="polite"></p>
-    <p class="note">Tot en poder de compra de l’any de partida, descomptant l’IPC de Catalunya (INE). Habitatge: valor taxat mitjà a la província de Barcelona (Ministeri d’Habitatge i Agenda Urbana), sense comptar lloguers cobrats, impostos, manteniment ni costos de compra i venda.</p>
+  <section>
+    <h2 id="socTitle"></h2>
+    <p id="socLede"></p>
+    <div class="ghosts" id="soc"></div>
+    <div class="gkey"><span><i style="background:var(--red);border-radius:1px"></i>Lloguer social</span><span><i style="background:var(--land);border-radius:1px"></i>La resta del parc</span></div>
+    <p class="readout" id="rSoc" aria-live="polite"></p>
+    <p class="note">OCDE, Affordable Housing Database, indicador PH4.2: habitatges de lloguer social en percentatge del parc total, l’últim any disponible (entre parèntesis). Per a Espanya, el 2019, 290.000 habitatges; segons l’OCDE la xifra pot incloure altres habitatges de lloguer reduït. Als Països Baixos inclou habitatge privat llogat per sota de mercat. Les definicions de cada país no són idèntiques.</p>
   </section>
 
-  <section id="f6">
-    <p class="kick">Fil 6 · Els joves</p>
-    <h2 id="emTitle"></h2>
-    <p id="emLede"></p>
-    <div class="slider"><span class="yr" id="emYr"></span><input type="range" id="emT" step="1" aria-label="Any de comparació"></div>
-    <svg class="viz" id="em" role="img" aria-label="Edat mitjana a què els joves marxen de casa dels pares, per països" style="max-width:640px"></svg>
-    <div class="gkey"><span><i style="border:1.5px solid var(--muted);background:var(--bg)"></i><span id="emK0"></span></span><span><i style="background:var(--red)"></i><span id="emK1"></span></span></div>
-    <p class="readout" id="rEm" aria-live="polite"></p>
-    <p class="note">Edat mitjana estimada a què els joves deixen la llar dels pares (Eurostat, yth_demo_030). Dades d’Espanya: no n’hi ha de Catalunya en aquesta sèrie.</p>
-  </section>
-
-  <section id="f7">
-    <p class="kick">Com es lliga tot</p>
-    <h2>Un nus, no una causa</h2>
-    <p>Cap d’aquests fils no ho explica tot sol. Toca un nus per veure què l’estreny i què estreny ell. Els cercles plens tenen una xifra mesurada en aquesta pàgina; els puntejats són fils que també hi pesen i que aquí encara no mesurem.</p>
-    <svg class="viz" id="knot" role="img" aria-label="Diagrama de causes i efectes de l’encariment de l’habitatge" style="max-width:820px"></svg>
-    <div class="kcard" id="kcard" aria-live="polite"></div>
-  </section>
-
-  <section id="f8">
-    <p class="kick">Desfer el nus</p>
-    <h2 id="untieTitle"></h2>
-    <p id="untieLede"></p>
-    <div class="ctrl">
-      <label>El sou puja <input type="range" id="uS" min="0" max="8" step=".5"><output id="uSV"></output> l’any</label>
-      <label>El pis puja <input type="range" id="uP" min="-2" max="8" step=".5"><output id="uPV"></output> l’any</label>
+  <section>
+    <h2 id="tenTitle"></h2>
+    <p id="tenLede"></p>
+    <div class="seg" role="group" aria-label="Tinença">
+      <button data-tn="Rent (private)" aria-pressed="true">De lloguer privat</button>
+      <button data-tn="own" aria-pressed="false">En un habitatge de propietat</button>
     </div>
-    <svg class="viz" id="untie" role="img" aria-label="Projecció dels anys de sou que costa un pis segons com creixin el sou i el preu" style="max-width:697px"></svg>
-    <p class="readout" id="rUntie" aria-live="polite"></p>
-    <p class="note">Model il·lustratiu, no una previsió: aplica cada any el creixement triat al sou i al preu a partir de l’últim any amb dades (província de Barcelona). Els valors inicials dels controls són la mitjana anual observada des del 2000.</p>
-    <ol class="plan" id="levers"></ol>
+    <svg class="viz" id="ten" role="img" aria-label="Percentatge de persones que viuen de lloguer privat o en habitatge de propietat, per edat, Espanya" style="max-width:697px"></svg>
+    <p class="readout" id="rTen" aria-live="polite"></p>
+    <p class="note">OCDE, Affordable Housing Database, indicador HM1.3, a partir de l’Enquesta de condicions de vida (EU-SILC). Percentatge de persones de cada edat segons la tinença de l’habitatge on viuen: qui viu amb els pares propietaris compta com a propietat. Espanya.</p>
+  </section>
+
+  <section>
+    <h2 id="obTitle"></h2>
+    <p id="obLede"></p>
+    <div class="slider"><span class="yr" id="obYr"></span><input type="range" id="obT" step="1" aria-label="Any"></div>
+    <div class="ghosts" id="ob"></div>
+    <p class="readout" id="rOb" aria-live="polite"></p>
+    <p class="note">Eurostat, ilc_lvho07c: persones que viuen en llars on el total de despeses d’habitatge, netes d’ajudes, supera el 40% de la renda disponible. Inclou lloguer o interessos de la hipoteca, subministraments i manteniment. Espanya; entre parèntesis, la mitjana de la Unió Europea (27 països) del mateix any.</p>
+  </section>
+
+  <section>
+    <h2 id="realTitle"></h2>
+    <p id="realLede"></p>
+    <div class="seg" role="group" aria-label="Com es compta">
+      <button data-bm="real" aria-pressed="true">Descomptant la inflació</button>
+      <button data-bm="nom" aria-pressed="false">En euros de cada any</button>
+    </div>
+    <svg class="viz" id="bis" role="img" aria-label="Índex de preus de l’habitatge a Espanya des del 1971, nominal i real" style="max-width:697px"></svg>
+    <p class="readout" id="rBis" aria-live="polite"></p>
+    <p class="note">Banc de Pagaments Internacionals (BIS), preus residencials seleccionats, Espanya: índex 2007 = 100, mitjana anual. El real descompta els preus de consum. Espanya sencera; a Barcelona la pujada recent ha estat més forta.</p>
+  </section>
+
+  <section>
+    <h2 id="abTitle"></h2>
+    <p id="abLede"></p>
+    <svg class="viz" id="ab" role="img" aria-label="Efecte estimat d’Airbnb sobre el lloguer i el preu de compra a Barcelona" style="max-width:560px"></svg>
+    <p class="readout" id="rAb" aria-live="polite"></p>
+    <p class="note">Garcia-López, Jofre-Monseny, Martínez-Mazza i Segú (2020), <a href="https://ddd.uab.cat/record/237144" class="back">Do short-term rental platforms affect housing markets? Evidence from Airbnb in Barcelona</a>, Journal of Urban Economics 119. Efecte acumulat estimat de l’activitat d’Airbnb sobre el lloguer i el preu, per barris de Barcelona.</p>
   </section>
 
   <section class="closing">
-    <h2>L’habitatge és on es troben tots els fils</h2>
+    <h2>No hi ha un sol fil</h2>
     <p id="close1"></p>
-    <p>Per això no hi ha una sola palanca. Les que es debaten actuen sobre fils diferents: construir i rehabilitar on hi ha la demanda, fer créixer un parc de lloguer públic i estable, apropar feina i serveis a la resta del territori perquè no tot pesi sobre la mateixa taca metropolitana, i que el sou recuperi terreny. Cada una afluixa un fil; el nus només cedeix si s’estiren alhora.</p>
+    <p id="close2"></p>
+    <p>Hi ha fils que aquesta pàgina no mesura perquè no tenen una sèrie oficial comparable: el temps i el cost de convertir sòl en solars, les llicències, la manca de mà d’obra a la construcció o el pes de les herències i les donacions en les compres. Els estudis els assenyalen, però amb xifres menys sòlides.</p>
     <div class="sources">
       <p class="note" style="margin:0">Fonts</p>
       <ul>
-        <li>Idescat. <a href="https://www.idescat.cat/pub/?id=pmh">Padró municipal d’habitants</a> (1998–2021) i <a href="https://www.idescat.cat/pub/?id=censph">Cens de població</a> (2025).</li>
-        <li>Ministeri d’Habitatge i Agenda Urbana. <a href="https://apps.fomento.gob.es/BoletinOnline2/?nivel=2&orden=35000000">Valor taxat de l’habitatge lliure</a>, per comunitats i províncies.</li>
-        <li>INE. <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=59392">Enquesta trimestral de cost laboral</a> i <a href="https://www.ine.es/jaxiT3/Tabla.htm?t=24078">Índex de preus de consum</a>.</li>
-        <li>Incasòl. <a href="https://analisi.transparenciacatalunya.cat/d/qww9-bvhh">Preu mitjà del lloguer d’habitatges</a> (fiances dipositades).</li>
-        <li>Banc Central Europeu. <a href="https://data.ecb.europa.eu/">Agregats monetaris (M3) i balanç de l’Eurosistema</a>.</li>
-        <li>Eurostat. <a href="https://ec.europa.eu/eurostat/databrowser/view/yth_demo_030/default/table">Edat mitjana estimada d’emancipació</a>.</li>
+        <li>Ministeri d’Habitatge i Agenda Urbana, Butlletí estadístic. <a href="https://apps.fomento.gob.es/BoletinOnline2/sedal/32201000.XLS">Habitatges lliures acabats</a>, <a href="https://apps.fomento.gob.es/BoletinOnline2/sedal/32200500.XLS">habitatges lliures iniciats</a> i <a href="https://apps.fomento.gob.es/BoletinOnline2/sedal/31306000.XLS">habitatges protegits amb qualificació definitiva</a>, per comunitats i províncies.</li>
+        <li>Banc d’Espanya. <a href="https://www.bde.es/webbe/es/estadisticas/compartido/datos/csv/si_1_5.csv">Síntesi d’indicadors, quadre 1.5: habitatge</a> (llars de l’EPA, accessibilitat, tipus, crèdit, rendibilitat i tinença).</li>
+        <li>Idescat. <a href="https://www.idescat.cat/pub/?id=pmh">Padró municipal d’habitants</a> i <a href="https://www.idescat.cat/pub/?id=censph">Cens de població</a>.</li>
+        <li>OCDE. <a href="https://oe.cd/ahd">Affordable Housing Database</a>: PH4.2, parc de lloguer social, i HM1.3, tinença de l’habitatge.</li>
+        <li>Eurostat. <a href="https://ec.europa.eu/eurostat/databrowser/view/ilc_lvho07c/default/table">Taxa de sobrecàrrega de despeses d’habitatge per tinença</a> (ilc_lvho07c).</li>
+        <li>BIS. <a href="https://data.bis.org/topics/RPP">Preus residencials seleccionats</a>, Espanya.</li>
+        <li>Garcia-López, Jofre-Monseny, Martínez-Mazza i Segú (2020), Journal of Urban Economics 119.</li>
       </ul>
     </div>
   </section>

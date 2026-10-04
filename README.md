@@ -28,8 +28,9 @@ data/diners.json           sèries de preus, diners, or, sous i habitatge (gener
 scripts/diners/            descàrrega de fonts i generació de data/diners.json
 or/, habitatge/, estrategia/ subpàgines «Mesurat en or», «La casa» i «Deu anys» (llegeixen data/diners.json)
 nus/index.html             subpàgina «El nus»: tots els fils que han encarit l’habitatge
-assets/nus.js              gràfics de «El nus» (data/diners.json, data/catalunya.json i data/nus.json)
-data/nus.json              població municipal 1998–2025 per a «El nus» (generat per scripts/nus/dades.mjs)
+assets/nus.js              gràfics de «El nus» (llegeix data/nus.json)
+data/nus.json              sèries de «El nus» (generat per scripts/nus/dades.mjs)
+scripts/nus/               descàrrega de fonts i generació de data/nus.json
 assets/menu.js             menú superior comú a totes les pàgines (llista d’articles)
 netlify.toml               configuració de desplegament a Netlify
 ```
@@ -77,10 +78,11 @@ Fonts: INE (IPC des del 1961 i Enquesta trimestral de cost laboral), BCE (M3, ef
 ## El nus
 
 ```bash
-node scripts/nus/dades.mjs   # regenera data/nus.json a partir de data/cartograma.json (després de npm run build:data)
+python3 scripts/nus/descarrega.py      # descarrega les fonts a data/raw/nus-*.csv (cal: pip install xlrd openpyxl)
+node scripts/nus/dades.mjs             # regenera data/nus.json i mostra les xifres clau
 ```
 
-La resta de dades de la pàgina surten de `data/diners.json`. Els fils sense dades a la web (construcció d’habitatge nou, parc social, pisos turístics, mida de les llars) apareixen al diagrama com a puntejats fins que s’hi afegeixin fonts oficials.
+Fonts: Ministeri d'Habitatge i Agenda Urbana (habitatges lliures iniciats i acabats i habitatge protegit, taules 3.1, 3.2 i 1.6 del butlletí), Banc d'Espanya (quadre 1.5 de la síntesi d'indicadors: llars de l'EPA, preu sobre renda, esforç teòric, tipus, crèdit, rendibilitat del lloguer, dipòsits, costos de construcció), OCDE (Affordable Housing Database, PH4.2 i HM1.3), Eurostat (ilc_lvho07c), BIS (preus residencials) i Idescat (padró). `data/raw/nus-estudis.csv` recull els resultats de Garcia-López et al. (2020) sobre Airbnb a Barcelona. Si els servidors oficials no són accessibles, `--local <carpeta>` llegeix els mateixos fitxers originals.
 
 ## Fonts
 

@@ -26,6 +26,11 @@ diners/index.html          subpàgina «Diners de paper» (inflació, diners, or
 assets/diners.js           gràfics de la subpàgina
 data/diners.json           sèries de preus, diners, or, sous i habitatge (generat)
 scripts/diners/            descàrrega de fonts i generació de data/diners.json
+or/, habitatge/, estrategia/ subpàgines «Mesurat en or», «La casa» i «Deu anys» (llegeixen data/diners.json)
+nus/index.html             subpàgina «El nus»: tots els fils que han encarit l’habitatge
+assets/nus.js              gràfics de «El nus» (data/diners.json, data/catalunya.json i data/nus.json)
+data/nus.json              població municipal 1998–2025 per a «El nus» (generat per scripts/nus/dades.mjs)
+assets/menu.js             menú superior comú a totes les pàgines (llista d’articles)
 netlify.toml               configuració de desplegament a Netlify
 ```
 
@@ -68,6 +73,14 @@ node scripts/diners/dades.mjs          # regenera data/diners.json i mostra les 
 ```
 
 Fonts: INE (IPC des del 1961 i Enquesta trimestral de cost laboral), BCE (M3, efectiu, balanç de l'Eurosistema i canvi dòlar/euro), FRED (balanç de la Reserva Federal i M2), Banc de la Reserva Federal de Minneapolis (IPC dels EUA des del 1800), Banc Mundial (preu de l'or), Ministeri d'Habitatge (valor taxat de l'habitatge), Incasòl (lloguer a Barcelona) i Eurostat (edat d'emancipació).
+
+## El nus
+
+```bash
+node scripts/nus/dades.mjs   # regenera data/nus.json a partir de data/cartograma.json (després de npm run build:data)
+```
+
+La resta de dades de la pàgina surten de `data/diners.json`. Els fils sense dades a la web (construcció d’habitatge nou, parc social, pisos turístics, mida de les llars) apareixen al diagrama com a puntejats fins que s’hi afegeixin fonts oficials.
 
 ## Fonts
 

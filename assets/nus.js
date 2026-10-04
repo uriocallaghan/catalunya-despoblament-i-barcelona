@@ -76,7 +76,7 @@ const LL=B.llars_milers, LY=N.bde.llars_milers.map(p=>p[0]).filter(y=>H[y]), LY0
 const HHP=[[LY0,2008,'bombolla'],[2008,2014,'crisi'],[2014,2021,'recuperació'],[2021,LYL,'ara']].map(([a,b,n])=>({a,b,n,l:(LL.get(b)-LL.get(a))*1000,h:sumY(acabEs,a+1,b)}));
 const hL=HHP[HHP.length-1], h0=HHP[0];
 $('#hhTitle').textContent=`Des del ${hL.a}, Espanya ha sumat ${M(hL.l)} milions de llars i ha acabat ${M(hL.h)} milions d’habitatges`;
-$('#hhLede').textContent=`És a dir, ${fmt(hL.l/hL.h,1)} llars noves per cada habitatge nou. Per al preu, més que les persones compten les llars: cada habitatge n’acull una. Durant la bombolla va passar al revés: entre el ${h0.a+1} i el ${h0.b} es van acabar ${M(h0.h)} milions d’habitatges per ${M(h0.l)} milions de llars noves. Aquell excedent es va anar absorbint durant la crisi i la recuperació; ara s’ha esgotat, sobretot on hi ha la feina.`;
+$('#hhLede').textContent=`És a dir, ${fmt(hL.l/hL.h,1)} llars noves per cada habitatge nou. Per al preu, més que les persones compten les llars: cada habitatge n’acull una. Durant la bombolla va passar al revés: entre el ${h0.a+1} i el ${h0.b} es van acabar ${M(h0.h)} milions d’habitatges per ${M(h0.l)} milions de llars noves. Aquell excedent es va anar absorbint durant la crisi i la recuperació; des del 2022, la diferència s’ha girat.`;
 function drawHh(shown){
   const svg=d3.select('#hh'); const [W,Ht]=sizeOf(svg,697,.5,260,360); const t=24,b=40;
   const x=d3.scaleBand().domain(HHP.map((d,i)=>i)).range([0,W]).paddingInner(.3).paddingOuter(.1), xi=d3.scaleBand().domain([0,1]).range([0,x.bandwidth()]).padding(.08);
@@ -102,7 +102,7 @@ function drawHh(shown){
 const PRI=N.bde.preu_renda_anys, CRE=N.bde.credit_habitatge_pib;
 const cMax=bMax('credit_habitatge_pib'), cL=bLast('credit_habitatge_pib'), prMax=bMax('preu_renda_anys'), prMin=bMin('preu_renda_anys',2009), prL=bLast('preu_renda_anys');
 $('#credTitle').textContent=`El deute per comprar habitatge ha baixat del ${fmt(cMax[1],0)}% al ${fmt(cL[1],0)}% del PIB. El preu, en anys de renda, torna a pujar.`;
-$('#credLede').textContent=`Durant la bombolla, el preu i el deute hipotecari van créixer junts: el pis va arribar a costar ${fmt(prMax[1],1)} anys de la renda bruta d’una llar mitjana el ${prMax[0]}, i el saldo de les hipoteques, el ${fmt(cMax[1],0)}% del PIB el ${cMax[0]}. Des del ${prMin[0]}, el preu ha tornat a pujar, de ${fmt(prMin[1],1)} a ${fmt(prL[1],1)} anys de renda el ${prL[0]}, mentre que el deute hipotecari, en proporció a l’economia, ha baixat a menys de la meitat. Aquesta pujada no ve, com la del 2007, d’un endeutament creixent de les famílies.`;
+$('#credLede').textContent=`Durant la bombolla, el preu i el deute hipotecari van créixer junts: el pis va arribar a costar ${fmt(prMax[1],1)} anys de la renda bruta de la llar mediana el ${prMax[0]}, i el saldo de les hipoteques, el ${fmt(cMax[1],0)}% del PIB el ${cMax[0]}. Des del ${prMin[0]}, el preu ha tornat a pujar, de ${fmt(prMin[1],1)} a ${fmt(prL[1],1)} anys de renda el ${prL[0]}, mentre que el deute hipotecari, en proporció a l’economia, ha baixat a menys de la meitat. Aquesta pujada no ve, com la del 2007, d’un endeutament creixent de les famílies.`;
 function drawCred(shown){
   const svg=d3.select('#cred'); const [W,Ht]=sizeOf(svg,697,.72,380,520); const rp=W<500?44:60, gap=44, t=30;
   const ph=(Ht-t-gap-24)/2, y1t=t, y1b=t+ph, y2t=y1b+gap, y2b=y2t+ph;
@@ -198,7 +198,7 @@ const AG=[['15 to 29 years','15–29 anys',R[3]],['30 to 49 years','30–49 anys
 const tSer=(age,mode)=>{ const T=N.ten[age]; if(mode!=='own') return T[mode]; const a=new Map(T['Own outright']); return T['Owner with mortgage'].map(([y,v])=>[y,v+a.get(y)]); };
 const rp30=tSer('30 to 49 years','Rent (private)'), o30=tSer('30 to 49 years','own'), o65=tSer('65 or more years','own');
 $('#tenTitle').textContent=`A Espanya, la gent de 30 a 49 anys que viu de lloguer privat ha passat del ${fmt(rp30[0][1],0)}% al ${fmt(rp30[rp30.length-1][1],0)}%`;
-$('#tenLede').textContent=`Entre el ${rp30[0][0]} i el ${rp30[rp30.length-1][0]}, a l’edat en què abans es comprava el primer pis. En el mateix temps, la part d’aquesta franja que viu en un habitatge de propietat ha baixat del ${fmt(o30[0][1],0)}% al ${fmt(o30[o30.length-1][1],0)}%, mentre que entre els més grans de 65 anys gairebé no s’ha mogut (${fmt(o65[o65.length-1][1],0)}%). Qui ja tenia casa abans de la pujada la conserva; qui arriba ara, lloga, i competeix per un parc de lloguer que no creix al mateix ritme.`;
+$('#tenLede').textContent=`Entre el ${rp30[0][0]} i el ${rp30[rp30.length-1][0]}, a l’edat en què abans es comprava el primer pis. En el mateix temps, la part d’aquesta franja que viu en un habitatge de propietat ha baixat del ${fmt(o30[0][1],0)}% al ${fmt(o30[o30.length-1][1],0)}%, mentre que entre els més grans de 65 anys gairebé no s’ha mogut (${fmt(o65[o65.length-1][1],0)}%). Qui ja tenia casa abans de la pujada la conserva; qui arriba ara, cada cop més, lloga.`;
 let tMode='Rent (private)';
 function drawTen(shown){
   const svg=d3.select('#ten'); const [W,Ht]=sizeOf(svg,697,.54,270,390); const t=18,b=24,rp=W<500?96:124;
